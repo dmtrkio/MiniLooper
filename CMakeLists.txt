@@ -1,8 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 
 # Project Settings
-set(APP_NAME MiniLooper)
-project(${APP_NAME} VERSION 0.0.1)
+project(MiniLooper VERSION 0.0.1)
 
 # Dependencies
 include(FetchContent)
@@ -22,7 +21,11 @@ FetchContent_Declare(
     GIT_TAG master
 )
 set(RTAUDIO_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-set(RTAUDIO_API_JACK OFF CACHE INTERNAL "")
+if(WIN32)
+    set(RTAUDIO_API_ASIO ON CACHE INTERNAL "")
+else()
+    set(RTAUDIO_API_JACK OFF CACHE INTERNAL "")
+endif()
 set(RTAUDIO_BUILD_TESTING OFF CACHE INTERNAL "")
 FetchContent_MakeAvailable(rtaudio)
 
@@ -51,10 +54,6 @@ FetchContent_MakeAvailable(kissfft)
 # Faust Generated DSP
 add_subdirectory(faust)
 
-# Build command
-set(CMAKE_CXX_STANDARD 23)
-add_compile_options(-O2 -Wall -Wextra -fdiagnostics-color=always)
-
 # Source files
 set(SOURCE_FILES
     src/audio_engine.cpp
@@ -63,18 +62,20 @@ set(SOURCE_FILES
     src/looper/looper_commands.cpp
 )
 
-# Executable
-add_executable(${APP_NAME} ${SOURCE_FILES})
+# Build Executable
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
 # Include directories
-target_include_directories(${APP_NAME} PRIVATE
-    ${rtaudio_SOURCE_DIR}/include
-    ${libremidi_SOURCE_DIR}/include
+target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 # Link libraries
-target_link_libraries(${APP_NAME} PRIVATE
+target_link_libraries(${PROJECT_NAME} PRIVATE
     rtaudio
     libremidi
     readerwriterqueue
@@ -82,5 +83,13 @@ target_link_libraries(${APP_NAME} PRIVATE
     faust_dsp_lib
 )
 
+# Compile options
+target_compile_options(${PROJECT_NAME} PRIVATE
+    $<$<CONFIG:Debug>:$<$<CXX_COMPILER_ID:MSVC>:/RTC1 /W3>>
+    $<$<CONFIG:Release>:$<$<CXX_COMPILER_ID:MSVC>:/O2 /W3>>
+    $<$<CONFIG:Debug>:$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-g -Wall -Wextra>>
+    $<$<CONFIG:Release>:$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-O2 -Wall -Wextra>>
+)
+
 # Install rules
-install(TARGETS ${APP_NAME} RUNTIME DESTINATION bin)
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
