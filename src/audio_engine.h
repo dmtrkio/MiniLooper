@@ -23,6 +23,9 @@ public:
     AudioEngine(const AudioEngine&) = delete;
     AudioEngine& operator=(const AudioEngine&) = delete;
 
+    void printApis() const;
+    void printDevices() const;
+
     // -- Only these are safe to be called from an audio callback --
     unsigned int getNumInputChannels() const noexcept;
     unsigned int getNumOutputChannels() const noexcept;

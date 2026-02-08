@@ -10,14 +10,47 @@ AudioEngine& AudioEngine::getInstance()
 
 AudioEngine::AudioEngine()
 {
-    rtAudio_ = std::make_unique<RtAudio>();
+    // Currently only WASAPI works on Windows, ASIO fails to initialize.
+    rtAudio_ = std::make_unique<RtAudio>(RtAudio::Api::WINDOWS_WASAPI);
     inputDevice_ = rtAudio_->getDefaultInputDevice();
     outputDevice_ = rtAudio_->getDefaultOutputDevice();
+
+    printApis();
+    printDevices();
 }
 
 AudioEngine::~AudioEngine()
 {
     stopStream();
+}
+
+void AudioEngine::printApis() const
+{
+    std::vector<RtAudio::Api> compiledApis;
+    RtAudio::getCompiledApi(compiledApis);
+    for (const auto& capi : compiledApis) {
+        std::cout << "RtAudio compiled api = " << RtAudio::getApiDisplayName(capi) << std::endl;
+    }
+
+    const auto currentApi = rtAudio_->getCurrentApi();
+    std::cout << "Current api = " << RtAudio::getApiDisplayName(currentApi) << std::endl;
+}
+
+void AudioEngine::printDevices() const
+{
+    const auto ids = rtAudio_->getDeviceIds();
+    if (ids.empty()) {
+        std::cout << "No devices found." << std::endl;
+        return;
+    }
+
+    for (unsigned int n = 0; n < ids.size(); n++ ) {
+        const auto info = rtAudio_->getDeviceInfo(ids[n]);
+        std::cout << "\ndevice id = " << n << std::endl;
+        std::cout << "device name = " << info.name << std::endl;
+        std::cout << "maximum input channels = " << info.inputChannels << std::endl;
+        std::cout << "maximum output channels = " << info.outputChannels << std::endl;
+    }
 }
 
 unsigned int AudioEngine::getNumInputChannels() const noexcept { return inputChannels_; }
@@ -162,8 +195,8 @@ int AudioEngine::staticCallback(void* outputBuffer,
             const auto iChannels = engine->getNumInputChannels();
             const auto oChannels = engine->getNumOutputChannels();
 
-            const float* in = static_cast<const float*>(inputBuffer);
-            float* out = static_cast<float*>(outputBuffer);
+            const auto* in = static_cast<const float*>(inputBuffer);
+            auto* out = static_cast<float*>(outputBuffer);
 
             for (auto i{0u}; i < iChannels; ++i)
                 engine->inputBuffers_[i] = in + i * nFrames;
