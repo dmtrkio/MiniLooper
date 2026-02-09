@@ -3,9 +3,9 @@
 #include <ranges>
 #include <algorithm>
 
-#include "audio_engine.h"
+#include "../audio/audio_engine.h"
 
-namespace looper {
+using namespace looper;
 
 void Looper::process(float **data, unsigned int nFrames) noexcept
 {
@@ -18,7 +18,7 @@ void Looper::process(float **data, unsigned int nFrames) noexcept
 
 void Looper::onStart()
 {
-    const auto& engine = AudioEngine::getInstance();
+    const auto& engine = audio::AudioEngine::getInstance();
     const auto nChannels = engine.getNumOutputChannels();
     const auto mFrames = engine.getSampleRate() * maxLengthInSec_;
 
@@ -123,6 +123,4 @@ void Looper::processInternal(float **data, unsigned int nFrames) noexcept
             }
         }
     }
-}
-
 }

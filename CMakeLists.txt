@@ -51,12 +51,22 @@ set(KISSFFT_TEST OFF CACHE INTERNAL "")
 set(KISSFFT_TOOLS OFF CACHE INTERNAL "")
 FetchContent_MakeAvailable(kissfft)
 
+# Raylib - windowing/inputs/graphics library
+FetchContent_Declare(
+    raylib
+    GIT_REPOSITORY https://github.com/raysan5/raylib.git
+    GIT_TAG master
+)
+set(SUPPORT_MODULE_RMODELS OFF CACHE INTERNAL "")
+set(SUPPORT_MODULE_RAUDIO OFF CACHE INTERNAL "")
+FetchContent_MakeAvailable(raylib)
+
 # Faust Generated DSP
 add_subdirectory(faust)
 
 # Source files
 set(SOURCE_FILES
-    src/audio_engine.cpp
+    src/audio/audio_engine.cpp
     src/main.cpp
     src/looper/looper.cpp
     src/looper/looper_commands.cpp
@@ -81,6 +91,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     readerwriterqueue
     kissfft 
     faust_dsp_lib
+    raylib
 )
 
 # Compile options

@@ -2,6 +2,10 @@
 
 #include <iostream>
 
+#include <RtAudio.h>
+
+using namespace audio;
+
 AudioEngine& AudioEngine::getInstance()
 {
     static AudioEngine instance;
@@ -183,7 +187,7 @@ int AudioEngine::staticCallback(void* outputBuffer,
                                 void* inputBuffer,
                                 unsigned int nFrames,
                                 double streamTime,
-                                RtAudioStreamStatus status,
+                                unsigned int status,
                                 void* userData)
 {
 

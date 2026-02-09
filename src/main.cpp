@@ -2,15 +2,17 @@
 #include <thread>
 #include <chrono>
 
-#include "audio_engine.h"
+#include <raylib.h>
+
+#include "audio/audio_engine.h"
 #include "looper/looper.h"
 
-class LooperCallback : public AudioCallback
+class LooperCallback : public audio::AudioCallback
 {
 public:
     void onProcess(const float **in, float **out, unsigned int nFrames) override
     {
-        const auto& engine = AudioEngine::getInstance();
+        const auto& engine = audio::AudioEngine::getInstance();
         const auto iChannels = engine.getNumInputChannels();
         const auto oChannels = engine.getNumOutputChannels();
 
@@ -43,7 +45,7 @@ private:
 
 int main()
 {
-    auto& engine = AudioEngine::getInstance();
+    auto& engine = audio::AudioEngine::getInstance();
     auto cb = std::make_shared<LooperCallback>();
     engine.setAudioCallback(cb);
     engine.setSampleRate(48000);
