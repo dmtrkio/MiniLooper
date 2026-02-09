@@ -2,7 +2,7 @@
 #include <thread>
 #include <chrono>
 
-#include <raylib.h>
+#include "raylib.h"
 
 #include "audio/audio_engine.h"
 #include "looper/looper.h"
@@ -58,21 +58,30 @@ int main()
 
     std::cout << "Running audio stream\n";
 
-    char c;
-    while (true) {
-        std::cout << "Quit[q] StartRecording[r] StopRecording[s] Clear[c]\n";
-        std::cin >> c;
+    InitWindow(800, 600, "MainLooper");
+    SetTargetFPS(60);
+    SetExitKey(KEY_ESCAPE);
 
-        if (c == 'q') {
-            break;
-        } else if (c == 'r') {
+    std::cout << "Quit[Escape] StartRecording[r] StopRecording[s] Clear[c]\n";
+
+    while (!WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(WHITE);
+
+        DrawText("Quit[Escape] StartRecording[r] StopRecording[s] Clear[c]", 40, 100, 20, BLACK);
+
+        if (IsKeyPressed(KEY_R)) {
             cb->getCommandMailbox().tryPush(looper::LooperCommand::startRecording());
-        } else if (c == 's') {
+        } else if (IsKeyPressed(KEY_S)) {
             cb->getCommandMailbox().tryPush(looper::LooperCommand::stopRecording());
-        } else if (c == 'c') {
+        } else if (IsKeyPressed(KEY_C)) {
             cb->getCommandMailbox().tryPush(looper::LooperCommand::clear());
         }
+
+        EndDrawing();
     }
+
+    CloseWindow();
 
     engine.stopStream();
     std::cout << "Audio stream stopped successfully.\n";
