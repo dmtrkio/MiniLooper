@@ -15,7 +15,7 @@ namespace audio {
     class AudioBackend
     {
     public:
-        using Callback = std::function<bool(const float **in, float **out, unsigned int nFrames)>;
+        using Callback = std::function<bool(const float *const *in, float *const *out, unsigned int nFrames)>;
 
         struct StreamParams
         {
@@ -25,11 +25,15 @@ namespace audio {
             unsigned int numOutputChannels{2};
         };
 
+        explicit AudioBackend(Callback audioCallback) : audioCallback_(std::move(audioCallback)) {}
         virtual ~AudioBackend() = default;
-        virtual bool initialize(Callback cb);
+
         virtual bool startStream(StreamParams &params);
         virtual bool stopStream();
         [[nodiscard]] virtual bool isStreamRunning() const;
+
+    protected:
+        Callback audioCallback_;
     };
 
     class AudioCallback
