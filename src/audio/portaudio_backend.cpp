@@ -8,6 +8,7 @@
 #include "audio_engine.h"
 
 namespace audio {
+
     class PortAudioBackend : AudioBackend
     {
     public:
@@ -52,7 +53,7 @@ namespace audio {
             PaStreamParameters inputParameters;
             inputParameters.device = Pa_GetDefaultInputDevice();
             const auto* inputDeviceInfo = Pa_GetDeviceInfo(inputParameters.device);
-            inputParameters.channelCount = std::min(2, inputDeviceInfo->maxInputChannels);
+            inputParameters.channelCount = std::min(static_cast<int>(params.numInputChannels), inputDeviceInfo->maxInputChannels);
             inputParameters.sampleFormat = sampleFormat;
             inputParameters.suggestedLatency = inputDeviceInfo->defaultLowInputLatency;
             inputParameters.hostApiSpecificStreamInfo = nullptr;
@@ -61,11 +62,16 @@ namespace audio {
             PaStreamParameters outputParameters;
             outputParameters.device = Pa_GetDefaultOutputDevice();
             const auto* outputDeviceInfo = Pa_GetDeviceInfo(outputParameters.device);
-            outputParameters.channelCount = std::min(2, outputDeviceInfo->maxOutputChannels);
+            outputParameters.channelCount = std::min(static_cast<int>(params.numOutputChannels), outputDeviceInfo->maxOutputChannels);
             outputParameters.sampleFormat = sampleFormat;
             outputParameters.suggestedLatency = outputDeviceInfo->defaultLowOutputLatency;
             outputParameters.hostApiSpecificStreamInfo = nullptr;
             std::cout << "Output device: " << outputDeviceInfo->name << std::endl;
+
+            if (Pa_IsFormatSupported(&inputParameters, &outputParameters, params.sampleRate)) {
+                std::cout << "Format not supported by PortAudio\n";
+                return false;
+            }
 
             {
                 const auto err = Pa_OpenStream(&stream_,
@@ -144,4 +150,5 @@ namespace audio {
 
         PaStream* stream_{nullptr};
     };
+
 } // audio
