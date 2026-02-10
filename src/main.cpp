@@ -83,8 +83,6 @@ int main()
     SetTargetFPS(60);
     SetExitKey(KEY_ESCAPE);
 
-    std::cout << "Quit[Escape] StartRecording[r] StopRecording[s] Clear[c]\n";
-
     while (!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(WHITE);
@@ -92,13 +90,10 @@ int main()
         DrawText("Quit[Escape] StartRecording[r] StopRecording[s] Clear[c]", 40, 100, 20, BLACK);
 
         if (IsKeyPressed(KEY_R)) {
-            std::cout << "KEY R\n";
             cb->getCommandMailbox().tryPush(looper::LooperCommand::startRecording());
         } else if (IsKeyPressed(KEY_S)) {
-            std::cout << "KEY S\n";
             cb->getCommandMailbox().tryPush(looper::LooperCommand::stopRecording());
         } else if (IsKeyPressed(KEY_C)) {
-            std::cout << "KEY C\n";
             cb->getCommandMailbox().tryPush(looper::LooperCommand::clear());
         }
 

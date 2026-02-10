@@ -114,7 +114,6 @@ void Looper::clear() noexcept
 void Looper::consumeCommands() noexcept
 {
     commandMailbox_.consumeAll([&](const LooperCommand& cmd) {
-        std::cout << stateToStr(this->state_) << '\n';
         cmd.apply(*this);
     });
 }
@@ -153,5 +152,5 @@ const char* Looper::stateToStr(State state)
     if (state == State::CLEARED) return "CLEARED";
     if (state == State::RECORDING) return "RECORDING";
     if (state == State::PLAYBACK) return "PLAYBACK";
-    return "";
+    return "Invalid State";
 }

@@ -14,8 +14,13 @@ AudioEngine& AudioEngine::getInstance()
 
 AudioEngine::AudioEngine()
 {
+#ifdef WIN32
     // Currently only WASAPI works on Windows, ASIO fails to initialize.
     rtAudio_ = std::make_unique<RtAudio>(RtAudio::Api::WINDOWS_WASAPI);
+#else
+    rtAudio_ = std::make_unique<RtAudio>();
+#endif
+
     inputDevice_ = rtAudio_->getDefaultInputDevice();
     outputDevice_ = rtAudio_->getDefaultOutputDevice();
 
