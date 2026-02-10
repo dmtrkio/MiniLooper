@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <vector>
 
 #include "looper_commands.h"
@@ -14,6 +15,9 @@ public:
     void onStop();
 
     LooperMailbox& getCommandMailbox() noexcept;
+    unsigned int getCurrentPosition() const noexcept;
+    unsigned int getCurrentNumFrames() const noexcept;
+    bool isEmpty() const noexcept;
 
     void startRecording() noexcept;
     void stopRecording() noexcept;
@@ -31,8 +35,8 @@ private:
     };
 
     State state_{State::CLEARED};
-    unsigned int position_{0};
-    unsigned int numFrames_{0};
+    std::atomic<unsigned int> position_{0};
+    std::atomic<unsigned int> numFrames_{0};
 
     unsigned int maxLengthInSec_{10};
     unsigned int numChannels_{0};

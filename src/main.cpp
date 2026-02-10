@@ -1,6 +1,6 @@
+#include <algorithm>
 #include <iostream>
-#include <thread>
-#include <chrono>
+#include <numbers>
 
 #include "raylib.h"
 
@@ -16,12 +16,28 @@ public:
         const auto iChannels = engine.getNumInputChannels();
         const auto oChannels = engine.getNumOutputChannels();
 
-        if (iChannels > 0)
-            for (auto c{0u}; c < oChannels; ++c)
-                for (auto i{0u}; i < nFrames; ++i)
-                    out[c][i] = in[0][i] * gain_;
+        if (iChannels > 0 && iChannels == oChannels) {
+            for (auto c{0u}; c < oChannels; ++c) {
+                for (auto i{0u}; i < nFrames; ++i) {
+                    out[c][i] = in[c][i];
+                }
+            }
+        }
 
         looper_.process(out, nFrames);
+
+        /*const auto sr = static_cast<float>(engine.getSampleRate());
+        constexpr auto twoPi = 2.0f * std::numbers::pi_v<float>;
+        const float phaseIncr = twoPi * 440.0f / sr;
+        static float osc{0};
+        for (auto i{0u}; i < nFrames; ++i) {
+            osc += phaseIncr;
+            if (osc >= twoPi) osc -= twoPi;
+            const float sine = std::sin(osc) * 0.03f;
+            for (auto c{0u}; c < oChannels; ++c) {
+                out[c][i] = sine;
+            }
+        }*/
     }
 
     void onStart() override
@@ -40,11 +56,15 @@ public:
 
 private:
     looper::Looper looper_;
-    float gain_{0.9f};
 };
 
 int main()
 {
+#ifdef WIN32
+    std::cout << "Windows not implemented yet\n";
+    return 1;
+#endif
+
     auto& engine = audio::AudioEngine::getInstance();
     auto cb = std::make_shared<LooperCallback>();
     engine.setAudioCallback(cb);
@@ -58,6 +78,7 @@ int main()
 
     std::cout << "Running audio stream\n";
 
+    SetTraceLogLevel(LOG_ERROR);
     InitWindow(800, 600, "MainLooper");
     SetTargetFPS(60);
     SetExitKey(KEY_ESCAPE);

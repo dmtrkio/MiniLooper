@@ -19,6 +19,11 @@ AudioEngine::AudioEngine()
     inputDevice_ = rtAudio_->getDefaultInputDevice();
     outputDevice_ = rtAudio_->getDefaultOutputDevice();
 
+    rtAudio_->showWarnings(true);
+
+    inputChannels_ = rtAudio_->getDeviceInfo(inputDevice_).inputChannels;
+    outputChannels_ = rtAudio_->getDeviceInfo(outputDevice_).outputChannels;
+
     printApis();
     printDevices();
 }
@@ -32,12 +37,14 @@ void AudioEngine::printApis() const
 {
     std::vector<RtAudio::Api> compiledApis;
     RtAudio::getCompiledApi(compiledApis);
+    std::cout << std::endl;
     for (const auto& capi : compiledApis) {
         std::cout << "RtAudio compiled api = " << RtAudio::getApiDisplayName(capi) << std::endl;
     }
 
     const auto currentApi = rtAudio_->getCurrentApi();
     std::cout << "Current api = " << RtAudio::getApiDisplayName(currentApi) << std::endl;
+    std::cout << std::endl;
 }
 
 void AudioEngine::printDevices() const
@@ -48,13 +55,37 @@ void AudioEngine::printDevices() const
         return;
     }
 
-    for (unsigned int n = 0; n < ids.size(); n++ ) {
-        const auto info = rtAudio_->getDeviceInfo(ids[n]);
-        std::cout << "\ndevice id = " << n << std::endl;
+    for (const auto id : ids) {
+        const auto info = rtAudio_->getDeviceInfo(id);
+        std::cout << "device id = " << id << std::endl;
         std::cout << "device name = " << info.name << std::endl;
         std::cout << "maximum input channels = " << info.inputChannels << std::endl;
         std::cout << "maximum output channels = " << info.outputChannels << std::endl;
+        std::cout << "supports duplex channels = " << (info.duplexChannels ? "true" : "false") << std::endl;
+
+        if (info.nativeFormats == 0) {
+            std::cout << "No natively supported data formats\n";
+        } else {
+            std::cout << "Natively supported data formats:\n";
+            if (info.nativeFormats & RTAUDIO_SINT8)
+                std::cout << "  8-bit int\n";
+            if ( info.nativeFormats & RTAUDIO_SINT16 )
+                std::cout << "  16-bit int\n";
+            if ( info.nativeFormats & RTAUDIO_SINT24 )
+                std::cout << "  24-bit int\n";
+            if ( info.nativeFormats & RTAUDIO_SINT32 )
+                std::cout << "  32-bit int\n";
+            if ( info.nativeFormats & RTAUDIO_FLOAT32 )
+                std::cout << "  32-bit float\n";
+            if ( info.nativeFormats & RTAUDIO_FLOAT64 )
+                std::cout << "  64-bit float\n";
+        }
+        std::cout << std::endl;
     }
+
+    std::cout << "picked input device id = " << inputDevice_ << std::endl;
+    std::cout << "picked output device id = " << outputDevice_ << std::endl;
+    std::cout << std::endl;
 }
 
 unsigned int AudioEngine::getNumInputChannels() const noexcept { return inputChannels_; }
@@ -127,7 +158,7 @@ bool AudioEngine::openStream()
     oParams.firstChannel = 0;
 
     RtAudio::StreamOptions options;
-    options.flags = RTAUDIO_SCHEDULE_REALTIME | RTAUDIO_NONINTERLEAVED;
+    options.flags = RTAUDIO_SCHEDULE_REALTIME | RTAUDIO_NONINTERLEAVED | RTAUDIO_HOG_DEVICE;
 
     inputBuffers_.resize(inputChannels_);
     outputBuffers_.resize(outputChannels_);
@@ -145,6 +176,9 @@ bool AudioEngine::openStream()
         std::cerr << "RtAudio open stream error: " << rtAudio_->getErrorText() << std::endl;
         return false;
     }
+
+    sampleRate_.store(rtAudio_->getStreamSampleRate());
+    bufferSize_.store(bufSize, std::memory_order_release);
 
     if (auto cb = userCallback_.load(std::memory_order_acquire))
         cb->onStart();
