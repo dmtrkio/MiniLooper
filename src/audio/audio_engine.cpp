@@ -21,8 +21,8 @@ AudioEngine::AudioEngine()
 
     rtAudio_->showWarnings(true);
 
-    inputChannels_ = rtAudio_->getDeviceInfo(inputDevice_).inputChannels;
-    outputChannels_ = rtAudio_->getDeviceInfo(outputDevice_).outputChannels;
+    inputChannels_ = std::min(rtAudio_->getDeviceInfo(inputDevice_).inputChannels, 2u);
+    outputChannels_ = std::min(rtAudio_->getDeviceInfo(outputDevice_).outputChannels, 2u);
 
     printApis();
     printDevices();
