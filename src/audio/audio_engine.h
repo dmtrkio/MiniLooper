@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <functional>
 #include <vector>
 #include <mutex>
 #include <memory>
@@ -10,6 +11,26 @@ namespace rt::audio {
 }
 
 namespace audio {
+
+    class AudioBackend
+    {
+    public:
+        using Callback = std::function<bool(const float **in, float **out, unsigned int nFrames)>;
+
+        struct StreamParams
+        {
+            unsigned int sampleRate{44100};
+            unsigned int bufferSize{512};
+            unsigned int numInputChannels{2};
+            unsigned int numOutputChannels{2};
+        };
+
+        virtual ~AudioBackend() = default;
+        virtual bool initialize(Callback cb);
+        virtual bool startStream(StreamParams &params);
+        virtual bool stopStream();
+        [[nodiscard]] virtual bool isStreamRunning() const;
+    };
 
     class AudioCallback
     {
