@@ -1,7 +1,6 @@
 #pragma once
 
 #include <atomic>
-#include <functional>
 #include <mutex>
 #include <memory>
 
@@ -36,8 +35,8 @@ namespace audio {
         AudioEngine(const AudioEngine&) = delete;
         AudioEngine& operator=(const AudioEngine&) = delete;
 
-        AudioEngine(AudioEngine&&) noexcept = default;
-        AudioEngine& operator=(AudioEngine&&) noexcept = default;
+        AudioEngine(AudioEngine&&) noexcept = delete;
+        AudioEngine& operator=(AudioEngine&&) noexcept = delete;
 
         // -- Only these are safe to be called from an audio callback --
         unsigned int getNumInputChannels() const noexcept;
