@@ -5,11 +5,11 @@
 
 #include <portaudio.h>
 
-#include "audio_engine.h"
+#include "audio_backend.h"
 
 namespace audio {
 
-    class PortAudioBackend final : AudioBackend
+    class PortAudioBackend final : public AudioBackend
     {
     public:
         explicit PortAudioBackend(Callback audioCallback) : AudioBackend(std::move(audioCallback))
@@ -28,13 +28,13 @@ namespace audio {
         bool startStream(StreamParams &params) override
         {
             if (isStreamRunning()) {
-                std::cout << "Stream is already running\n";
+                std::cerr << "Stream is already running\n";
                 return false;
             }
 
             const int numDevices = Pa_GetDeviceCount();
             if (numDevices <= 0) {
-                std::cout << "No Devices" << std::endl;
+                std::cerr << "No Devices" << std::endl;
                 Pa_Terminate();
                 return false;
             }
@@ -74,7 +74,7 @@ namespace audio {
             std::cout << "Output device: " << outputDeviceInfo->name << std::endl;
 
             if (Pa_IsFormatSupported(&inputParameters, &outputParameters, params.sampleRate)) {
-                std::cout << "Format not supported by PortAudio\n";
+                std::cerr << "Format not supported by PortAudio\n";
                 return false;
             }
 
@@ -89,13 +89,13 @@ namespace audio {
                                                       this);
 
                 if (err != paNoError) {
-                    std::cout << "PortAudio error opening stream: " << Pa_GetErrorText(err) << std::endl;
+                    std::cerr << "PortAudio error opening stream: " << Pa_GetErrorText(err) << std::endl;
                     return false;
                 }
             }
 
             if (const auto err = Pa_StartStream(stream_); err != paNoError) {
-                std::cout << "PortAudio error starting stream: " << Pa_GetErrorText(err) << std::endl;
+                std::cerr << "PortAudio error starting stream: " << Pa_GetErrorText(err) << std::endl;
                 return false;
             }
 
@@ -105,17 +105,17 @@ namespace audio {
         bool stopStream() override
         {
             if (!isStreamRunning()) {
-                std::cout << "Stream is not running\n";
+                std::cerr << "PortAudio stream is not running\n";
                 return false;
             }
 
             if (const auto err = Pa_StopStream(stream_); err != paNoError) {
-                std::cout << "PortAudio error stopping stream: " << Pa_GetErrorText(err) << std::endl;
+                std::cerr << "PortAudio error stopping stream: " << Pa_GetErrorText(err) << std::endl;
                 return false;
             }
 
             if (const auto err = Pa_CloseStream(stream_); err != paNoError) {
-                std::cout << "PortAudio error closing stream: " << Pa_GetErrorText(err) << std::endl;
+                std::cerr << "PortAudio error closing stream: " << Pa_GetErrorText(err) << std::endl;
                 return false;
             }
 
@@ -124,10 +124,11 @@ namespace audio {
 
         [[nodiscard]] bool isStreamRunning() const override
         {
+            if (!stream_) return false;
             const auto err = Pa_IsStreamActive(stream_);
-            if (err == paNoError) return true;
+            if (err == 1) return true;
             if (err < 0) {
-                std::cout << "PortAudio error: " << Pa_GetErrorText(err) << std::endl;
+                std::cerr << "PortAudio error: " << Pa_GetErrorText(err) << std::endl;
             }
             return false;
         }

@@ -10,7 +10,7 @@ namespace looper {
 class Looper
 {
 public:
-    void process(float **data, unsigned int nFrames) noexcept;
+    void process(float *const *data, unsigned int nFrames) noexcept;
     void onStart();
     void onStop();
 
@@ -34,7 +34,7 @@ private:
     };
 
     void consumeCommands() noexcept;
-    void processInternal(float **data, unsigned int nFrames) noexcept;
+    void processInternal(float *const *data, unsigned int nFrames) noexcept;
     static const char* stateToStr(State state);
 
     State state_{State::CLEARED};

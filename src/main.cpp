@@ -10,7 +10,7 @@
 class LooperCallback : public audio::AudioCallback
 {
 public:
-    void onProcess(const float **in, float **out, unsigned int nFrames) override
+    void onProcess(const float *const *in, float *const *out, unsigned int nFrames) override
     {
         const auto& engine = audio::AudioEngine::getInstance();
         const auto iChannels = engine.getNumInputChannels();
@@ -24,9 +24,9 @@ public:
             }
         }
 
-        looper_.process(out, nFrames);
+        //looper_.process(out, nFrames);
 
-        const auto sr = static_cast<float>(engine.getSampleRate());
+        /*const auto sr = static_cast<float>(engine.getSampleRate());
         constexpr auto twoPi = 2.0f * std::numbers::pi_v<float>;
         const float phaseIncr = twoPi * 440.0f / sr;
         static float osc{0};
@@ -37,7 +37,7 @@ public:
             for (auto c{0u}; c < oChannels; ++c) {
                 out[c][i] = sine;
             }
-        }
+        }*/
     }
 
     void onStart() override
@@ -71,12 +71,16 @@ int main()
     engine.setSampleRate(48000);
     engine.setBufferSize(64);
 
-    if (!engine.startStream()) {
+    if (!engine.start()) {
         std::cerr << "Failed to start audio stream.\n";
         return 1;
     }
 
-    std::cout << "Running audio stream\n";
+    if (engine.isStreamRunning()) {
+        std::cout << "Running audio stream\n";
+    } else {
+        std::cerr << "No audio stream running.\n";
+    }
 
     SetTraceLogLevel(LOG_ERROR);
     InitWindow(800, 600, "MainLooper");
@@ -102,8 +106,8 @@ int main()
 
     CloseWindow();
 
-    engine.stopStream();
-    std::cout << "Audio stream stopped successfully.\n";
+    if (engine.stop())
+        std::cout << "Audio stream stopped successfully.\n";
 
     return 0;
 }

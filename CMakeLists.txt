@@ -79,8 +79,6 @@ set(SOURCE_FILES
     src/main.cpp
     src/looper/looper.cpp
     src/looper/looper_commands.cpp
-    src/audio/portaudio_backend.cpp
-src/audio/rtaudio_backend.cpp
 )
 
 # Build Executable

@@ -6,11 +6,11 @@
 
 #include <RtAudio.h>
 
-#include "audio_engine.h"
+#include "audio_backend.h"
 
 namespace audio {
 
-    class RtAudioBackend final : AudioBackend
+    class RtAudioBackend final : public AudioBackend
     {
     public:
         explicit RtAudioBackend(Callback audioCallback) : AudioBackend(std::move(audioCallback))
@@ -81,12 +81,12 @@ namespace audio {
         bool stopStream() override
         {
             if (!rtAudio_->isStreamOpen()) {
-                std::cout << "RtAudio stream is not open\n";
+                std::cerr << "RtAudio stream is not open\n";
                 return false;
             }
 
             if (!rtAudio_->isStreamRunning()) {
-                std::cout << "RtAudio stream is not running\n";
+                std::cerr << "RtAudio stream is not running\n";
                 return false;
             }
 
@@ -124,7 +124,7 @@ namespace audio {
         {
             const auto ids = rtAudio_->getDeviceIds();
             if (ids.empty()) {
-                std::cout << "No devices found." << std::endl;
+                std::cerr << "No devices found." << std::endl;
                 return;
             }
 

@@ -7,7 +7,7 @@
 
 using namespace looper;
 
-void Looper::process(float **data, unsigned int nFrames) noexcept
+void Looper::process(float *const *data, unsigned int nFrames) noexcept
 {
     consumeCommands();
 
@@ -118,7 +118,7 @@ void Looper::consumeCommands() noexcept
     });
 }
 
-void Looper::processInternal(float **data, unsigned int nFrames) noexcept
+void Looper::processInternal(float *const *data, unsigned int nFrames) noexcept
 {
     if (state_ == State::CLEARED) return;
 
