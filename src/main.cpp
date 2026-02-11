@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <iostream>
 #include <numbers>
+#include <cmath>
 
 #include "raylib.h"
 
@@ -24,7 +25,7 @@ public:
             }
         }
 
-        //looper_.process(out, nFrames);
+        looper_.process(out, nFrames);
 
         /*const auto sr = static_cast<float>(engine.getSampleRate());
         constexpr auto twoPi = 2.0f * std::numbers::pi_v<float>;

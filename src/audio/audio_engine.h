@@ -13,9 +13,16 @@ namespace audio {
     {
     public:
         virtual ~AudioCallback() = default;
+
+        AudioCallback(const AudioCallback&) = delete;
+        AudioCallback& operator=(const AudioCallback&) = delete;
+
         virtual void onProcess(const float *const *in, float *const *out, unsigned int nFrames) = 0;
         virtual void onStart() = 0;
         virtual void onStop() = 0;
+
+    protected:
+        AudioCallback() = default;
     };
 
     class AudioEngine
@@ -45,6 +52,8 @@ namespace audio {
     private:
         AudioEngine();
         ~AudioEngine();
+
+        bool callback(const float *const *in, float *const *out, unsigned int nFrames);
 
         std::unique_ptr<AudioBackend> backend_;
 

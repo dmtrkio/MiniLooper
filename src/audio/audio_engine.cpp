@@ -17,15 +17,12 @@ AudioEngine& AudioEngine::getInstance()
 
 AudioEngine::AudioEngine()
 {
-    AudioBackend::Callback audioCallback = [&](const float *const *in, float *const *out, unsigned int nFrames) -> bool {
+    auto audioCallback = [this](const float *const *in, float *const *out, unsigned int nFrames) -> bool {
         /*for (unsigned int i = 0; i < nFrames; ++i) {
             std::cout << in[0][i] << '\n';
         }*/
 
-        if (const auto cb = userCallback_.load(std::memory_order_relaxed)) {
-            cb->onProcess(in, out, nFrames);
-        }
-        return true;
+        return this->callback(in, out, nFrames);
     };
 
     try {
@@ -90,6 +87,9 @@ bool AudioEngine::start()
     inputChannels_ = params.numInputChannels;
     outputChannels_ = params.numOutputChannels;
 
+    if (const auto cb = userCallback_.load(std::memory_order_relaxed))
+        cb->onStart();
+
     return true;
 }
 
@@ -117,4 +117,12 @@ bool AudioEngine::isStreamRunning() const
 {
     std::lock_guard<std::mutex> lock(streamMutex_);
     return backend_->isStreamRunning();
+}
+
+bool AudioEngine::callback(const float *const *in, float *const *out, unsigned int nFrames)
+{
+    if (const auto cb = userCallback_.load(std::memory_order_relaxed)) {
+        cb->onProcess(in, out, nFrames);
+    }
+    return true;
 }

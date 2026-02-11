@@ -18,7 +18,11 @@ namespace audio {
         };
 
         explicit AudioBackend(Callback audioCallback) : audioCallback_(std::move(audioCallback)) {}
+
         virtual ~AudioBackend() = default;
+
+        AudioBackend(const AudioBackend&) = delete;
+        AudioBackend& operator=(const AudioBackend&) = delete;
 
         virtual bool startStream(StreamParams &params) = 0;
         virtual bool stopStream() = 0;
