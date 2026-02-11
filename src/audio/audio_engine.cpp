@@ -90,7 +90,6 @@ bool AudioEngine::start()
     inputChannels_ = params.numInputChannels;
     outputChannels_ = params.numOutputChannels;
 
-    streamRunning_.store(true, std::memory_order_relaxed);
     return true;
 }
 
@@ -106,7 +105,6 @@ bool AudioEngine::stop()
     if (const auto cb = userCallback_.load(std::memory_order_relaxed))
         cb->onStop();
 
-    streamRunning_.store(false, std::memory_order_relaxed);
     return true;
 }
 

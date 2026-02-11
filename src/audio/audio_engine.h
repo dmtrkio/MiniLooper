@@ -51,7 +51,6 @@ namespace audio {
         std::atomic<std::shared_ptr<AudioCallback>> userCallback_;
 
         mutable std::mutex streamMutex_;
-        std::atomic<bool> streamRunning_{false};
 
         std::atomic<unsigned int> sampleRate_{48000};
         std::atomic<unsigned int> bufferSize_{256};
