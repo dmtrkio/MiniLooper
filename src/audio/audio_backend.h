@@ -24,6 +24,9 @@ namespace audio {
         AudioBackend(const AudioBackend&) = delete;
         AudioBackend& operator=(const AudioBackend&) = delete;
 
+        AudioBackend(AudioBackend&&) noexcept = default;
+        AudioBackend& operator=(AudioBackend&&) noexcept = default;
+
         virtual bool startStream(StreamParams &params) = 0;
         virtual bool stopStream() = 0;
         [[nodiscard]] virtual bool isStreamRunning() const = 0;
