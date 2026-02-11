@@ -44,7 +44,7 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/celtera/libremidi.git
     GIT_TAG master
 )
-set(LIBREMIDI_NO_JACK OFF CACHE INTERNAL "")
+set(LIBREMIDI_NO_JACK ON CACHE INTERNAL "")
 FetchContent_MakeAvailable(libremidi)
 
 # kissfft - FFT(Fast Fourier Transform) library
@@ -67,6 +67,7 @@ FetchContent_Declare(
     GIT_TAG master
 )
 set(SUPPORT_MODULE_RMODELS OFF CACHE INTERNAL "")
+set(USE_AUDIO OFF CACHE INTERNAL "")
 set(SUPPORT_MODULE_RAUDIO OFF CACHE INTERNAL "")
 FetchContent_MakeAvailable(raylib)
 
