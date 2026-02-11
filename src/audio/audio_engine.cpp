@@ -3,9 +3,15 @@
 #include <iostream>
 #include <memory>
 
+//#define USE_PORTAUDIO
 
-#include "portaudio_backend.h"
-using DefaultAudioBackend = audio::PortAudioBackend;
+#ifdef USE_PORTAUDIO
+    #include "portaudio_backend.h"
+    using DefaultAudioBackend = audio::PortAudioBackend;
+#else
+    #include "rtaudio_backend.h"
+    using DefaultAudioBackend = audio::RtAudioBackend;
+#endif
 
 using namespace audio;
 

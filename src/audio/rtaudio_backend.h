@@ -57,12 +57,20 @@ namespace audio {
             RtAudio::StreamOptions options;
             options.flags = RTAUDIO_SCHEDULE_REALTIME | RTAUDIO_NONINTERLEAVED;
 
-            const auto err = rtAudio_->openStream(&inputParameters, &outputParameters,
-                RTAUDIO_FLOAT32, params.sampleRate, &params.bufferSize, &rtCallback, this, &options);
+            {
+                const auto err = rtAudio_->openStream(&inputParameters,
+                                                      &outputParameters,
+                                                      RTAUDIO_FLOAT32,
+                                                      params.sampleRate,
+                                                      &params.bufferSize,
+                                                      &rtCallback,
+                                                      this,
+                                                      &options);
 
-            if (err != RTAUDIO_NO_ERROR) {
-                std::cerr << "RtAudio open stream error: " << rtAudio_->getErrorText() << std::endl;
-                return false;
+                if (err != RTAUDIO_NO_ERROR) {
+                    std::cerr << "RtAudio open stream error: " << rtAudio_->getErrorText() << std::endl;
+                    return false;
+                }
             }
 
             params.sampleRate = rtAudio_->getStreamSampleRate();
@@ -74,6 +82,11 @@ namespace audio {
 
             inputBuffers_.resize(params.numInputChannels);
             outputBuffers_.resize(params.numOutputChannels);
+
+            if (rtAudio_->startStream() != RTAUDIO_NO_ERROR) {
+                std::cerr << "RtAudio start stream error: " << rtAudio_->getErrorText() << std::endl;
+                return false;
+            }
 
             return true;
         }
@@ -182,7 +195,9 @@ namespace audio {
             for (auto i{0u}; i < oChannels; ++i)
                 backend->outputBuffers_[i] = out + i * nFrames;
 
-            return backend->audioCallback_(backend->inputBuffers_.data(), backend->outputBuffers_.data(), nFrames);
+            const auto res = backend->audioCallback_(backend->inputBuffers_.data(), backend->outputBuffers_.data(), nFrames);
+
+            return res ? 0 : 1;
         }
 
         std::vector<const float*> inputBuffers_;
