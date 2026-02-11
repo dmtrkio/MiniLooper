@@ -7,7 +7,7 @@ namespace audio {
     class AudioBackend
     {
     public:
-        using Callback = std::function<bool(const float *const *in, float *const *out, unsigned int nFrames)>;
+        using Callback = std::function<bool(const float *in, float *out, unsigned int nFrames)>;
 
         struct StreamParams
         {

@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <vector>
 
 #include <portaudio.h>
 
@@ -35,7 +36,6 @@ namespace audio {
             const int numDevices = Pa_GetDeviceCount();
             if (numDevices <= 0) {
                 std::cerr << "No Devices" << std::endl;
-                Pa_Terminate();
                 return false;
             }
 
@@ -53,7 +53,7 @@ namespace audio {
                 std::cout << "	Host Api: " << deviceInfo->hostApi << std::endl;
             }
 
-            const PaSampleFormat sampleFormat = paFloat32 | paNonInterleaved;
+            constexpr PaSampleFormat sampleFormat = paFloat32;
 
             PaStreamParameters inputParameters;
             inputParameters.device = Pa_GetDefaultInputDevice();
@@ -145,8 +145,9 @@ namespace audio {
             (void) statusFlags;
 
             const auto *backend = static_cast<const PortAudioBackend*>(userData);
-            auto in = static_cast<const float * const *>(input);
-            auto out = static_cast<float * const *>(output);
+
+            const auto in = static_cast<const float*>(input);
+            auto out = static_cast<float*>(output);
 
             if (!backend->audioCallback_(in, out, frameCount))
                 return paAbort;

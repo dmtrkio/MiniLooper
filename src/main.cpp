@@ -27,7 +27,7 @@ public:
 
         looper_.process(out, nFrames);
 
-        /*const auto sr = static_cast<float>(engine.getSampleRate());
+        const auto sr = static_cast<float>(engine.getSampleRate());
         constexpr auto twoPi = 2.0f * std::numbers::pi_v<float>;
         const float phaseIncr = twoPi * 440.0f / sr;
         static float osc{0};
@@ -38,7 +38,7 @@ public:
             for (auto c{0u}; c < oChannels; ++c) {
                 out[c][i] = sine;
             }
-        }*/
+        }
     }
 
     void onStart() override

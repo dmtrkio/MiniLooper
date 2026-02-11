@@ -55,7 +55,7 @@ namespace audio {
             outputParameters.nChannels = std::min(params.numOutputChannels, outputDeviceInfo.outputChannels);
 
             RtAudio::StreamOptions options;
-            options.flags = RTAUDIO_SCHEDULE_REALTIME | RTAUDIO_NONINTERLEAVED;
+            options.flags = RTAUDIO_SCHEDULE_REALTIME;
 
             {
                 const auto err = rtAudio_->openStream(&inputParameters,
@@ -79,9 +79,6 @@ namespace audio {
 
             std::cout << "Input device id = " << inputParameters.deviceId << std::endl;
             std::cout << "Output device id = " << outputParameters.deviceId << std::endl;
-
-            inputBuffers_.resize(params.numInputChannels);
-            outputBuffers_.resize(params.numOutputChannels);
 
             if (rtAudio_->startStream() != RTAUDIO_NO_ERROR) {
                 std::cerr << "RtAudio start stream error: " << rtAudio_->getErrorText() << std::endl;
@@ -181,27 +178,16 @@ namespace audio {
             (void)streamTime;
             (void)status;
 
-            auto *backend = static_cast<RtAudioBackend*>(userData);
+            const auto *backend = static_cast<RtAudioBackend*>(userData);
 
-            const auto iChannels = backend->inputBuffers_.size();
-            const auto oChannels = backend->outputBuffers_.size();
+            const auto in = static_cast<const float*>(inputBuffer);
+            auto out = static_cast<float*>(outputBuffer);
 
-            const auto* in = static_cast<const float*>(inputBuffer);
-            auto* out = static_cast<float*>(outputBuffer);
-
-            for (auto i{0u}; i < iChannels; ++i)
-                backend->inputBuffers_[i] = in + i * nFrames;
-
-            for (auto i{0u}; i < oChannels; ++i)
-                backend->outputBuffers_[i] = out + i * nFrames;
-
-            const auto res = backend->audioCallback_(backend->inputBuffers_.data(), backend->outputBuffers_.data(), nFrames);
+            const auto res = backend->audioCallback_(in, out, nFrames);
 
             return res ? 0 : 1;
         }
 
-        std::vector<const float*> inputBuffers_;
-        std::vector<float*> outputBuffers_;
         std::unique_ptr<RtAudio> rtAudio_;
     };
 

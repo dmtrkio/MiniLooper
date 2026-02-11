@@ -3,7 +3,7 @@
 #include <iostream>
 #include <memory>
 
-//#define USE_PORTAUDIO
+#define USE_PORTAUDIO
 
 #ifdef USE_PORTAUDIO
     #include "portaudio_backend.h"
@@ -23,11 +23,7 @@ AudioEngine& AudioEngine::getInstance()
 
 AudioEngine::AudioEngine()
 {
-    auto audioCallback = [this](const float *const *in, float *const *out, unsigned int nFrames) -> bool {
-        /*for (unsigned int i = 0; i < nFrames; ++i) {
-            std::cout << in[0][i] << '\n';
-        }*/
-
+    auto audioCallback = [this](const float *in, float *out, unsigned int nFrames) -> bool {
         return this->callback(in, out, nFrames);
     };
 
@@ -90,8 +86,12 @@ bool AudioEngine::start()
 
     sampleRate_.store(params.sampleRate, std::memory_order_relaxed);
     bufferSize_.store(params.bufferSize, std::memory_order_relaxed);
+
     inputChannels_ = params.numInputChannels;
     outputChannels_ = params.numOutputChannels;
+
+    inputData_.setNumChannels(inputChannels_);
+    outputData_.setNumChannels(outputChannels_);
 
     if (const auto cb = userCallback_.load(std::memory_order_relaxed))
         cb->onStart();
@@ -125,10 +125,50 @@ bool AudioEngine::isStreamRunning() const
     return backend_->isStreamRunning();
 }
 
-bool AudioEngine::callback(const float *const *in, float *const *out, unsigned int nFrames)
+bool AudioEngine::callback(const float *in, float *out, unsigned int nFrames)
 {
     if (const auto cb = userCallback_.load(std::memory_order_relaxed)) {
-        cb->onProcess(in, out, nFrames);
+        inputData_.deinterleave(in, nFrames);
+        cb->onProcess(inputData_.planar.data(), outputData_.planar.data(), nFrames);
+        inputData_.interleave(out, nFrames);
     }
+
     return true;
+}
+
+void AudioEngine::PlanarAudioData::setNumChannels(unsigned int numChannels)
+{
+    planar.clear();
+    buffers.clear();
+
+    planar.resize(numChannels);
+    buffers.resize(numChannels);
+
+    for (auto i{0u}; i < numChannels; ++i) {
+        buffers[i].resize(MAX_FRAMES_IN_BUFFER);
+        planar[i] = buffers[i].data();
+    }
+}
+
+void AudioEngine::PlanarAudioData::deinterleave(const float *data, unsigned int nFrames)
+{
+    const auto nChannels = buffers.size();
+    for (auto c{0u}; c < nChannels; ++c) {
+        auto& channel = buffers[c];
+        for (auto i{0u}; i < nFrames; ++i) {
+            channel[i] = data[i * nChannels + c];
+        }
+    }
+}
+
+void AudioEngine::PlanarAudioData::interleave(float *data, unsigned int nFrames)
+{
+    const auto nChannels = buffers.size();
+    for (auto c{0u}; c < nChannels; ++c) {
+        auto& channel = buffers[c];
+        for (auto i{0u}; i < nFrames; ++i) {
+            data[i * nChannels + c] = channel[i];
+            channel[i] = 0.0f;
+        }
+    }
 }

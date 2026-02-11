@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <vector>
 #include <mutex>
 #include <memory>
 
@@ -58,7 +59,7 @@ namespace audio {
         AudioEngine();
         ~AudioEngine();
 
-        bool callback(const float *const *in, float *const *out, unsigned int nFrames);
+        bool callback(const float *in, float *out, unsigned int nFrames);
 
         std::unique_ptr<AudioBackend> backend_;
 
@@ -74,6 +75,20 @@ namespace audio {
 
         unsigned int inputChannels_{2};
         unsigned int outputChannels_{2};
+
+        struct PlanarAudioData
+        {
+            void setNumChannels(unsigned int numChannels);
+            void deinterleave(const float *data, unsigned int nFrames);
+            void interleave(float *data, unsigned int nFrames);
+
+            static constexpr unsigned int MAX_FRAMES_IN_BUFFER = 8096;
+            std::vector<float*> planar;
+            std::vector<std::vector<float>> buffers;
+        };
+
+        PlanarAudioData inputData_;
+        PlanarAudioData outputData_;
     };
 
 }
