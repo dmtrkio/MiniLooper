@@ -9,7 +9,7 @@
 
 namespace audio {
 
-    class PortAudioBackend : AudioBackend
+    class PortAudioBackend final : AudioBackend
     {
     public:
         explicit PortAudioBackend(Callback audioCallback) : AudioBackend(std::move(audioCallback))
@@ -27,6 +27,11 @@ namespace audio {
 
         bool startStream(StreamParams &params) override
         {
+            if (isStreamRunning()) {
+                std::cout << "Stream is already running\n";
+                return false;
+            }
+
             const int numDevices = Pa_GetDeviceCount();
             if (numDevices <= 0) {
                 std::cout << "No Devices" << std::endl;
@@ -138,7 +143,7 @@ namespace audio {
             (void) timeInfo;
             (void) statusFlags;
 
-            const auto *backend = static_cast<const PortAudioBackend *>(userData);
+            const auto *backend = static_cast<const PortAudioBackend*>(userData);
             auto in = static_cast<const float * const *>(input);
             auto out = static_cast<float * const *>(output);
 
