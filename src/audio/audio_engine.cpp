@@ -2,8 +2,9 @@
 
 #include <iostream>
 #include <memory>
+#include <cassert>
 
-#define USE_PORTAUDIO
+//#define USE_PORTAUDIO
 
 #ifdef USE_PORTAUDIO
     #include "portaudio_backend.h"
@@ -79,11 +80,6 @@ bool AudioEngine::start()
     params.numInputChannels = inputChannels_;
     params.numOutputChannels = outputChannels_;
 
-    if (!backend_->startStream(params)) {
-        std::cerr << "Error starting stream\n";
-        return false;
-    }
-
     sampleRate_.store(params.sampleRate, std::memory_order_relaxed);
     bufferSize_.store(params.bufferSize, std::memory_order_relaxed);
 
@@ -95,6 +91,11 @@ bool AudioEngine::start()
 
     if (const auto cb = userCallback_.load(std::memory_order_relaxed))
         cb->onStart();
+
+    if (!backend_->startStream(params)) {
+        std::cerr << "Error starting stream\n";
+        return false;
+    }
 
     return true;
 }
@@ -130,7 +131,7 @@ bool AudioEngine::callback(const float *in, float *out, unsigned int nFrames)
     if (const auto cb = userCallback_.load(std::memory_order_relaxed)) {
         inputData_.deinterleave(in, nFrames);
         cb->onProcess(inputData_.planar.data(), outputData_.planar.data(), nFrames);
-        inputData_.interleave(out, nFrames);
+        outputData_.interleave(out, nFrames);
     }
 
     return true;
@@ -152,6 +153,8 @@ void AudioEngine::PlanarAudioData::setNumChannels(unsigned int numChannels)
 
 void AudioEngine::PlanarAudioData::deinterleave(const float *data, unsigned int nFrames)
 {
+    assert(nFrames <= MAX_FRAMES_IN_BUFFER);
+
     const auto nChannels = buffers.size();
     for (auto c{0u}; c < nChannels; ++c) {
         auto& channel = buffers[c];
@@ -163,6 +166,8 @@ void AudioEngine::PlanarAudioData::deinterleave(const float *data, unsigned int 
 
 void AudioEngine::PlanarAudioData::interleave(float *data, unsigned int nFrames)
 {
+    assert(nFrames <= MAX_FRAMES_IN_BUFFER);
+
     const auto nChannels = buffers.size();
     for (auto c{0u}; c < nChannels; ++c) {
         auto& channel = buffers[c];
