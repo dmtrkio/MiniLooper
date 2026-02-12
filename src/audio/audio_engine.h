@@ -53,7 +53,7 @@ namespace audio {
         bool start();
         bool stop();
         bool restart();
-        bool isStreamRunning() const;
+        bool isRunning() const;
 
     private:
         AudioEngine();

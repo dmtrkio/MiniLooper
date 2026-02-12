@@ -4,7 +4,7 @@
 #include <memory>
 #include <cassert>
 
-//#define USE_PORTAUDIO
+#define USE_PORTAUDIO
 
 #ifdef USE_PORTAUDIO
     #include "portaudio_backend.h"
@@ -48,14 +48,14 @@ unsigned int AudioEngine::getBufferSize() const noexcept { return bufferSize_.lo
 void AudioEngine::setSampleRate(unsigned int sampleRate)
 {
     sampleRate_.store(sampleRate, std::memory_order_relaxed);
-    if (isStreamRunning())
+    if (isRunning())
         restart();
 }
 
 void AudioEngine::setBufferSize(unsigned int bufferSize)
 {
     bufferSize_.store(bufferSize, std::memory_order_relaxed);
-    if (isStreamRunning())
+    if (isRunning())
         restart();
 }
 
@@ -64,7 +64,7 @@ void AudioEngine::setAudioCallback(std::shared_ptr<AudioCallback> cb)
     if ((!cb) || (cb == userCallback_.load(std::memory_order_relaxed)))
         return;
 
-    if (isStreamRunning())
+    if (isRunning())
         cb->onStart();
 
     userCallback_.store(cb, std::memory_order_relaxed);
@@ -120,7 +120,7 @@ bool AudioEngine::restart()
     return stop() && start();
 }
 
-bool AudioEngine::isStreamRunning() const
+bool AudioEngine::isRunning() const
 {
     std::lock_guard<std::mutex> lock(streamMutex_);
     return backend_->isStreamRunning();

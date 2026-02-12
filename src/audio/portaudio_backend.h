@@ -2,9 +2,13 @@
 
 #include <iostream>
 #include <algorithm>
-#include <vector>
+#include <utility>
 
 #include <portaudio.h>
+
+#ifdef WIN32
+    #include <pa_win_wasapi.h>
+#endif
 
 #include "audio_backend.h"
 
@@ -19,6 +23,8 @@ namespace audio {
                 Pa_Terminate();
                 throw std::runtime_error(Pa_GetErrorText(err));
             }
+
+            scanDevices();
         }
 
         ~PortAudioBackend() override
@@ -39,41 +45,40 @@ namespace audio {
                 return false;
             }
 
-            for (int i = 0; i < numDevices; ++i) {
-                const PaDeviceInfo* deviceInfo = Pa_GetDeviceInfo(i);
+            PaDeviceIndex inputDevice = paNoDevice;
+            PaDeviceIndex outputDevice = paNoDevice;
 
-                std::cout << "Device:" << deviceInfo->name << std::endl;
-                std::cout << "	Max IN channels: " << deviceInfo->maxInputChannels << std::endl;
-                std::cout << "	Max OUT channels: " << deviceInfo->maxOutputChannels << std::endl;
-                std::cout << "	Default Low Input Latency: " << deviceInfo->defaultLowInputLatency << std::endl;
-                std::cout << "	Default Low Output Latency: " << deviceInfo->defaultLowOutputLatency << std::endl;
-                std::cout << "	Default High Input Latency: " << deviceInfo->defaultHighInputLatency << std::endl;
-                std::cout << "	Default High Output Latency: " << deviceInfo->defaultHighOutputLatency << std::endl;
-                std::cout << "	Default Sample rate: " << deviceInfo->defaultSampleRate << std::endl;
-                std::cout << "	Host Api: " << deviceInfo->hostApi << std::endl;
+            if (!pickDevices(inputDevice, outputDevice, params)) {
+                inputDevice = Pa_GetDefaultInputDevice();
+                outputDevice = Pa_GetDefaultOutputDevice();
+                std::cerr << "Default devices picked\n";
             }
 
             constexpr PaSampleFormat sampleFormat = paFloat32;
 
             PaStreamParameters inputParameters;
-            inputParameters.device = Pa_GetDefaultInputDevice();
+            inputParameters.device = inputDevice;
             const auto* inputDeviceInfo = Pa_GetDeviceInfo(inputParameters.device);
             inputParameters.channelCount = std::min(static_cast<int>(params.numInputChannels), inputDeviceInfo->maxInputChannels);
             inputParameters.sampleFormat = sampleFormat;
             inputParameters.suggestedLatency = inputDeviceInfo->defaultLowInputLatency;
             inputParameters.hostApiSpecificStreamInfo = nullptr;
-            std::cout << "Input device: " << inputDeviceInfo->name << std::endl;
+            std::cout << "Input device name: " << inputDeviceInfo->name << std::endl;
+            const auto inputHostApiInfo = Pa_GetHostApiInfo(inputDeviceInfo->hostApi);
+            std::cout << "Input Host Api: " << inputHostApiInfo->name << std::endl;
 
             PaStreamParameters outputParameters;
-            outputParameters.device = Pa_GetDefaultOutputDevice();
+            outputParameters.device = outputDevice;
             const auto* outputDeviceInfo = Pa_GetDeviceInfo(outputParameters.device);
             outputParameters.channelCount = std::min(static_cast<int>(params.numOutputChannels), outputDeviceInfo->maxOutputChannels);
             outputParameters.sampleFormat = sampleFormat;
             outputParameters.suggestedLatency = outputDeviceInfo->defaultLowOutputLatency;
             outputParameters.hostApiSpecificStreamInfo = nullptr;
-            std::cout << "Output device: " << outputDeviceInfo->name << std::endl;
+            std::cout << "Output device name: " << outputDeviceInfo->name << std::endl;
+            const auto outputHostApiInfo = Pa_GetHostApiInfo(outputDeviceInfo->hostApi);
+            std::cout << "Output Host Api: " << outputHostApiInfo->name << std::endl;
 
-            if (Pa_IsFormatSupported(&inputParameters, &outputParameters, params.sampleRate)) {
+            if (Pa_IsFormatSupported(&inputParameters, &outputParameters, params.sampleRate) != paFormatIsSupported) {
                 std::cerr << "Format not supported by PortAudio\n";
                 return false;
             }
@@ -105,7 +110,7 @@ namespace audio {
         bool stopStream() override
         {
             if (!isStreamRunning()) {
-                std::cerr << "PortAudio stream is not running\n";
+                std::cerr << "PortAudio stream is already not running\n";
                 return false;
             }
 
@@ -134,6 +139,110 @@ namespace audio {
         }
 
     private:
+        static void scanDevices()
+        {
+            for (int i = 0; i < Pa_GetHostApiCount(); ++i) {
+                const auto *hostApiInfo = Pa_GetHostApiInfo(i);
+                if (!hostApiInfo) continue;
+
+                std::cout << "Host Api: " << hostApiInfo->name << std::endl;
+                std::cout << std::endl;
+
+                for (int j = 0; j < hostApiInfo->deviceCount; ++j) {
+                    const auto deviceIndex = Pa_HostApiDeviceIndexToDeviceIndex(i, j);
+                    const auto deviceInfo = Pa_GetDeviceInfo(deviceIndex);
+
+                    std::cout << "Device name:" << deviceInfo->name << std::endl;
+                    std::cout << "Max input channels: " << deviceInfo->maxInputChannels << std::endl;
+                    std::cout << "Max output channels: " << deviceInfo->maxOutputChannels << std::endl;
+                    std::cout << "Default Low Input Latency: " << deviceInfo->defaultLowInputLatency << std::endl;
+                    std::cout << "Default Low Output Latency: " << deviceInfo->defaultLowOutputLatency << std::endl;
+                    std::cout << "Default High Input Latency: " << deviceInfo->defaultHighInputLatency << std::endl;
+                    std::cout << "Default High Output Latency: " << deviceInfo->defaultHighOutputLatency << std::endl;
+                    std::cout << "Default Sample rate: " << deviceInfo->defaultSampleRate << std::endl;
+
+#ifdef WIN32
+                    if (deviceInfo->hostApi == paWASAPI && PaWasapi_IsLoopback(i) != 0)
+                        continue;
+#endif
+
+                    PaStreamParameters iParams;
+                    iParams.device = deviceIndex;
+                    iParams.channelCount = deviceInfo->maxInputChannels;
+                    iParams.sampleFormat = paFloat32;
+                    iParams.suggestedLatency = deviceInfo->defaultLowInputLatency;
+                    iParams.hostApiSpecificStreamInfo = nullptr;
+
+                    PaStreamParameters oParams;
+                    oParams.device = deviceIndex;
+                    oParams.channelCount = deviceInfo->maxOutputChannels;
+                    oParams.sampleFormat = paFloat32;
+                    oParams.suggestedLatency = deviceInfo->defaultLowOutputLatency;
+                    oParams.hostApiSpecificStreamInfo = nullptr;
+
+                    const auto ip = iParams.channelCount > 0 ? &iParams : nullptr;
+                    const auto op = oParams.channelCount > 0 ? &oParams : nullptr;
+
+                    std::vector<unsigned int> supportedSampleRates;
+
+                    for (const auto sr : {22050, 32000, 44100, 48000, 88200, 96000, 192000}) {
+                        if (const auto err = Pa_IsFormatSupported(ip, op, sr); err == paFormatIsSupported) {
+                            supportedSampleRates.push_back(static_cast<unsigned int>(sr));
+                        /*} else {
+                            std::cout << Pa_GetErrorText(err) << std::endl;*/
+                        }
+                    }
+
+                    std::cout << "Supported Sample Rates: ";
+                    for (const auto sr : supportedSampleRates) {
+                        std::cout << sr << " ";
+                    }
+
+                    std::cout << std::endl << std::endl;
+                }
+            }
+
+            std::cout << std::endl;
+        }
+
+        static bool pickDevices(PaDeviceIndex &inputDevice, PaDeviceIndex &outputDevice, StreamParams &params)
+        {
+            const auto numDevices = Pa_GetDeviceCount();
+            if (numDevices <= 0) {
+                std::cerr << "No Devices" << std::endl;
+                return false;
+            }
+
+            bool inputDeviceFound = false;
+            bool outputDeviceFound = false;
+
+            constexpr PaHostApiTypeId targetApiType = paWASAPI;
+            const auto targetApiIndex = Pa_HostApiTypeIdToHostApiIndex(targetApiType);
+
+            for (int i = 0; i < numDevices; ++i) {
+                const PaDeviceInfo* deviceInfo = Pa_GetDeviceInfo(i);
+
+#ifdef WIN32
+                if (deviceInfo->hostApi == paWASAPI && PaWasapi_IsLoopback(i) != 0)
+                    continue;
+#endif
+
+                if (deviceInfo->hostApi == targetApiIndex) {
+                    if (deviceInfo->maxInputChannels > 0) {
+                        inputDevice = i;
+                        inputDeviceFound = true;
+                    }
+
+                    if (deviceInfo->maxOutputChannels > 1) {
+                        outputDevice = i;
+                        outputDeviceFound = true;
+                    }
+                }
+            }
+
+            return inputDeviceFound && outputDeviceFound;
+        }
+
         static int paCallback(const void *input,
                               void *output,
                               unsigned long frameCount,

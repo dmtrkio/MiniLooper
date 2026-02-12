@@ -26,6 +26,11 @@ namespace audio {
                 throw std::runtime_error("Failed to create RtAudio");
             }
 
+            const auto rtErrorHandler = [](RtAudioErrorType type, const std::string &errorText) {
+                std::cerr << "RtAudio error occurred: " << errorText << std::endl;
+            };
+
+            rtAudio_->setErrorCallback(rtErrorHandler);
             rtAudio_->showWarnings(true);
 
             printApis();
@@ -54,6 +59,9 @@ namespace audio {
             const auto outputDeviceInfo = rtAudio_->getDeviceInfo(outputParameters.deviceId);
             outputParameters.nChannels = std::min(params.numOutputChannels, outputDeviceInfo.outputChannels);
 
+            std::cout << "Input device id = " << inputParameters.deviceId << std::endl;
+            std::cout << "Output device id = " << outputParameters.deviceId << std::endl;
+
             RtAudio::StreamOptions options;
             options.flags = RTAUDIO_SCHEDULE_REALTIME;
 
@@ -68,7 +76,7 @@ namespace audio {
                                                       &options);
 
                 if (err != RTAUDIO_NO_ERROR) {
-                    std::cerr << "RtAudio open stream error: " << rtAudio_->getErrorText() << std::endl;
+                    std::cerr << "RtAudio error opening stream: " << rtAudio_->getErrorText() << std::endl;
                     return false;
                 }
             }
@@ -76,9 +84,6 @@ namespace audio {
             params.sampleRate = rtAudio_->getStreamSampleRate();
             params.numInputChannels = inputParameters.nChannels;
             params.numOutputChannels = outputParameters.nChannels;
-
-            std::cout << "Input device id = " << inputParameters.deviceId << std::endl;
-            std::cout << "Output device id = " << outputParameters.deviceId << std::endl;
 
             if (rtAudio_->startStream() != RTAUDIO_NO_ERROR) {
                 std::cerr << "RtAudio start stream error: " << rtAudio_->getErrorText() << std::endl;

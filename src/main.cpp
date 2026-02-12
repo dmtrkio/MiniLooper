@@ -69,19 +69,20 @@ int main()
     auto& engine = audio::AudioEngine::getInstance();
     auto cb = std::make_shared<LooperCallback>();
     engine.setAudioCallback(cb);
-    engine.setSampleRate(48000);
+    engine.setSampleRate(44100);
     engine.setBufferSize(64);
 
     if (!engine.start()) {
-        std::cerr << "Failed to start audio stream.\n";
-        return 1;
+        std::cerr << "Failed to start audio engine.\n";
+        exit(EXIT_FAILURE);
     }
 
-    if (engine.isStreamRunning()) {
-        std::cout << "Running audio stream\n";
-    } else {
-        std::cerr << "No audio stream running.\n";
+    if (!engine.isRunning()) {
+        std::cerr << "Audio engine not running.\n";
+        exit(EXIT_FAILURE);
     }
+
+    std::cout << "Audio engine started\n";
 
     SetTraceLogLevel(LOG_ERROR);
     InitWindow(800, 600, "MainLooper");
@@ -108,7 +109,7 @@ int main()
     CloseWindow();
 
     if (engine.stop())
-        std::cout << "Audio stream stopped successfully.\n";
+        std::cout << "Audio engine stopped successfully.\n";
 
     return 0;
 }
