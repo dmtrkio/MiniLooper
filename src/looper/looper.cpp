@@ -85,11 +85,11 @@ void Looper::stopRecording() noexcept
             break;
         }
         case State::RECORDING: {
-            state_ = State::PLAYBACK;
             if (isEmpty()) {
                 numFrames_.store(position_.load(std::memory_order_relaxed), std::memory_order_relaxed);
                 position_.store(0, std::memory_order_relaxed);
             }
+            state_ = State::PLAYBACK;
             break;
         }
         case State::PLAYBACK: {
@@ -102,9 +102,11 @@ void Looper::clear() noexcept
 {
     if (state_ == State::CLEARED) return;
 
-    const auto nFrames = numFrames_.load(std::memory_order_relaxed);
+    stopRecording();
+
+    const auto toErase = numFrames_.load(std::memory_order_relaxed);
     for (auto& b : buffers_)
-        std::ranges::fill_n(b.begin(), nFrames, 0.0f);
+        std::ranges::fill_n(b.begin(), toErase, 0.0f);
 
     state_ = State::CLEARED;
     position_.store(0, std::memory_order_relaxed);
