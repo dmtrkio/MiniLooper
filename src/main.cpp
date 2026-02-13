@@ -25,7 +25,7 @@ public:
             }
         }
 
-        looper_.process(out, nFrames);
+        looper.process(out, nFrames);
 
         /*const auto sr = static_cast<float>(engine.getSampleRate());
         constexpr auto twoPi = 2.0f * std::numbers::pi_v<float>;
@@ -44,19 +44,16 @@ public:
     void onStart() override
     {
         //std::cout << "onStart()\n";
-        looper_.onStart();
+        looper.onStart();
     }
 
     void onStop() override
     {
         //std::cout << "onStop()\n";
-        looper_.onStop();
+        looper.onStop();
     }
 
-    looper::LooperMailbox& getCommandMailbox() { return looper_.getCommandMailbox(); }
-
-private:
-    looper::Looper looper_;
+    looper::Looper looper;
 };
 
 int main()
@@ -81,22 +78,44 @@ int main()
     std::cout << "Audio engine started\n";
 
     SetTraceLogLevel(LOG_ERROR);
+    SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(800, 600, "MainLooper");
     SetTargetFPS(60);
     SetExitKey(KEY_ESCAPE);
 
     while (!WindowShouldClose()) {
         BeginDrawing();
-        ClearBackground(WHITE);
+        ClearBackground(DARKGRAY);
 
         DrawText("Quit[Escape] StartRecording[r] StopRecording[s] Clear[c]", 40, 100, 20, BLACK);
 
+        const int x = GetScreenWidth() / 2;
+        const int y = GetScreenHeight() / 2;
+        const int radius = 60;
+        const auto nFramesInLoop = cb->looper.getCurrentNumFrames();
+        const auto loopPosition = cb->looper.getCurrentPosition();
+
+        const Color outlineColor = BLACK;
+        const Color emptyColor = GRAY;
+        const Color filledColor = LIGHTGRAY;
+
+        DrawCircle(x, y, radius + 3.0f, outlineColor);
+        DrawCircle(x, y, radius, emptyColor);
+        if (nFramesInLoop > 0) {
+            constexpr auto startAngle = 270.f;
+            const auto endAngle = 360.0f * (static_cast<float>(loopPosition) / static_cast<float>(nFramesInLoop)) + startAngle;
+            DrawCircleSector({static_cast<float>(x),static_cast<float>(y)}, radius, startAngle, endAngle, 32, filledColor);
+        }
+        DrawCircle(x, y, radius * 0.4f, outlineColor);
+
+        auto &looperMailbox = cb->looper.getCommandMailbox();
+
         if (IsKeyPressed(KEY_R)) {
-            cb->getCommandMailbox().tryPush(looper::LooperCommand::startRecording());
+            looperMailbox.tryPush(looper::LooperCommand::startRecording());
         } else if (IsKeyPressed(KEY_S)) {
-            cb->getCommandMailbox().tryPush(looper::LooperCommand::stopRecording());
+            looperMailbox.tryPush(looper::LooperCommand::stopRecording());
         } else if (IsKeyPressed(KEY_C)) {
-            cb->getCommandMailbox().tryPush(looper::LooperCommand::clear());
+            looperMailbox.tryPush(looper::LooperCommand::clear());
         }
 
         EndDrawing();
