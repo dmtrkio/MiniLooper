@@ -54,6 +54,7 @@ namespace audio {
         bool stop();
         bool restart();
         bool isRunning() const;
+        void pickDevices();
 
     private:
         AudioEngine();
@@ -70,8 +71,8 @@ namespace audio {
         std::atomic<unsigned int> sampleRate_{48000};
         std::atomic<unsigned int> bufferSize_{256};
 
-        unsigned int inputDevice_{0};
-        unsigned int outputDevice_{0};
+        int inputDeviceIndex_{0};
+        int outputDeviceIndex_{0};
 
         unsigned int inputChannels_{2};
         unsigned int outputChannels_{2};

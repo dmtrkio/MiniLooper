@@ -43,13 +43,13 @@ public:
 
     void onStart() override
     {
-        std::cout << "onStart()\n";
+        //std::cout << "onStart()\n";
         looper_.onStart();
     }
 
     void onStop() override
     {
-        std::cout << "onStop()\n";
+        //std::cout << "onStop()\n";
         looper_.onStop();
     }
 
@@ -69,8 +69,9 @@ int main()
     auto& engine = audio::AudioEngine::getInstance();
     auto cb = std::make_shared<LooperCallback>();
     engine.setAudioCallback(cb);
-    engine.setSampleRate(44100);
+    engine.setSampleRate(48000);
     engine.setBufferSize(64);
+    engine.pickDevices();
 
     if (!engine.start()) {
         std::cerr << "Failed to start audio engine.\n";

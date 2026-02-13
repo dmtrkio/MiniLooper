@@ -92,7 +92,7 @@ bool AudioEngine::start()
     if (const auto cb = userCallback_.load(std::memory_order_relaxed))
         cb->onStart();
 
-    if (!backend_->startStream(params)) {
+    if (!backend_->startStream(inputDeviceIndex_, outputDeviceIndex_, params)) {
         std::cerr << "Error starting stream\n";
         return false;
     }
@@ -124,6 +124,31 @@ bool AudioEngine::isRunning() const
 {
     std::lock_guard<std::mutex> lock(streamMutex_);
     return backend_->isStreamRunning();
+}
+
+void AudioEngine::pickDevices()
+{
+    const auto devices = backend_->getAvailableDevices();
+    if (devices.empty()) {
+        std::cerr << "No devices available\n";
+        return;
+    }
+
+    std::cout << "Available devices" << std::endl;
+    for (const auto& device : devices) {
+        device.printInfo();
+    }
+
+    std::cout << "Enter Input Device Index" << std::endl;
+    int inputDeviceIndex = -1;
+    std::cin >> inputDeviceIndex;
+
+    std::cout << "Enter Output Device Index" << std::endl;
+    int outputDeviceIndex = -1;
+    std::cin >> outputDeviceIndex;
+
+    inputDeviceIndex_ = inputDeviceIndex;
+    outputDeviceIndex_ = outputDeviceIndex;
 }
 
 bool AudioEngine::callback(const float *in, float *out, unsigned int nFrames)
