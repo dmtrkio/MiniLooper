@@ -61,11 +61,6 @@ private:
 
 int main()
 {
-/*#ifdef WIN32
-    std::cout << "Windows not implemented yet\n";
-    return 1;
-#endif*/
-
     auto& engine = audio::AudioEngine::getInstance();
     auto cb = std::make_shared<LooperCallback>();
     engine.setAudioCallback(cb);

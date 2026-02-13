@@ -71,8 +71,8 @@ namespace audio {
         std::atomic<unsigned int> sampleRate_{48000};
         std::atomic<unsigned int> bufferSize_{256};
 
-        int inputDeviceIndex_{0};
-        int outputDeviceIndex_{0};
+        int inputDeviceIndex_{-1};
+        int outputDeviceIndex_{-1};
 
         unsigned int inputChannels_{2};
         unsigned int outputChannels_{2};
