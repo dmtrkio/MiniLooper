@@ -29,10 +29,9 @@ void Looper::onStart()
     for (auto& b : buffers_)
         b.resize(maxFrames_);
 
-    clear();
-
     // ensure mailbox is clear from stale messages
     consumeCommands();
+    clear();
 }
 
 void Looper::onStop()
