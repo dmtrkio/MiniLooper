@@ -3,7 +3,8 @@
 #include <numbers>
 #include <cmath>
 
-#include "raylib.h"
+#include <raylib.h>
+#include <raymath.h>
 
 #include "audio/audio_engine.h"
 #include "looper/looper.h"
@@ -56,6 +57,35 @@ public:
     looper::Looper looper;
 };
 
+void looperIndicator(int x, int y, float radius, unsigned int nFramesInLoop, unsigned int loopPosition)
+{
+
+    const Color outlineColor = BLACK;
+    const Color emptyColor = GRAY;
+    const Color filledColor = LIGHTGRAY;
+    const float outlineThickness = 3.0f;
+
+    const Vector2 origin = {static_cast<float>(x), static_cast<float>(y)};
+
+    DrawCircle(x, y, radius + outlineThickness, outlineColor);
+    DrawCircle(x, y, radius, emptyColor);
+    if (nFramesInLoop > 0) {
+        constexpr auto startAngle = 270.f;
+        const auto endAngle = 360.0f * (static_cast<float>(loopPosition) / static_cast<float>(nFramesInLoop)) + startAngle;
+        DrawCircleSector(origin, radius, startAngle, endAngle, 32, filledColor);
+
+        const auto angleRadians = endAngle * DEG2RAD;
+        const Vector2 end = {
+            static_cast<float>(x) + std::cos(angleRadians) * radius,
+            static_cast<float>(y) + std::sin(angleRadians) * radius
+        };
+        DrawLineEx(origin, end, outlineThickness, outlineColor);
+        const Vector2 up = origin + Vector2(0.0f, -1.0f) * radius;
+        DrawLineEx(origin, up, outlineThickness, outlineColor);
+    }
+    DrawCircle(x, y, radius * 0.5f, outlineColor);
+}
+
 int main()
 {
     auto& engine = audio::AudioEngine::getInstance();
@@ -87,26 +117,14 @@ int main()
         BeginDrawing();
         ClearBackground(DARKGRAY);
 
-        DrawText("Quit[Escape] StartRecording[r] StopRecording[s] Clear[c]", 40, 100, 20, BLACK);
+        DrawText("Quit[Escape] StartRecording[r] StopRecording[s] Clear[c]", 50, 100, 20, BLACK);
 
         const int x = GetScreenWidth() / 2;
         const int y = GetScreenHeight() / 2;
-        const int radius = 60;
+        const float radius = 60.0f;
         const auto nFramesInLoop = cb->looper.getCurrentNumFrames();
         const auto loopPosition = cb->looper.getCurrentPosition();
-
-        const Color outlineColor = BLACK;
-        const Color emptyColor = GRAY;
-        const Color filledColor = LIGHTGRAY;
-
-        DrawCircle(x, y, radius + 3.0f, outlineColor);
-        DrawCircle(x, y, radius, emptyColor);
-        if (nFramesInLoop > 0) {
-            constexpr auto startAngle = 270.f;
-            const auto endAngle = 360.0f * (static_cast<float>(loopPosition) / static_cast<float>(nFramesInLoop)) + startAngle;
-            DrawCircleSector({static_cast<float>(x),static_cast<float>(y)}, radius, startAngle, endAngle, 32, filledColor);
-        }
-        DrawCircle(x, y, radius * 0.4f, outlineColor);
+        looperIndicator(x, y, radius, nFramesInLoop, loopPosition);
 
         auto &looperMailbox = cb->looper.getCommandMailbox();
 
