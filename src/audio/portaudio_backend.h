@@ -179,6 +179,8 @@ namespace audio {
 
         void scanDevices()
         {
+            devices_.clear();
+
             for (int i = 0; i < Pa_GetHostApiCount(); ++i) {
                 const auto *hostApiInfo = Pa_GetHostApiInfo(i);
                 if (!hostApiInfo) continue;
