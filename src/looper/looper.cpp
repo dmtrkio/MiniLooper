@@ -39,6 +39,11 @@ void Looper::onStop()
     clear();
 }
 
+Looper::State Looper::getState() const noexcept
+{
+    return state_.load();
+}
+
 unsigned int Looper::getCurrentPosition() const noexcept
 {
     return position_.load(std::memory_order_relaxed);
@@ -61,7 +66,7 @@ LooperMailbox& Looper::getCommandMailbox() noexcept
 
 void Looper::startRecording() noexcept
 {
-    switch (state_) {
+    switch (state_.load()) {
         case State::CLEARED: {
             position_.store(0, std::memory_order_relaxed);
             state_ = State::RECORDING;
@@ -74,12 +79,13 @@ void Looper::startRecording() noexcept
             state_ = State::RECORDING;
             break;
         }
+        default:;
     }
 }
 
 void Looper::stopRecording() noexcept
 {
-    switch (state_) {
+    switch (state_.load()) {
         case State::CLEARED: {
             break;
         }
@@ -94,6 +100,7 @@ void Looper::stopRecording() noexcept
         case State::PLAYBACK: {
             break;
         }
+        default:;
     }
 }
 
@@ -112,6 +119,14 @@ void Looper::clear() noexcept
     numFrames_.store(0, std::memory_order_relaxed);
 }
 
+const char* Looper::stateToStr(State state)
+{
+    if (state == State::CLEARED) return "CLEARED";
+    if (state == State::RECORDING) return "RECORDING";
+    if (state == State::PLAYBACK) return "PLAYBACK";
+    return "Invalid State";
+}
+
 void Looper::consumeCommands() noexcept
 {
     commandMailbox_.consumeAll([&](const LooperCommand& cmd) {
@@ -121,37 +136,41 @@ void Looper::consumeCommands() noexcept
 
 void Looper::processInternal(float *const *data, unsigned int nFrames) noexcept
 {
-    if (state_ == State::CLEARED) return;
+    const auto state = state_.load();
+
+    if (state == State::CLEARED) return;
 
     const auto currentNumFrames = numFrames_.load(std::memory_order_relaxed);
     const auto wrapAround = currentNumFrames > 0 ? currentNumFrames : maxFrames_;
     unsigned int pos = position_.load(std::memory_order_relaxed);
 
-    for (auto i{0u}; i < nFrames; ++i) {
-        for (auto ch{0u}; ch < numChannels_; ++ch) {
-            if (state_ == State::RECORDING) {
+    if (state == State::PLAYBACK) {
+        for (auto i{0u}; i < nFrames; ++i) {
+            for (auto ch{0u}; ch < numChannels_; ++ch) {
+                data[ch][i] += buffers_[ch][pos];
+            }
+
+            pos++;
+            if (pos >= wrapAround) {
+                pos = 0;
+                numFrames_.store(wrapAround, std::memory_order_relaxed);
+            }
+        }
+    } else if (state == State::RECORDING) {
+        for (auto i{0u}; i < nFrames; ++i) {
+            for (auto ch{0u}; ch < numChannels_; ++ch) {
                 const float oldSample = buffers_[ch][pos];
                 buffers_[ch][pos] += data[ch][i];
                 data[ch][i] += oldSample;
-            } else if (state_ == State::PLAYBACK) {
-                data[ch][i] += buffers_[ch][pos];
             }
-        }
 
-        pos++;
-        if (pos >= wrapAround) {
-            pos = 0;
-            numFrames_.store(wrapAround, std::memory_order_relaxed);
+            pos++;
+            if (pos >= wrapAround) {
+                pos = 0;
+                numFrames_.store(wrapAround, std::memory_order_relaxed);
+            }
         }
     }
 
     position_.store(pos, std::memory_order_relaxed);
-}
-
-const char* Looper::stateToStr(State state)
-{
-    if (state == State::CLEARED) return "CLEARED";
-    if (state == State::RECORDING) return "RECORDING";
-    if (state == State::PLAYBACK) return "PLAYBACK";
-    return "Invalid State";
 }
