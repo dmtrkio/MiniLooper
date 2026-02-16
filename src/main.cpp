@@ -57,17 +57,23 @@ public:
     looper::Looper looper;
 };
 
-void looperIndicator(int x, int y, float radius, unsigned int nFramesInLoop, unsigned int loopPosition)
+void looperIndicator(int x, int y, float radius, unsigned int nFramesInLoop, unsigned int loopPosition, looper::Looper::State state)
 {
 
     const Color outlineColor = BLACK;
     const Color emptyColor = GRAY;
     const Color filledColor = LIGHTGRAY;
-    const float outlineThickness = 3.0f;
+    const Color clearedColor = outlineColor;
+    const Color recordingColor = RED;
+    const Color overdubbingColor = ORANGE;
+    const Color playbackColor = LIME;
+
+    const float outlineThickness = 4.0f;
 
     const Vector2 origin = {static_cast<float>(x), static_cast<float>(y)};
 
-    DrawCircle(x, y, radius + outlineThickness, outlineColor);
+    DrawCircle(x, y, radius, outlineColor);
+    radius -= outlineThickness;
     DrawCircle(x, y, radius, emptyColor);
     if (nFramesInLoop > 0) {
         constexpr auto startAngle = 270.f;
@@ -83,7 +89,23 @@ void looperIndicator(int x, int y, float radius, unsigned int nFramesInLoop, uns
         const Vector2 up = origin + Vector2(0.0f, -1.0f) * radius;
         DrawLineEx(origin, up, outlineThickness, outlineColor);
     }
-    DrawCircle(x, y, radius * 0.5f, outlineColor);
+
+    auto indicatorRadius = radius * 0.5f;
+    DrawCircle(x, y, indicatorRadius, outlineColor);
+    indicatorRadius -= outlineThickness;
+
+    Color indicatorColor = clearedColor;
+    if (state == looper::Looper::State::RECORDING) {
+        if (nFramesInLoop > 0) {
+            indicatorColor = overdubbingColor;
+        } else {
+            indicatorColor = recordingColor;
+        }
+    } else if (state == looper::Looper::State::PLAYBACK) {
+        indicatorColor = playbackColor;
+    }
+
+    DrawCircle(x, y, indicatorRadius, indicatorColor);
 }
 
 int main()
@@ -124,7 +146,8 @@ int main()
         const float radius = 60.0f;
         const auto nFramesInLoop = cb->looper.getCurrentNumFrames();
         const auto loopPosition = cb->looper.getCurrentPosition();
-        looperIndicator(x, y, radius, nFramesInLoop, loopPosition);
+        const auto looperState = cb->looper.getState();
+        looperIndicator(x, y, radius, nFramesInLoop, loopPosition, looperState);
 
         auto &looperMailbox = cb->looper.getCommandMailbox();
 
