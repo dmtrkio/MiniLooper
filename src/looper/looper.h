@@ -35,7 +35,7 @@ public:
     static const char* stateToStr(State state);
 
 private:
-    static constexpr unsigned int MAX_LOOP_LENGTH_IN_SECONDS = 15;
+    static constexpr unsigned int MAX_LOOP_LENGTH_IN_SECONDS = 30;
 
     void consumeCommands() noexcept;
     void processInternal(float *const *data, unsigned int nFrames) noexcept;
