@@ -11,7 +11,7 @@
 
 namespace looper {
 
-    class LooperCallback : public audio::AudioCallback
+    class Looper::LooperCallback : public audio::AudioCallback
     {
     public:
         void onProcess(const float *const *in, float *const *out, const unsigned int nFrames) override

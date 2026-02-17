@@ -5,7 +5,6 @@
 #include "looper_processor.h"
 
 namespace looper {
-    class LooperCallback;
 
     class Looper
     {
@@ -35,6 +34,8 @@ namespace looper {
         void clear(int trackIndex);
 
     private:
+        class LooperCallback;
         std::shared_ptr<LooperCallback> cb_;
     };
+
 }
