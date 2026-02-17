@@ -12,7 +12,7 @@
 class LooperCallback : public audio::AudioCallback
 {
 public:
-    void onProcess(const float *const *in, float *const *out, unsigned int nFrames) override
+    void onProcess(const float *const *in, float *const *out, const unsigned int nFrames) override
     {
         const auto& engine = audio::AudioEngine::getInstance();
         const auto iChannels = engine.getNumInputChannels();
@@ -57,9 +57,8 @@ public:
     looper::Looper looper;
 };
 
-void looperIndicator(int x, int y, float radius, unsigned int nFramesInLoop, unsigned int loopPosition, looper::Looper::State state)
+bool looperWidget(int x, int y, float radius, unsigned int nFramesInLoop, unsigned int loopPosition, looper::Looper::State state)
 {
-
     const Color outlineColor = BLACK;
     const Color emptyColor = GRAY;
     const Color filledColor = LIGHTGRAY;
@@ -70,11 +69,14 @@ void looperIndicator(int x, int y, float radius, unsigned int nFramesInLoop, uns
 
     const float outlineThickness = 4.0f;
 
+    const float widgetRadius = radius;
+
     const Vector2 origin = {static_cast<float>(x), static_cast<float>(y)};
 
     DrawCircle(x, y, radius, outlineColor);
     radius -= outlineThickness;
     DrawCircle(x, y, radius, emptyColor);
+
     if (nFramesInLoop > 0) {
         constexpr auto startAngle = 270.f;
         const auto endAngle = 360.0f * (static_cast<float>(loopPosition) / static_cast<float>(nFramesInLoop)) + startAngle;
@@ -106,6 +108,14 @@ void looperIndicator(int x, int y, float radius, unsigned int nFramesInLoop, uns
     }
 
     DrawCircle(x, y, indicatorRadius, indicatorColor);
+
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        if (Vector2Distance(GetMousePosition(), origin) < widgetRadius) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 int main()
@@ -147,9 +157,15 @@ int main()
         const auto nFramesInLoop = cb->looper.getCurrentNumFrames();
         const auto loopPosition = cb->looper.getCurrentPosition();
         const auto looperState = cb->looper.getState();
-        looperIndicator(x, y, radius, nFramesInLoop, loopPosition, looperState);
-
         auto &looperMailbox = cb->looper.getCommandMailbox();
+
+        if (looperWidget(x, y, radius, nFramesInLoop, loopPosition, looperState)) {
+            if (looperState != looper::Looper::State::RECORDING) {
+                looperMailbox.tryPush(looper::LooperCommand::startRecording());
+            } else {
+                looperMailbox.tryPush(looper::LooperCommand::stopRecording());
+            }
+        }
 
         if (IsKeyPressed(KEY_R)) {
             looperMailbox.tryPush(looper::LooperCommand::startRecording());
