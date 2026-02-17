@@ -19,6 +19,8 @@ namespace looper {
         Looper(const Looper &&) = delete;
         Looper& operator=(Looper &&) = delete;
 
+        [[nodiscard]] int getNumLooperTracks() const noexcept;
+
         struct LooperState
         {
             unsigned int nFrames;
@@ -26,11 +28,11 @@ namespace looper {
             LooperProcessor::State state;
         };
 
-        [[nodiscard]] LooperState getLooperState() const noexcept;
+        [[nodiscard]] LooperState getLooperState(int trackIndex) const noexcept;
 
-        void startRecording();
-        void stopRecording();
-        void clear();
+        void startRecording(int trackIndex);
+        void stopRecording(int trackIndex);
+        void clear(int trackIndex);
 
     private:
         std::shared_ptr<LooperCallback> cb_;

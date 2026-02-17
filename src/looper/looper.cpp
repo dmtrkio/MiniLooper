@@ -65,7 +65,12 @@ namespace looper {
         engine.setAudioCallback(cb_);
     }
 
-    Looper::LooperState Looper::getLooperState() const noexcept
+    int Looper::getNumLooperTracks() const noexcept
+    {
+        return 1;
+    }
+
+    Looper::LooperState Looper::getLooperState(int trackIndex) const noexcept
     {
         const auto nFrames = cb_->looper.getCurrentNumFrames();
         const auto loopPosition = cb_->looper.getCurrentPosition();
@@ -78,22 +83,22 @@ namespace looper {
         };
     }
 
-    void Looper::startRecording()
+    void Looper::startRecording(int trackIndex)
     {
         auto &looperMailbox = cb_->looper.getCommandMailbox();
-        looperMailbox.tryPush(looper::LooperCommand::startRecording());
+        looperMailbox.tryPush(looper::LooperCommand::startRecording(trackIndex));
     }
 
-    void Looper::stopRecording()
+    void Looper::stopRecording(int trackIndex)
     {
         auto &looperMailbox = cb_->looper.getCommandMailbox();
-        looperMailbox.tryPush(looper::LooperCommand::stopRecording());
+        looperMailbox.tryPush(looper::LooperCommand::stopRecording(trackIndex));
     }
 
-    void Looper::clear()
+    void Looper::clear(int trackIndex)
     {
         auto &looperMailbox = cb_->looper.getCommandMailbox();
-        looperMailbox.tryPush(looper::LooperCommand::clear());
+        looperMailbox.tryPush(looper::LooperCommand::clear(trackIndex));
     }
 
 }

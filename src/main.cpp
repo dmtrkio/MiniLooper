@@ -10,7 +10,7 @@
 
 void looperWidget(int x, int y, float radius, looper::Looper &looper)
 {
-    const auto [nFramesInLoop, loopPosition, state] = looper.getLooperState();
+    const auto [nFramesInLoop, loopPosition, state] = looper.getLooperState(0);
 
     const Color outlineColor = BLACK;
     const Color emptyColor = GRAY;
@@ -65,9 +65,9 @@ void looperWidget(int x, int y, float radius, looper::Looper &looper)
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         if (Vector2Distance(GetMousePosition(), origin) < widgetRadius) {
             if (state != looper::LooperProcessor::State::RECORDING) {
-                looper.startRecording();
+                looper.startRecording(0);
             } else {
-                looper.stopRecording();
+                looper.stopRecording(0);
             }
         }
     }
@@ -113,11 +113,11 @@ int main()
         looperWidget(x, y, radius, looper);
 
         if (IsKeyPressed(KEY_R)) {
-            looper.startRecording();
+            looper.startRecording(0);
         } else if (IsKeyPressed(KEY_S)) {
-            looper.stopRecording();
+            looper.stopRecording(0);
         } else if (IsKeyPressed(KEY_C)) {
-            looper.clear();
+            looper.clear(0);
         }
 
         EndDrawing();

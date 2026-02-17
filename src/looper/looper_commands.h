@@ -13,9 +13,9 @@ class LooperCommand
 public:
     LooperCommand() noexcept : LooperCommand(Dummy{}) {}
 
-    static LooperCommand startRecording() noexcept;
-    static LooperCommand stopRecording() noexcept;
-    static LooperCommand clear() noexcept;
+    static LooperCommand startRecording(int trackIndex) noexcept;
+    static LooperCommand stopRecording(int trackIndex) noexcept;
+    static LooperCommand clear(int trackIndex) noexcept;
 
     void apply(LooperProcessor& looper) const;
 
@@ -27,16 +27,19 @@ private:
 
     struct StartRecording
     {
+        int trackIndex;
         void apply(LooperProcessor& looper) const;
     };
 
     struct StopRecording
     {
+        int trackIndex;
         void apply(LooperProcessor& looper) const;
     };
 
     struct Clear
     {
+        int trackIndex;
         void apply(LooperProcessor& looper) const;
     };
 
