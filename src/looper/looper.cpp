@@ -72,9 +72,10 @@ namespace looper {
 
     Looper::LooperState Looper::getLooperState(int trackIndex) const noexcept
     {
-        const auto nFrames = cb_->looper.getCurrentNumFrames();
-        const auto loopPosition = cb_->looper.getCurrentPosition();
-        const auto looperState = cb_->looper.getState();
+        const auto &looper = cb_->looper;
+        const auto nFrames = looper.getCurrentNumFrames(trackIndex);
+        const auto loopPosition = looper.getCurrentPosition(trackIndex);
+        const auto looperState = looper.getState(trackIndex);
 
         return LooperState {
             .nFrames = nFrames,

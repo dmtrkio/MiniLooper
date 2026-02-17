@@ -31,32 +31,41 @@ void LooperProcessor::onStart()
 
     // ensure mailbox is clear from stale messages
     consumeCommands();
-    clear();
+    clearAll();
 }
 
 void LooperProcessor::onStop()
 {
-    clear();
+    clearAll();
 }
 
-LooperProcessor::State LooperProcessor::getState() const noexcept
+int LooperProcessor::getNumLooperTracks() const noexcept
 {
+    return 1;
+}
+
+LooperProcessor::State LooperProcessor::getState(int trackIndex) const noexcept
+{
+    if (!isTrackIndexValid(trackIndex)) return LooperProcessor::State::CLEARED;
     return state_.load();
 }
 
-unsigned int LooperProcessor::getCurrentPosition() const noexcept
+unsigned int LooperProcessor::getCurrentPosition(int trackIndex) const noexcept
 {
+    if (!isTrackIndexValid(trackIndex)) return 0;
     return position_.load(std::memory_order_relaxed);
 }
 
-unsigned int LooperProcessor::getCurrentNumFrames() const noexcept
+unsigned int LooperProcessor::getCurrentNumFrames(int trackIndex) const noexcept
 {
+    if (!isTrackIndexValid(trackIndex)) return 0;
     return numFrames_.load(std::memory_order_relaxed);
 }
 
-bool LooperProcessor::isEmpty() const noexcept
+bool LooperProcessor::isEmpty(int trackIndex) const noexcept
 {
-    return getCurrentNumFrames() == 0;
+    if (!isTrackIndexValid(trackIndex)) return true;
+    return getCurrentNumFrames(trackIndex) == 0;
 }
 
 LooperMailbox& LooperProcessor::getCommandMailbox() noexcept
@@ -64,8 +73,10 @@ LooperMailbox& LooperProcessor::getCommandMailbox() noexcept
     return commandMailbox_;
 }
 
-void LooperProcessor::startRecording() noexcept
+void LooperProcessor::startRecording(int trackIndex) noexcept
 {
+    if (!isTrackIndexValid(trackIndex)) return;
+
     switch (state_.load()) {
         case State::CLEARED: {
             position_.store(0, std::memory_order_relaxed);
@@ -83,14 +94,16 @@ void LooperProcessor::startRecording() noexcept
     }
 }
 
-void LooperProcessor::stopRecording() noexcept
+void LooperProcessor::stopRecording(int trackIndex) noexcept
 {
+    if (!isTrackIndexValid(trackIndex)) return;
+
     switch (state_.load()) {
         case State::CLEARED: {
             break;
         }
         case State::RECORDING: {
-            if (isEmpty()) {
+            if (isEmpty(0)) {
                 numFrames_.store(position_.load(std::memory_order_relaxed), std::memory_order_relaxed);
                 position_.store(0, std::memory_order_relaxed);
             }
@@ -104,11 +117,13 @@ void LooperProcessor::stopRecording() noexcept
     }
 }
 
-void LooperProcessor::clear() noexcept
+void LooperProcessor::clear(int trackIndex) noexcept
 {
+    if (!isTrackIndexValid(trackIndex)) return;
+
     if (state_ == State::CLEARED) return;
 
-    stopRecording();
+    stopRecording(trackIndex);
 
     const auto toErase = numFrames_.load(std::memory_order_relaxed);
     for (auto& b : buffers_)
@@ -119,12 +134,24 @@ void LooperProcessor::clear() noexcept
     numFrames_.store(0, std::memory_order_relaxed);
 }
 
+void LooperProcessor::clearAll() noexcept
+{
+    for (int i = 0; i < getNumLooperTracks(); ++i)
+        clear(i);
+}
+
 const char* LooperProcessor::stateToStr(State state)
 {
     if (state == State::CLEARED) return "CLEARED";
     if (state == State::RECORDING) return "RECORDING";
     if (state == State::PLAYBACK) return "PLAYBACK";
     return "Invalid State";
+}
+
+
+bool LooperProcessor::isTrackIndexValid(int trackIndex) const noexcept
+{
+    return trackIndex >= 0 && trackIndex < getNumLooperTracks();
 }
 
 void LooperProcessor::consumeCommands() noexcept

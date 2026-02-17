@@ -23,8 +23,8 @@ namespace looper {
         std::visit([&](auto const& c){ c.apply(looper); }, cmd_);
     }
 
-    void LooperCommand::StartRecording::apply(LooperProcessor& looper) const { looper.startRecording(); }
-    void LooperCommand::StopRecording::apply(LooperProcessor& looper) const { looper.stopRecording(); }
-    void LooperCommand::Clear::apply(LooperProcessor& looper) const { looper.clear(); }
+    void LooperCommand::StartRecording::apply(LooperProcessor& looper) const { looper.startRecording(trackIndex); }
+    void LooperCommand::StopRecording::apply(LooperProcessor& looper) const { looper.stopRecording(trackIndex); }
+    void LooperCommand::Clear::apply(LooperProcessor& looper) const { looper.clear(trackIndex); }
 
 } // namespace looper
