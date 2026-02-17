@@ -6,7 +6,7 @@
 
 namespace looper {
 
-class Looper;
+class LooperProcessor;
 
 class LooperCommand 
 {
@@ -17,27 +17,27 @@ public:
     static LooperCommand stopRecording() noexcept;
     static LooperCommand clear() noexcept;
 
-    void apply(Looper& looper) const;
+    void apply(LooperProcessor& looper) const;
 
 private:
     struct Dummy
     {
-        void apply(Looper&) const {}
+        void apply(LooperProcessor&) const {}
     };
 
     struct StartRecording
     {
-        void apply(Looper& looper) const;
+        void apply(LooperProcessor& looper) const;
     };
 
     struct StopRecording
     {
-        void apply(Looper& looper) const;
+        void apply(LooperProcessor& looper) const;
     };
 
     struct Clear
     {
-        void apply(Looper& looper) const;
+        void apply(LooperProcessor& looper) const;
     };
 
     using Variant = std::variant<

@@ -2,175 +2,98 @@
 
 #include <algorithm>
 #include <iostream>
+#include <numbers>
+#include <cmath>
 
-#include "../audio/audio_engine.h"
+#include "audio/audio_engine.h"
+#include "looper_processor.h"
+#include "looper_commands.h"
 
-using namespace looper;
+namespace looper {
 
-void Looper::process(float *const *data, unsigned int nFrames) noexcept
-{
-    consumeCommands();
+    class LooperCallback : public audio::AudioCallback
+    {
+    public:
+        void onProcess(const float *const *in, float *const *out, const unsigned int nFrames) override
+        {
+            const auto& engine = audio::AudioEngine::getInstance();
+            const auto iChannels = engine.getNumInputChannels();
+            const auto oChannels = engine.getNumOutputChannels();
 
-    if (!data || buffers_.empty()) return;
-
-    processInternal(data, nFrames);
-}
-
-void Looper::onStart()
-{
-    const auto& engine = audio::AudioEngine::getInstance();
-    const auto nChannels = engine.getNumOutputChannels();
-    const auto mFrames = engine.getSampleRate() * MAX_LOOP_LENGTH_IN_SECONDS;
-
-    numChannels_ = nChannels;
-    maxFrames_ = mFrames;
-
-    buffers_.resize(numChannels_);
-    for (auto& b : buffers_)
-        b.resize(maxFrames_);
-
-    // ensure mailbox is clear from stale messages
-    consumeCommands();
-    clear();
-}
-
-void Looper::onStop()
-{
-    clear();
-}
-
-Looper::State Looper::getState() const noexcept
-{
-    return state_.load();
-}
-
-unsigned int Looper::getCurrentPosition() const noexcept
-{
-    return position_.load(std::memory_order_relaxed);
-}
-
-unsigned int Looper::getCurrentNumFrames() const noexcept
-{
-    return numFrames_.load(std::memory_order_relaxed);
-}
-
-bool Looper::isEmpty() const noexcept
-{
-    return getCurrentNumFrames() == 0;
-}
-
-LooperMailbox& Looper::getCommandMailbox() noexcept
-{
-    return commandMailbox_;
-}
-
-void Looper::startRecording() noexcept
-{
-    switch (state_.load()) {
-        case State::CLEARED: {
-            position_.store(0, std::memory_order_relaxed);
-            state_ = State::RECORDING;
-            break;
-        }
-        case State::RECORDING: {
-            break;
-        }
-        case State::PLAYBACK: {
-            state_ = State::RECORDING;
-            break;
-        }
-        default:;
-    }
-}
-
-void Looper::stopRecording() noexcept
-{
-    switch (state_.load()) {
-        case State::CLEARED: {
-            break;
-        }
-        case State::RECORDING: {
-            if (isEmpty()) {
-                numFrames_.store(position_.load(std::memory_order_relaxed), std::memory_order_relaxed);
-                position_.store(0, std::memory_order_relaxed);
-            }
-            state_ = State::PLAYBACK;
-            break;
-        }
-        case State::PLAYBACK: {
-            break;
-        }
-        default:;
-    }
-}
-
-void Looper::clear() noexcept
-{
-    if (state_ == State::CLEARED) return;
-
-    stopRecording();
-
-    const auto toErase = numFrames_.load(std::memory_order_relaxed);
-    for (auto& b : buffers_)
-        std::ranges::fill_n(b.begin(), toErase, 0.0f);
-
-    state_ = State::CLEARED;
-    position_.store(0, std::memory_order_relaxed);
-    numFrames_.store(0, std::memory_order_relaxed);
-}
-
-const char* Looper::stateToStr(State state)
-{
-    if (state == State::CLEARED) return "CLEARED";
-    if (state == State::RECORDING) return "RECORDING";
-    if (state == State::PLAYBACK) return "PLAYBACK";
-    return "Invalid State";
-}
-
-void Looper::consumeCommands() noexcept
-{
-    commandMailbox_.consumeAll([&](const LooperCommand& cmd) {
-        cmd.apply(*this);
-    });
-}
-
-void Looper::processInternal(float *const *data, unsigned int nFrames) noexcept
-{
-    const auto state = state_.load();
-
-    if (state == State::CLEARED) return;
-
-    const auto currentNumFrames = numFrames_.load(std::memory_order_relaxed);
-    const auto wrapAround = currentNumFrames > 0 ? currentNumFrames : maxFrames_;
-    unsigned int pos = position_.load(std::memory_order_relaxed);
-
-    if (state == State::PLAYBACK) {
-        for (auto i{0u}; i < nFrames; ++i) {
-            for (auto ch{0u}; ch < numChannels_; ++ch) {
-                data[ch][i] += buffers_[ch][pos];
+            if (iChannels > 0 && iChannels == oChannels) {
+                for (auto c{0u}; c < oChannels; ++c) {
+                    for (auto i{0u}; i < nFrames; ++i) {
+                        out[c][i] = in[c][i];
+                    }
+                }
             }
 
-            pos++;
-            if (pos >= wrapAround) {
-                pos = 0;
-                numFrames_.store(wrapAround, std::memory_order_relaxed);
-            }
-        }
-    } else if (state == State::RECORDING) {
-        for (auto i{0u}; i < nFrames; ++i) {
-            for (auto ch{0u}; ch < numChannels_; ++ch) {
-                const float oldSample = buffers_[ch][pos];
-                buffers_[ch][pos] += data[ch][i];
-                data[ch][i] += oldSample;
-            }
+            looper.process(out, nFrames);
 
-            pos++;
-            if (pos >= wrapAround) {
-                pos = 0;
-                numFrames_.store(wrapAround, std::memory_order_relaxed);
-            }
+            /*const auto sr = static_cast<float>(engine.getSampleRate());
+            constexpr auto twoPi = 2.0f * std::numbers::pi_v<float>;
+            const float phaseIncr = twoPi * 440.0f / sr;
+            static float osc{0};
+            for (auto i{0u}; i < nFrames; ++i) {
+                osc += phaseIncr;
+                if (osc >= twoPi) osc -= twoPi;
+                const float sine = std::sin(osc) * 0.03f;
+                for (auto c{0u}; c < oChannels; ++c) {
+                    out[c][i] = sine;
+                }
+            }*/
         }
+
+        void onStart() override
+        {
+            //std::cout << "onStart()\n";
+            looper.onStart();
+        }
+
+        void onStop() override
+        {
+            //std::cout << "onStop()\n";
+            looper.onStop();
+        }
+
+        looper::LooperProcessor looper;
+    };
+
+    Looper::Looper() : cb_(std::make_shared<LooperCallback>())
+    {
+        auto& engine = audio::AudioEngine::getInstance();
+        engine.setAudioCallback(cb_);
     }
 
-    position_.store(pos, std::memory_order_relaxed);
+    Looper::LooperState Looper::getLooperState() const noexcept
+    {
+        const auto nFrames = cb_->looper.getCurrentNumFrames();
+        const auto loopPosition = cb_->looper.getCurrentPosition();
+        const auto looperState = cb_->looper.getState();
+
+        return LooperState {
+            .nFrames = nFrames,
+            .position = loopPosition,
+            .state = looperState,
+        };
+    }
+
+    void Looper::startRecording()
+    {
+        auto &looperMailbox = cb_->looper.getCommandMailbox();
+        looperMailbox.tryPush(looper::LooperCommand::startRecording());
+    }
+
+    void Looper::stopRecording()
+    {
+        auto &looperMailbox = cb_->looper.getCommandMailbox();
+        looperMailbox.tryPush(looper::LooperCommand::stopRecording());
+    }
+
+    void Looper::clear()
+    {
+        auto &looperMailbox = cb_->looper.getCommandMailbox();
+        looperMailbox.tryPush(looper::LooperCommand::clear());
+    }
+
 }

@@ -79,8 +79,9 @@ add_subdirectory(faust)
 set(SOURCE_FILES
     src/audio/audio_engine.cpp
     src/main.cpp
-    src/looper/looper.cpp
+    src/looper/looper_processor.cpp
     src/looper/looper_commands.cpp
+    src/looper/looper.cpp
 )
 
 # Build Executable

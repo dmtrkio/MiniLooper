@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <iostream>
-#include <numbers>
 #include <cmath>
 
 #include <raylib.h>
@@ -9,56 +8,10 @@
 #include "audio/audio_engine.h"
 #include "looper/looper.h"
 
-class LooperCallback : public audio::AudioCallback
+void looperWidget(int x, int y, float radius, looper::Looper &looper)
 {
-public:
-    void onProcess(const float *const *in, float *const *out, const unsigned int nFrames) override
-    {
-        const auto& engine = audio::AudioEngine::getInstance();
-        const auto iChannels = engine.getNumInputChannels();
-        const auto oChannels = engine.getNumOutputChannels();
+    const auto [nFramesInLoop, loopPosition, state] = looper.getLooperState();
 
-        if (iChannels > 0 && iChannels == oChannels) {
-            for (auto c{0u}; c < oChannels; ++c) {
-                for (auto i{0u}; i < nFrames; ++i) {
-                    out[c][i] = in[c][i];
-                }
-            }
-        }
-
-        looper.process(out, nFrames);
-
-        /*const auto sr = static_cast<float>(engine.getSampleRate());
-        constexpr auto twoPi = 2.0f * std::numbers::pi_v<float>;
-        const float phaseIncr = twoPi * 440.0f / sr;
-        static float osc{0};
-        for (auto i{0u}; i < nFrames; ++i) {
-            osc += phaseIncr;
-            if (osc >= twoPi) osc -= twoPi;
-            const float sine = std::sin(osc) * 0.03f;
-            for (auto c{0u}; c < oChannels; ++c) {
-                out[c][i] = sine;
-            }
-        }*/
-    }
-
-    void onStart() override
-    {
-        //std::cout << "onStart()\n";
-        looper.onStart();
-    }
-
-    void onStop() override
-    {
-        //std::cout << "onStop()\n";
-        looper.onStop();
-    }
-
-    looper::Looper looper;
-};
-
-bool looperWidget(int x, int y, float radius, unsigned int nFramesInLoop, unsigned int loopPosition, looper::Looper::State state)
-{
     const Color outlineColor = BLACK;
     const Color emptyColor = GRAY;
     const Color filledColor = LIGHTGRAY;
@@ -97,13 +50,13 @@ bool looperWidget(int x, int y, float radius, unsigned int nFramesInLoop, unsign
     indicatorRadius -= outlineThickness;
 
     Color indicatorColor = clearedColor;
-    if (state == looper::Looper::State::RECORDING) {
+    if (state == looper::LooperProcessor::State::RECORDING) {
         if (nFramesInLoop > 0) {
             indicatorColor = overdubbingColor;
         } else {
             indicatorColor = recordingColor;
         }
-    } else if (state == looper::Looper::State::PLAYBACK) {
+    } else if (state == looper::LooperProcessor::State::PLAYBACK) {
         indicatorColor = playbackColor;
     }
 
@@ -111,18 +64,20 @@ bool looperWidget(int x, int y, float radius, unsigned int nFramesInLoop, unsign
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         if (Vector2Distance(GetMousePosition(), origin) < widgetRadius) {
-            return true;
+            if (state != looper::LooperProcessor::State::RECORDING) {
+                looper.startRecording();
+            } else {
+                looper.stopRecording();
+            }
         }
     }
-
-    return false;
 }
 
 int main()
 {
+    looper::Looper looper;
+
     auto& engine = audio::AudioEngine::getInstance();
-    auto cb = std::make_shared<LooperCallback>();
-    engine.setAudioCallback(cb);
     engine.setSampleRate(48000);
     engine.setBufferSize(64);
     engine.pickDevices();
@@ -154,25 +109,15 @@ int main()
         const int x = GetScreenWidth() / 2;
         const int y = GetScreenHeight() / 2;
         const float radius = 60.0f;
-        const auto nFramesInLoop = cb->looper.getCurrentNumFrames();
-        const auto loopPosition = cb->looper.getCurrentPosition();
-        const auto looperState = cb->looper.getState();
-        auto &looperMailbox = cb->looper.getCommandMailbox();
 
-        if (looperWidget(x, y, radius, nFramesInLoop, loopPosition, looperState)) {
-            if (looperState != looper::Looper::State::RECORDING) {
-                looperMailbox.tryPush(looper::LooperCommand::startRecording());
-            } else {
-                looperMailbox.tryPush(looper::LooperCommand::stopRecording());
-            }
-        }
+        looperWidget(x, y, radius, looper);
 
         if (IsKeyPressed(KEY_R)) {
-            looperMailbox.tryPush(looper::LooperCommand::startRecording());
+            looper.startRecording();
         } else if (IsKeyPressed(KEY_S)) {
-            looperMailbox.tryPush(looper::LooperCommand::stopRecording());
+            looper.stopRecording();
         } else if (IsKeyPressed(KEY_C)) {
-            looperMailbox.tryPush(looper::LooperCommand::clear());
+            looper.clear();
         }
 
         EndDrawing();
