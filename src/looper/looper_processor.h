@@ -45,7 +45,7 @@ private:
     void processInternal(float *const *data, unsigned int nFrames) noexcept;
     void processTrack(int trackIndex, float *const *data, unsigned int nFrames) noexcept;
 
-    static constexpr unsigned int NUM_LOOPER_TRACKS{1};
+    static constexpr unsigned int NUM_LOOPER_TRACKS{4};
     static constexpr unsigned int MAX_LOOP_LENGTH_IN_SECONDS = 30;
 
     unsigned int numChannels_{0};

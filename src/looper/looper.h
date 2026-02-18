@@ -32,6 +32,7 @@ namespace looper {
         void startRecording(int trackIndex);
         void stopRecording(int trackIndex);
         void clear(int trackIndex);
+        void clearAll();
 
     private:
         class LooperCallback;

@@ -16,6 +16,7 @@ namespace looper {
         static LooperCommand startRecording(int trackIndex) noexcept;
         static LooperCommand stopRecording(int trackIndex) noexcept;
         static LooperCommand clear(int trackIndex) noexcept;
+        static LooperCommand clearAllTracks() noexcept;
 
         void apply(LooperProcessor& looper) const;
 
@@ -43,11 +44,17 @@ namespace looper {
             void apply(LooperProcessor& looper) const;
         };
 
+        struct ClearAllTracks
+        {
+            void apply(LooperProcessor& looper) const;
+        };
+
         using Variant = std::variant<
             Dummy,
             StartRecording,
             StopRecording,
-            Clear
+            Clear,
+            ClearAllTracks
         >;
 
         explicit LooperCommand(Variant cmd) noexcept : cmd_(cmd) {}

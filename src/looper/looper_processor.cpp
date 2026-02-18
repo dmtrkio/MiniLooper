@@ -49,7 +49,7 @@ int LooperProcessor::getNumLooperTracks() const noexcept
 
 LooperProcessor::State LooperProcessor::getState(int trackIndex) const noexcept
 {
-    if (!isTrackIndexValid(trackIndex)) return LooperProcessor::State::CLEARED;
+    if (!isTrackIndexValid(trackIndex)) return State::CLEARED;
     return tracks_[trackIndex].state.load();
 }
 
@@ -79,7 +79,7 @@ void LooperProcessor::startRecording(int trackIndex) noexcept
 {
     if (!isTrackIndexValid(trackIndex)) return;
 
-    auto& [state, position, nFrames, buffers] = tracks_[trackIndex];
+    auto& [state, position, nFrames, _] = tracks_[trackIndex];
 
     switch (state.load()) {
         case State::CLEARED: {
@@ -102,14 +102,14 @@ void LooperProcessor::stopRecording(int trackIndex) noexcept
 {
     if (!isTrackIndexValid(trackIndex)) return;
 
-    auto& [state, position, nFrames, buffers] = tracks_[trackIndex];
+    auto& [state, position, nFrames, _] = tracks_[trackIndex];
 
     switch (state.load()) {
         case State::CLEARED: {
             break;
         }
         case State::RECORDING: {
-            if (isEmpty(0)) {
+            if (nFrames == 0) {
                 nFrames.store(position.load());
                 position.store(0);
             }

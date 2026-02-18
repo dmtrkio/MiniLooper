@@ -67,7 +67,7 @@ namespace looper {
 
     int Looper::getNumLooperTracks() const noexcept
     {
-        return 1;
+        return cb_->looper.getNumLooperTracks();
     }
 
     Looper::LooperState Looper::getLooperState(int trackIndex) const noexcept
@@ -100,6 +100,12 @@ namespace looper {
     {
         auto &looperMailbox = cb_->looper.getCommandMailbox();
         looperMailbox.tryPush(looper::LooperCommand::clear(trackIndex));
+    }
+
+    void Looper::clearAll()
+    {
+        auto &looperMailbox = cb_->looper.getCommandMailbox();
+        looperMailbox.tryPush(LooperCommand::clearAllTracks());
     }
 
 }

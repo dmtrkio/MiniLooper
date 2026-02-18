@@ -8,27 +8,27 @@
 #include "audio/audio_engine.h"
 #include "looper/looper.h"
 
-void looperWidget(int x, int y, float radius, looper::Looper &looper)
+constexpr Color outlineColor = BLACK;
+constexpr Color emptyColor = GRAY;
+constexpr Color filledColor = LIGHTGRAY;
+constexpr Color clearedColor = outlineColor;
+constexpr Color recordingColor = RED;
+constexpr Color overdubbingColor = ORANGE;
+constexpr Color playbackColor = LIME;
+
+constexpr float outlineThickness = 4.0f;
+
+void looperTrackWidget(float x, float y, float radius, looper::Looper &looper, int trackIndex)
 {
-    const auto [nFramesInLoop, loopPosition, state] = looper.getLooperState(0);
-
-    const Color outlineColor = BLACK;
-    const Color emptyColor = GRAY;
-    const Color filledColor = LIGHTGRAY;
-    const Color clearedColor = outlineColor;
-    const Color recordingColor = RED;
-    const Color overdubbingColor = ORANGE;
-    const Color playbackColor = LIME;
-
-    const float outlineThickness = 4.0f;
+    const auto [nFramesInLoop, loopPosition, state] = looper.getLooperState(trackIndex);
 
     const float widgetRadius = radius;
 
-    const Vector2 origin = {static_cast<float>(x), static_cast<float>(y)};
+    const Vector2 origin = {x, y};
 
-    DrawCircle(x, y, radius, outlineColor);
+    DrawCircleV(origin, radius, outlineColor);
     radius -= outlineThickness;
-    DrawCircle(x, y, radius, emptyColor);
+    DrawCircleV(origin, radius, emptyColor);
 
     if (nFramesInLoop > 0) {
         constexpr auto startAngle = 270.f;
@@ -37,8 +37,8 @@ void looperWidget(int x, int y, float radius, looper::Looper &looper)
 
         const auto angleRadians = endAngle * DEG2RAD;
         const Vector2 end = {
-            static_cast<float>(x) + std::cos(angleRadians) * radius,
-            static_cast<float>(y) + std::sin(angleRadians) * radius
+            x + std::cos(angleRadians) * radius,
+            y + std::sin(angleRadians) * radius
         };
         DrawLineEx(origin, end, outlineThickness, outlineColor);
         const Vector2 up = origin + Vector2(0.0f, -1.0f) * radius;
@@ -46,7 +46,7 @@ void looperWidget(int x, int y, float radius, looper::Looper &looper)
     }
 
     auto indicatorRadius = radius * 0.5f;
-    DrawCircle(x, y, indicatorRadius, outlineColor);
+    DrawCircleV(origin, indicatorRadius, outlineColor);
     indicatorRadius -= outlineThickness;
 
     Color indicatorColor = clearedColor;
@@ -60,16 +60,46 @@ void looperWidget(int x, int y, float radius, looper::Looper &looper)
         indicatorColor = playbackColor;
     }
 
-    DrawCircle(x, y, indicatorRadius, indicatorColor);
+    DrawCircleV(origin, indicatorRadius, indicatorColor);
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         if (Vector2Distance(GetMousePosition(), origin) < widgetRadius) {
             if (state != looper::LooperProcessor::State::RECORDING) {
-                looper.startRecording(0);
+                looper.startRecording(trackIndex);
             } else {
-                looper.stopRecording(0);
+                looper.stopRecording(trackIndex);
             }
         }
+    }
+}
+
+void looperWidget(float x, float y, float width, looper::Looper &looper)
+{
+    const auto nTracks = looper.getNumLooperTracks();
+    if (nTracks < 1) return;
+
+    const float padding = 5.0f;
+    //const float diameter = width / static_cast<float>(nTracks) - padding * static_cast<float>(nTracks + 1);
+    const float diameter = (width - padding) / static_cast<float>(nTracks) - padding;
+    const float radius = diameter / 2.0f;
+
+    const float rectX = x - width / 2.0f;
+    const float rectH = diameter + padding * 2.0f;
+    const float rectY = y - padding - radius;
+
+    const auto roundness = 0.7f;
+    const auto nSegments = 16;
+    DrawRectangleRounded({rectX - outlineThickness, rectY - outlineThickness, width + outlineThickness * 2.0f, rectH + outlineThickness * 2.0f},
+                         roundness, nSegments, BLACK);
+    DrawRectangleRounded({rectX, rectY, width, rectH}, roundness, nSegments, WHITE);
+
+    const float startX = rectX + padding + radius;
+    const float startY = y;
+
+    for (int i = 0; i < nTracks; ++i) {
+        const float trackX = startX + (diameter + padding) * static_cast<float>(i);
+        const float trackY = startY;
+        looperTrackWidget(trackX, trackY, radius, looper, i);
     }
 }
 
@@ -104,20 +134,19 @@ int main()
         BeginDrawing();
         ClearBackground(DARKGRAY);
 
-        DrawText("Quit[Escape] StartRecording[r] StopRecording[s] Clear[c]", 50, 100, 20, BLACK);
+        //DrawText("Quit[Escape] StartRecording[r] StopRecording[s] Clear[c]", 50, 100, 20, BLACK);
 
-        const int x = GetScreenWidth() / 2;
-        const int y = GetScreenHeight() / 2;
-        const float radius = 60.0f;
+        const float x = static_cast<float>(GetScreenWidth()) / 2.0f;
+        const float y = static_cast<float>(GetScreenHeight()) / 2.0f;
 
-        looperWidget(x, y, radius, looper);
+        looperWidget(x, y, 440.0f, looper);
 
         if (IsKeyPressed(KEY_R)) {
             looper.startRecording(0);
         } else if (IsKeyPressed(KEY_S)) {
             looper.stopRecording(0);
         } else if (IsKeyPressed(KEY_C)) {
-            looper.clear(0);
+            looper.clearAll();
         }
 
         EndDrawing();
