@@ -61,6 +61,8 @@ private:
 
     std::array<Track, NUM_LOOPER_TRACKS> tracks_{};
 
+    std::vector<std::vector<float>> sumBuffers_;
+
     LooperMailbox commandMailbox_{128};
 };
 

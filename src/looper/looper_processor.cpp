@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <cassert>
 
 #include "../audio/audio_engine.h"
 
@@ -11,6 +12,7 @@ void LooperProcessor::process(float *const *data, unsigned int nFrames) noexcept
 {
     consumeCommands();
 
+    assert(nFrames <= maxFrames_);
     if (!data || numChannels_ == 0) return;
 
     processInternal(data, nFrames);
@@ -30,6 +32,11 @@ void LooperProcessor::onStart()
         for (auto& buffer : track.buffers) {
             buffer.resize(mFrames);
         }
+    }
+
+    sumBuffers_.resize(nChannels);
+    for (auto& buffer : sumBuffers_) {
+        buffer.resize(mFrames);
     }
 
     // ensure mailbox is clear from stale messages
@@ -170,8 +177,19 @@ void LooperProcessor::consumeCommands() noexcept
 
 void LooperProcessor::processInternal(float *const *data, unsigned int nFrames) noexcept
 {
+    for (auto& buffer : sumBuffers_) {
+        std::ranges::fill_n(buffer.begin(), nFrames, 0.0f);
+    }
+
     for (int i = 0; i < getNumLooperTracks(); ++i) {
         processTrack(i, data, nFrames);
+    }
+
+    for (auto ch{0u}; ch < numChannels_; ++ch) {
+        const auto& buffer = sumBuffers_[ch];
+        for (auto i{0u}; i < nFrames; ++i) {
+            data[ch][i] += buffer[i];
+        }
     }
 }
 
@@ -191,7 +209,7 @@ void LooperProcessor::processTrack(int trackIndex, float *const *data, unsigned 
     if (state == State::PLAYBACK) {
         for (auto i{0u}; i < nFrames; ++i) {
             for (auto ch{0u}; ch < numChannels_; ++ch) {
-                data[ch][i] += buffers[ch][pos];
+                sumBuffers_[ch][i] += buffers[ch][pos];
             }
 
             pos++;
@@ -205,7 +223,7 @@ void LooperProcessor::processTrack(int trackIndex, float *const *data, unsigned 
             for (auto ch{0u}; ch < numChannels_; ++ch) {
                 const float oldSample = buffers[ch][pos];
                 buffers[ch][pos] += data[ch][i];
-                data[ch][i] += oldSample;
+                sumBuffers_[ch][i] += oldSample;
             }
 
             pos++;
