@@ -8,15 +8,17 @@
 #include "audio/audio_engine.h"
 #include "looper/looper.h"
 
+constexpr Color backgroundColor = {50, 50, 60, 255};
 constexpr Color outlineColor = BLACK;
-constexpr Color emptyColor = GRAY;
+constexpr Color emptyColor = DARKGRAY;
 constexpr Color filledColor = LIGHTGRAY;
 constexpr Color clearedColor = outlineColor;
-constexpr Color recordingColor = RED;
-constexpr Color overdubbingColor = ORANGE;
-constexpr Color playbackColor = LIME;
+constexpr Color recordingColor = {220, 60, 50, 255};
+constexpr Color overdubbingColor = {200, 160, 190, 255};
+constexpr Color playbackColor = {130, 170, 200, 255};
+constexpr Color looperWidgetColor = {155, 150, 160, 255};
 
-constexpr float outlineThickness = 4.0f;
+constexpr float outlineThickness = 3.6f;
 
 void looperTrackWidget(float x, float y, float radius, looper::Looper &looper, int trackIndex)
 {
@@ -31,8 +33,9 @@ void looperTrackWidget(float x, float y, float radius, looper::Looper &looper, i
     DrawCircleV(origin, radius, emptyColor);
 
     if (nFramesInLoop > 0) {
+        const auto relativePosition = static_cast<float>(loopPosition) / static_cast<float>(nFramesInLoop);
         constexpr auto startAngle = 270.f;
-        const auto endAngle = 360.0f * (static_cast<float>(loopPosition) / static_cast<float>(nFramesInLoop)) + startAngle;
+        const auto endAngle = 360.0f * relativePosition + startAngle;
         DrawCircleSector(origin, radius, startAngle, endAngle, 32, filledColor);
 
         const auto angleRadians = endAngle * DEG2RAD;
@@ -90,8 +93,8 @@ void looperWidget(float x, float y, float width, looper::Looper &looper)
     const auto roundness = 0.7f;
     const auto nSegments = 16;
     DrawRectangleRounded({rectX - outlineThickness, rectY - outlineThickness, width + outlineThickness * 2.0f, rectH + outlineThickness * 2.0f},
-                         roundness, nSegments, BLACK);
-    DrawRectangleRounded({rectX, rectY, width, rectH}, roundness, nSegments, WHITE);
+                         roundness, nSegments, outlineColor);
+    DrawRectangleRounded({rectX, rectY, width, rectH}, roundness, nSegments, looperWidgetColor);
 
     const float startX = rectX + padding + radius;
     const float startY = y;
@@ -132,7 +135,7 @@ int main()
 
     while (!WindowShouldClose()) {
         BeginDrawing();
-        ClearBackground(DARKGRAY);
+        ClearBackground(backgroundColor);
 
         //DrawText("Quit[Escape] StartRecording[r] StopRecording[s] Clear[c]", 50, 100, 20, BLACK);
 
