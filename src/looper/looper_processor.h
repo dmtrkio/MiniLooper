@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <atomic>
 #include <vector>
 
@@ -39,20 +40,26 @@ public:
     static const char* stateToStr(State state);
 
 private:
-    static constexpr unsigned int MAX_LOOP_LENGTH_IN_SECONDS = 30;
-
-
     bool isTrackIndexValid(int trackIndex) const noexcept;
     void consumeCommands() noexcept;
     void processInternal(float *const *data, unsigned int nFrames) noexcept;
+    void processTrack(int trackIndex, float *const *data, unsigned int nFrames) noexcept;
 
-    RelaxedAtomic<State> state_{State::CLEARED};
-    RelaxedAtomic<unsigned int> position_{0};
-    RelaxedAtomic<unsigned int> numFrames_{0};
+    static constexpr unsigned int NUM_LOOPER_TRACKS{1};
+    static constexpr unsigned int MAX_LOOP_LENGTH_IN_SECONDS = 30;
 
     unsigned int numChannels_{0};
     unsigned int maxFrames_{0};
-    std::vector<std::vector<float>> buffers_;
+
+    struct Track
+    {
+        RelaxedAtomic<State> state{State::CLEARED};
+        RelaxedAtomic<unsigned int> position{0};
+        RelaxedAtomic<unsigned int> nFrames{0};
+        std::vector<std::vector<float>> buffers;
+    };
+
+    std::array<Track, NUM_LOOPER_TRACKS> tracks_{};
 
     LooperMailbox commandMailbox_{128};
 };
