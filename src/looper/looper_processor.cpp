@@ -53,13 +53,13 @@ LooperProcessor::State LooperProcessor::getState(int trackIndex) const noexcept
 unsigned int LooperProcessor::getCurrentPosition(int trackIndex) const noexcept
 {
     if (!isTrackIndexValid(trackIndex)) return 0;
-    return position_.load(std::memory_order_relaxed);
+    return position_.load();
 }
 
 unsigned int LooperProcessor::getCurrentNumFrames(int trackIndex) const noexcept
 {
     if (!isTrackIndexValid(trackIndex)) return 0;
-    return numFrames_.load(std::memory_order_relaxed);
+    return numFrames_.load();
 }
 
 bool LooperProcessor::isEmpty(int trackIndex) const noexcept
@@ -79,7 +79,7 @@ void LooperProcessor::startRecording(int trackIndex) noexcept
 
     switch (state_.load()) {
         case State::CLEARED: {
-            position_.store(0, std::memory_order_relaxed);
+            position_.store(0);
             state_ = State::RECORDING;
             break;
         }
@@ -104,8 +104,8 @@ void LooperProcessor::stopRecording(int trackIndex) noexcept
         }
         case State::RECORDING: {
             if (isEmpty(0)) {
-                numFrames_.store(position_.load(std::memory_order_relaxed), std::memory_order_relaxed);
-                position_.store(0, std::memory_order_relaxed);
+                numFrames_.store(position_.load());
+                position_.store(0);
             }
             state_ = State::PLAYBACK;
             break;
@@ -125,13 +125,13 @@ void LooperProcessor::clear(int trackIndex) noexcept
 
     stopRecording(trackIndex);
 
-    const auto toErase = numFrames_.load(std::memory_order_relaxed);
+    const auto toErase = numFrames_.load();
     for (auto& b : buffers_)
         std::ranges::fill_n(b.begin(), toErase, 0.0f);
 
     state_ = State::CLEARED;
-    position_.store(0, std::memory_order_relaxed);
-    numFrames_.store(0, std::memory_order_relaxed);
+    position_.store(0);
+    numFrames_.store(0);
 }
 
 void LooperProcessor::clearAll() noexcept
@@ -167,9 +167,9 @@ void LooperProcessor::processInternal(float *const *data, unsigned int nFrames) 
 
     if (state == State::CLEARED) return;
 
-    const auto currentNumFrames = numFrames_.load(std::memory_order_relaxed);
+    const auto currentNumFrames = numFrames_.load();
     const auto wrapAround = currentNumFrames > 0 ? currentNumFrames : maxFrames_;
-    unsigned int pos = position_.load(std::memory_order_relaxed);
+    unsigned int pos = position_.load();
 
     if (state == State::PLAYBACK) {
         for (auto i{0u}; i < nFrames; ++i) {
@@ -180,7 +180,7 @@ void LooperProcessor::processInternal(float *const *data, unsigned int nFrames) 
             pos++;
             if (pos >= wrapAround) {
                 pos = 0;
-                numFrames_.store(wrapAround, std::memory_order_relaxed);
+                numFrames_.store(wrapAround);
             }
         }
     } else if (state == State::RECORDING) {
@@ -194,10 +194,10 @@ void LooperProcessor::processInternal(float *const *data, unsigned int nFrames) 
             pos++;
             if (pos >= wrapAround) {
                 pos = 0;
-                numFrames_.store(wrapAround, std::memory_order_relaxed);
+                numFrames_.store(wrapAround);
             }
         }
     }
 
-    position_.store(pos, std::memory_order_relaxed);
+    position_.store(pos);
 }

@@ -15,7 +15,6 @@ public:
     void onStart();
     void onStop();
 
-
     int getNumLooperTracks() const noexcept;
     LooperMailbox& getCommandMailbox() noexcept;
 
@@ -48,8 +47,8 @@ private:
     void processInternal(float *const *data, unsigned int nFrames) noexcept;
 
     RelaxedAtomic<State> state_{State::CLEARED};
-    std::atomic<unsigned int> position_{0};
-    std::atomic<unsigned int> numFrames_{0};
+    RelaxedAtomic<unsigned int> position_{0};
+    RelaxedAtomic<unsigned int> numFrames_{0};
 
     unsigned int numChannels_{0};
     unsigned int maxFrames_{0};
