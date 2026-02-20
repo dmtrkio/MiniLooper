@@ -106,6 +106,26 @@ void looperWidget(float x, float y, float width, looper::Looper &looper)
     }
 }
 
+void looperInput(looper::Looper &looper)
+{
+    const auto nTracks = looper.getNumLooperTracks();
+
+    for (int i = 0; i < nTracks; ++i) {
+        const auto looperState = looper.getLooperState(i);
+        if (IsKeyPressed(KEY_ONE + i)) {
+            if (looperState.state != looper::LooperProcessor::State::RECORDING) {
+                looper.startRecording(i);
+            } else {
+                looper.stopRecording(i);
+            }
+        }
+    }
+
+    if (IsKeyPressed(KEY_C)) {
+        looper.clearAll();
+    }
+}
+
 int main()
 {
     looper::Looper looper;
@@ -137,20 +157,11 @@ int main()
         BeginDrawing();
         ClearBackground(backgroundColor);
 
-        //DrawText("Quit[Escape] StartRecording[r] StopRecording[s] Clear[c]", 50, 100, 20, BLACK);
-
         const float x = static_cast<float>(GetScreenWidth()) / 2.0f;
         const float y = static_cast<float>(GetScreenHeight()) / 2.0f;
 
         looperWidget(x, y, 440.0f, looper);
-
-        if (IsKeyPressed(KEY_R)) {
-            looper.startRecording(0);
-        } else if (IsKeyPressed(KEY_S)) {
-            looper.stopRecording(0);
-        } else if (IsKeyPressed(KEY_C)) {
-            looper.clearAll();
-        }
+        looperInput(looper);
 
         EndDrawing();
     }
