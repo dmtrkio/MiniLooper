@@ -25,6 +25,13 @@ namespace looper {
             unsigned int nFrames;
             unsigned int position;
             LooperProcessor::State state;
+
+            void printState() const noexcept
+            {
+                std::cout << "nFrames: " << nFrames << std::endl;
+                std::cout << "position: " << position << std::endl;
+                std::cout << "state: " << LooperProcessor::stateToStr(state) << std::endl;
+            }
         };
 
         [[nodiscard]] LooperState getLooperState(int trackIndex) const noexcept;

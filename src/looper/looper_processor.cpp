@@ -198,7 +198,8 @@ unsigned int LooperProcessor::getNextGridDivision(int frameIndex) const noexcept
         target = newTarget;
         distance = newDistance;
     }
-    std::cout << "bars: " << target / transport_.barLength << std::endl;
+
+    //std::cout << "bars: " << target / transport_.barLength << std::endl;
     return target;
 }
 
@@ -250,7 +251,7 @@ void LooperProcessor::processTrack(int trackIndex, float *const *data, unsigned 
     auto state = track.state.load();
 
     auto currentNumFrames = track.nFrames.load();
-    const auto wrapAround = currentNumFrames > 0 ? currentNumFrames : transport_.largestPossibleLoopLength;
+    const auto wrapAround = currentNumFrames > 0 ? currentNumFrames : (transport_.largestPossibleLoopLength + 1);
     unsigned int pos = track.position.load();
 
     for (auto i{0u}; i < nFrames; ++i) {
@@ -325,8 +326,6 @@ bool LooperProcessor::Track::tick()
             position.store(0);
             state.store(State::PLAYBACK);
         }
-
-        //std::cout << stateToStr(state.load()) << std::endl;
 
         hasNext = false;
         return true;

@@ -73,15 +73,16 @@ namespace looper {
     Looper::LooperState Looper::getLooperState(int trackIndex) const noexcept
     {
         const auto &looper = cb_->looper;
-        const auto nFrames = looper.getCurrentNumFrames(trackIndex);
-        const auto loopPosition = looper.getCurrentPosition(trackIndex);
-        const auto looperState = looper.getState(trackIndex);
 
-        return LooperState {
-            .nFrames = nFrames,
-            .position = loopPosition,
-            .state = looperState,
+        const LooperState looperState = {
+            .nFrames = looper.getCurrentNumFrames(trackIndex),
+            .position = looper.getCurrentPosition(trackIndex),
+            .state = looper.getState(trackIndex),
         };
+
+        //if (trackIndex == 1) looperState.printState();
+
+        return looperState;
     }
 
     void Looper::startRecording(int trackIndex)
