@@ -84,9 +84,11 @@ LooperMailbox& LooperProcessor::getCommandMailbox() noexcept
 void LooperProcessor::startRecording(int trackIndex) noexcept
 {
     if (!isTrackIndexValid(trackIndex)) return;
-    if (isAnyTrackCurrentlyRecording()) return;
 
     auto& track = tracks_[trackIndex];
+    track.transitionTimer.reset();
+
+    if (isAnyTrackCurrentlyRecording()) return;
 
     switch (track.state.load()) {
         case State::CLEARED: {
@@ -115,6 +117,7 @@ void LooperProcessor::stopRecording(int trackIndex) noexcept
     if (!isTrackIndexValid(trackIndex)) return;
 
     auto &track = tracks_[trackIndex];
+    track.transitionTimer.reset();
 
     switch (track.state.load()) {
         case State::CLEARED: {
@@ -129,9 +132,7 @@ void LooperProcessor::stopRecording(int trackIndex) noexcept
                     track.position.store(0);
                     track.state = State::PLAYBACK;
                 } else {
-                    const auto toWait = gridSnap(nFrames);
-                    std::cout << "bar length: " << transport_.barLength << std::endl;
-                    std::cout << "frames: " << (toWait + nFrames) << std::endl;
+                    const auto toWait = getNextGridDivision(static_cast<int>(nFrames)) - nFrames;
                     track.scheduleTransition(State::PLAYBACK, toWait);
                 }
             } else {
@@ -183,23 +184,22 @@ const char* LooperProcessor::stateToStr(State state)
     return "Invalid State";
 }
 
-unsigned int LooperProcessor::gridSnap(unsigned int frameIndex) const noexcept
+unsigned int LooperProcessor::getNextGridDivision(int frameIndex) const noexcept
 {
-    if (!transport_.isTempoSet()) return 0;
+    int target = static_cast<int>(transport_.largestPossibleLoopLength);
+    int distance = target - frameIndex;
 
-    float best = INFINITY;
-    const auto limit = static_cast<float>(transport_.largestPossibleLoopLength);
+    while (target > transport_.barLength) {
+        int newTarget = target / 2;
+        int newDistance = newTarget - frameIndex;
 
-    for (const auto mul : GRID_MULTIPLIERS) {
-        const auto target = static_cast<float>(transport_.barLength) * mul;
-        if (target >= limit) break;
+        if ((newDistance < 0) || (newDistance > distance)) break;
 
-        const auto gap = target - static_cast<float>(frameIndex);
-        if (gap < 0) break;
-        best = std::min(best, gap);
+        target = newTarget;
+        distance = newDistance;
     }
-
-    return static_cast<unsigned int>(best);
+    std::cout << "bars: " << target / transport_.barLength << std::endl;
+    return target;
 }
 
 bool LooperProcessor::isTrackIndexValid(int trackIndex) const noexcept
@@ -254,7 +254,11 @@ void LooperProcessor::processTrack(int trackIndex, float *const *data, unsigned 
     unsigned int pos = track.position.load();
 
     for (auto i{0u}; i < nFrames; ++i) {
-        if (track.tick()) state = track.state.load();
+        if (track.tick()) {
+            state = track.state.load();
+            currentNumFrames = track.nFrames.load();
+            pos = track.position.load();
+        }
 
         switch (state) {
             case State::CLEARED: {
@@ -281,8 +285,10 @@ void LooperProcessor::processTrack(int trackIndex, float *const *data, unsigned 
             pos = 0;
             if (currentNumFrames == 0) {
                 if (state == State::RECORDING) {
-                    state = State::PLAYBACK;
                     currentNumFrames = wrapAround;
+                    if (!transport_.isTempoSet()) {
+                        transport_.setBarLength(currentNumFrames, maxFrames_);
+                    }
                 }
             }
         }
@@ -320,7 +326,7 @@ bool LooperProcessor::Track::tick()
             state.store(State::PLAYBACK);
         }
 
-        std::cout << stateToStr(state.load()) << std::endl;
+        //std::cout << stateToStr(state.load()) << std::endl;
 
         hasNext = false;
         return true;

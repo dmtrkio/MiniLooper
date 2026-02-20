@@ -20,6 +20,8 @@ public:
     int getNumLooperTracks() const noexcept;
     LooperMailbox& getCommandMailbox() noexcept;
 
+    static constexpr unsigned int MAX_LOOP_LENGTH_IN_SECONDS = 16;
+
     enum class State : unsigned char
     {
         CLEARED,
@@ -41,7 +43,7 @@ public:
     static const char* stateToStr(State state);
 
 private:
-    unsigned int gridSnap(unsigned int frameIndex) const noexcept;
+    unsigned int getNextGridDivision(int frameIndex) const noexcept;
     bool isTrackIndexValid(int trackIndex) const noexcept;
     bool isAnyTrackCurrentlyRecording() const noexcept;
     void consumeCommands() noexcept;
@@ -49,8 +51,7 @@ private:
     void processTrack(int trackIndex, float *const *data, unsigned int nFrames) noexcept;
 
     static constexpr unsigned int NUM_LOOPER_TRACKS{4};
-    static constexpr unsigned int MAX_LOOP_LENGTH_IN_SECONDS = 30;
-    static constexpr std::array<float, 6> GRID_MULTIPLIERS = { 1.0f / 4.0f, 1.0f / 2.0f, 1.0f, 2.0f, 4.0f, 8.0f };
+    static constexpr std::array<float, 4> GRID_MULTIPLIERS = { 1.0f, 2.0f, 4.0f, 8.0f };
 
     struct Transport
     {
@@ -99,6 +100,13 @@ private:
 
     struct TransitionTimer
     {
+        void reset() noexcept
+        {
+            hasNext = false;
+            nextState = State::CLEARED;
+            framesLeft = 0;
+        }
+
         bool hasNext{false};
         State nextState{State::CLEARED};
         unsigned int framesLeft{0};
