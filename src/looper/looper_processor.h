@@ -22,11 +22,12 @@ public:
 
     static constexpr unsigned int MAX_LOOP_LENGTH_IN_SECONDS = 16;
 
-    enum class State : unsigned char
+    enum class State
     {
         CLEARED,
         RECORDING,
         PLAYBACK,
+        PAUSED,
     };
 
     State getState(int trackIndex) const noexcept;
@@ -37,6 +38,8 @@ public:
     void startRecording(int trackIndex) noexcept;
     void stopRecording(int trackIndex) noexcept;
     void clear(int trackIndex) noexcept;
+    void pause(int trackIndex) noexcept;
+    void resume(int trackIndex) noexcept;
 
     void clearAll() noexcept;
 

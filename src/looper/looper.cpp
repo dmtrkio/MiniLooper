@@ -103,6 +103,18 @@ namespace looper {
         looperMailbox.tryPush(looper::LooperCommand::clear(trackIndex));
     }
 
+    void Looper::pause(int trackIndex)
+    {
+        auto &looperMailbox = cb_->looper.getCommandMailbox();
+        looperMailbox.tryPush(looper::LooperCommand::pause(trackIndex));
+    }
+
+    void Looper::resume(int trackIndex)
+    {
+        auto &looperMailbox = cb_->looper.getCommandMailbox();
+        looperMailbox.tryPush(looper::LooperCommand::resume(trackIndex));
+    }
+
     void Looper::clearAll()
     {
         auto &looperMailbox = cb_->looper.getCommandMailbox();

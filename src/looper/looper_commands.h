@@ -16,6 +16,8 @@ namespace looper {
         static LooperCommand startRecording(int trackIndex) noexcept;
         static LooperCommand stopRecording(int trackIndex) noexcept;
         static LooperCommand clear(int trackIndex) noexcept;
+        static LooperCommand pause(int trackIndex) noexcept;
+        static LooperCommand resume(int trackIndex) noexcept;
         static LooperCommand clearAllTracks() noexcept;
 
         void apply(LooperProcessor& looper) const;
@@ -44,6 +46,18 @@ namespace looper {
             void apply(LooperProcessor& looper) const;
         };
 
+        struct Pause
+        {
+            int trackIndex;
+            void apply(LooperProcessor& looper) const;
+        };
+
+        struct Resume
+        {
+            int trackIndex;
+            void apply(LooperProcessor& looper) const;
+        };
+
         struct ClearAllTracks
         {
             void apply(LooperProcessor& looper) const;
@@ -54,6 +68,8 @@ namespace looper {
             StartRecording,
             StopRecording,
             Clear,
+            Pause,
+            Resume,
             ClearAllTracks
         >;
 

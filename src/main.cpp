@@ -16,6 +16,7 @@ constexpr Color clearedColor = outlineColor;
 constexpr Color recordingColor = {220, 60, 50, 255};
 constexpr Color overdubbingColor = {200, 160, 190, 255};
 constexpr Color playbackColor = {130, 170, 200, 255};
+constexpr Color pausedColor = {90, 105, 140, 255};
 constexpr Color looperWidgetColor = {155, 150, 160, 255};
 
 constexpr float outlineThickness = 3.6f;
@@ -61,16 +62,26 @@ void looperTrackWidget(float x, float y, float radius, looper::Looper &looper, i
         }
     } else if (state == looper::LooperProcessor::State::PLAYBACK) {
         indicatorColor = playbackColor;
+    } else if (state == looper::LooperProcessor::State::PAUSED) {
+        indicatorColor = pausedColor;
     }
 
     DrawCircleV(origin, indicatorRadius, indicatorColor);
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         if (Vector2Distance(GetMousePosition(), origin) < widgetRadius) {
-            if (state != looper::LooperProcessor::State::RECORDING) {
-                looper.startRecording(trackIndex);
+            if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT)) {
+                if (state == looper::LooperProcessor::State::PAUSED) {
+                    looper.resume(trackIndex);
+                } else {
+                    looper.pause(trackIndex);
+                }
             } else {
-                looper.stopRecording(trackIndex);
+                if (state != looper::LooperProcessor::State::RECORDING) {
+                    looper.startRecording(trackIndex);
+                } else {
+                    looper.stopRecording(trackIndex);
+                }
             }
         }
     }

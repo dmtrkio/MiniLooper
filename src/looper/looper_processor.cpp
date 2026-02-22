@@ -101,8 +101,8 @@ void LooperProcessor::startRecording(int trackIndex) noexcept
             }
             break;
         }
-        case State::RECORDING: {
-            break;
+        case State::PAUSED: {
+            [[fallthrough]];
         }
         case State::PLAYBACK: {
             track.state = State::RECORDING;
@@ -120,9 +120,6 @@ void LooperProcessor::stopRecording(int trackIndex) noexcept
     track.transitionTimer.reset();
 
     switch (track.state.load()) {
-        case State::CLEARED: {
-            break;
-        }
         case State::RECORDING: {
             if (track.nFrames == 0) {
                 const auto nFrames = track.position.load();
@@ -139,9 +136,6 @@ void LooperProcessor::stopRecording(int trackIndex) noexcept
                 track.state = State::PLAYBACK;
             }
 
-            break;
-        }
-        case State::PLAYBACK: {
             break;
         }
         default:;
@@ -167,6 +161,32 @@ void LooperProcessor::clear(int trackIndex) noexcept
     if (std::ranges::all_of(tracks_, [](const auto& track) { return track.nFrames.load() == 0; })) {
         transport_.reset(maxFrames_);
     }
+}
+
+void LooperProcessor::pause(int trackIndex) noexcept
+{
+    if (!isTrackIndexValid(trackIndex)) return;
+
+    auto &track = tracks_[trackIndex];
+
+    if (track.state != State::PLAYBACK) return;
+    track.transitionTimer.reset();
+
+    const auto toWait = track.nFrames.load() - track.position.load();
+    track.scheduleTransition(State::PAUSED, toWait);
+}
+
+void LooperProcessor::resume(int trackIndex) noexcept
+{
+    if (!isTrackIndexValid(trackIndex)) return;
+
+    auto &track = tracks_[trackIndex];
+
+    if (track.state != State::PAUSED) return;
+    track.transitionTimer.reset();
+
+    const auto toWait = track.nFrames.load() - track.position.load();
+    track.scheduleTransition(State::PLAYBACK, toWait);
 }
 
 void LooperProcessor::clearAll() noexcept
@@ -262,9 +282,6 @@ void LooperProcessor::processTrack(int trackIndex, float *const *data, unsigned 
         }
 
         switch (state) {
-            case State::CLEARED: {
-                continue;
-            }
             case State::PLAYBACK: {
                 for (auto ch{0u}; ch < numChannels_; ++ch) {
                     sumBuffers_[ch][i] += track.buffers[ch][pos];
@@ -279,6 +296,7 @@ void LooperProcessor::processTrack(int trackIndex, float *const *data, unsigned 
                 }
                 break;
             }
+            default:;
         }
 
         pos++;
@@ -295,8 +313,14 @@ void LooperProcessor::processTrack(int trackIndex, float *const *data, unsigned 
         }
     }
 
-    track.nFrames.store(currentNumFrames);
-    track.position.store(pos);
+    if (state != State::CLEARED) {
+        track.nFrames.store(currentNumFrames);
+        track.position.store(pos);
+    } else {
+        track.nFrames.store(0);
+        track.position.store(0);
+    }
+
     track.state.store(state);
 }
 
@@ -318,13 +342,25 @@ bool LooperProcessor::Track::tick()
     if (!hasNext) return false;
 
     if (framesLeft-- == 0) {
-        if (nextState == State::RECORDING) {
-            position.store(0);
-            state.store(State::RECORDING);
-        } else if (nextState == State::PLAYBACK) {
-            nFrames.store(position.load());
-            position.store(0);
-            state.store(State::PLAYBACK);
+        switch (nextState) {
+            case State::RECORDING: {
+                position.store(0);
+                state.store(State::RECORDING);
+                break;
+            }
+            case State::PLAYBACK: {
+                if (state == State::RECORDING) {
+                    nFrames.store(position.load());
+                }
+                position.store(0);
+                state.store(State::PLAYBACK);
+                break;
+            }
+            case State::PAUSED: {
+                state.store(State::PAUSED);
+                break;
+            }
+            default:;
         }
 
         hasNext = false;

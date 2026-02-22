@@ -39,6 +39,8 @@ namespace looper {
         void startRecording(int trackIndex);
         void stopRecording(int trackIndex);
         void clear(int trackIndex);
+        void pause(int trackIndex);
+        void resume(int trackIndex);
         void clearAll();
 
     private:

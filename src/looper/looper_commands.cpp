@@ -18,6 +18,16 @@ namespace looper {
         return LooperCommand{ Clear{ trackIndex } };
     }
 
+    LooperCommand LooperCommand::pause(int trackIndex) noexcept
+    {
+        return LooperCommand{ Pause{ trackIndex } };
+    }
+
+    LooperCommand LooperCommand::resume(int trackIndex) noexcept
+    {
+        return LooperCommand{ Resume{ trackIndex } };
+    }
+
     LooperCommand LooperCommand::clearAllTracks() noexcept
     {
         return LooperCommand{ ClearAllTracks{} };
@@ -41,6 +51,16 @@ namespace looper {
     void LooperCommand::Clear::apply(LooperProcessor& looper) const
     {
         looper.clear(trackIndex);
+    }
+
+    void LooperCommand::Pause::apply(LooperProcessor& looper) const
+    {
+        looper.pause(trackIndex);
+    }
+
+    void LooperCommand::Resume::apply(LooperProcessor& looper) const
+    {
+        looper.resume(trackIndex);
     }
 
     void LooperCommand::ClearAllTracks::apply(LooperProcessor& looper) const
