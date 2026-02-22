@@ -122,10 +122,18 @@ void looperInput(looper::Looper &looper)
     for (int i = 0; i < nTracks; ++i) {
         const auto looperState = looper.getLooperState(i);
         if (IsKeyPressed(KEY_ONE + i)) {
-            if (looperState.state != looper::LooperProcessor::State::RECORDING) {
-                looper.startRecording(i);
+            if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT)) {
+                if (looperState.state == looper::LooperProcessor::State::PAUSED) {
+                    looper.resume(i);
+                } else {
+                    looper.pause(i);
+                }
             } else {
-                looper.stopRecording(i);
+                if (looperState.state != looper::LooperProcessor::State::RECORDING) {
+                    looper.startRecording(i);
+                } else {
+                    looper.stopRecording(i);
+                }
             }
         }
     }
