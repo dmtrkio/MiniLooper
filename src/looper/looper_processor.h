@@ -20,7 +20,7 @@ public:
     int getNumLooperTracks() const noexcept;
     LooperMailbox& getCommandMailbox() noexcept;
 
-    static constexpr unsigned int MAX_LOOP_LENGTH_IN_SECONDS = 16;
+    static constexpr unsigned int MAX_LOOP_LENGTH_IN_SECONDS = 32;
 
     enum class State
     {
@@ -54,7 +54,7 @@ private:
     void processTrack(int trackIndex, float *const *data, unsigned int nFrames) noexcept;
 
     static constexpr unsigned int NUM_LOOPER_TRACKS{4};
-    static constexpr std::array<float, 4> GRID_MULTIPLIERS = { 1.0f, 2.0f, 4.0f, 8.0f };
+    static constexpr std::array<float, 5> GRID_MULTIPLIERS = { 1.0f, 2.0f, 4.0f, 8.0f, 16.0f };
 
     struct Transport
     {
