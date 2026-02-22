@@ -68,20 +68,18 @@ void looperTrackWidget(float x, float y, float radius, looper::Looper &looper, i
 
     DrawCircleV(origin, indicatorRadius, indicatorColor);
 
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        if (Vector2Distance(GetMousePosition(), origin) < widgetRadius) {
-            if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT)) {
-                if (state == looper::LooperProcessor::State::PAUSED) {
-                    looper.resume(trackIndex);
-                } else {
-                    looper.pause(trackIndex);
-                }
+    if (Vector2Distance(GetMousePosition(), origin) < widgetRadius) {
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            if (state != looper::LooperProcessor::State::RECORDING) {
+                looper.startRecording(trackIndex);
             } else {
-                if (state != looper::LooperProcessor::State::RECORDING) {
-                    looper.startRecording(trackIndex);
-                } else {
-                    looper.stopRecording(trackIndex);
-                }
+                looper.stopRecording(trackIndex);
+            }
+        } else if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+            if (state == looper::LooperProcessor::State::PAUSED) {
+                looper.resume(trackIndex);
+            } else {
+                looper.pause(trackIndex);
             }
         }
     }
