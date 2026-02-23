@@ -1,7 +1,6 @@
 #include "looper.h"
 
 #include <algorithm>
-#include <iostream>
 #include <numbers>
 #include <cmath>
 

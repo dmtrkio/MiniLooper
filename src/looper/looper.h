@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <iostream>
 
 #include "looper_processor.h"
 
@@ -24,13 +25,13 @@ namespace looper {
         {
             unsigned int nFrames;
             unsigned int position;
-            LooperProcessor::State state;
+            State state;
 
             void printState() const noexcept
             {
                 std::cout << "nFrames: " << nFrames << std::endl;
                 std::cout << "position: " << position << std::endl;
-                std::cout << "state: " << LooperProcessor::stateToStr(state) << std::endl;
+                std::cout << "state: " << stateToStr(state) << std::endl;
             }
         };
 

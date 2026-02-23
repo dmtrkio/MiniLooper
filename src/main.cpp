@@ -54,15 +54,15 @@ void looperTrackWidget(float x, float y, float radius, looper::Looper &looper, i
     indicatorRadius -= outlineThickness;
 
     Color indicatorColor = clearedColor;
-    if (state == looper::LooperProcessor::State::RECORDING) {
+    if (state == looper::State::RECORDING) {
         if (nFramesInLoop > 0) {
             indicatorColor = overdubbingColor;
         } else {
             indicatorColor = recordingColor;
         }
-    } else if (state == looper::LooperProcessor::State::PLAYBACK) {
+    } else if (state == looper::State::PLAYBACK) {
         indicatorColor = playbackColor;
-    } else if (state == looper::LooperProcessor::State::PAUSED) {
+    } else if (state == looper::State::PAUSED) {
         indicatorColor = pausedColor;
     }
 
@@ -70,13 +70,13 @@ void looperTrackWidget(float x, float y, float radius, looper::Looper &looper, i
 
     if (Vector2Distance(GetMousePosition(), origin) < widgetRadius) {
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            if (state != looper::LooperProcessor::State::RECORDING) {
+            if (state != looper::State::RECORDING) {
                 looper.startRecording(trackIndex);
             } else {
                 looper.stopRecording(trackIndex);
             }
         } else if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
-            if (state == looper::LooperProcessor::State::PAUSED) {
+            if (state == looper::State::PAUSED) {
                 looper.resume(trackIndex);
             } else {
                 looper.pause(trackIndex);
@@ -123,13 +123,13 @@ void looperInput(looper::Looper &looper)
         const auto looperState = looper.getLooperState(i);
         if (IsKeyPressed(KEY_ONE + i)) {
             if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT)) {
-                if (looperState.state == looper::LooperProcessor::State::PAUSED) {
+                if (looperState.state == looper::State::PAUSED) {
                     looper.resume(i);
                 } else {
                     looper.pause(i);
                 }
             } else {
-                if (looperState.state != looper::LooperProcessor::State::RECORDING) {
+                if (looperState.state != looper::State::RECORDING) {
                     looper.startRecording(i);
                 } else {
                     looper.stopRecording(i);
