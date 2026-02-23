@@ -19,11 +19,13 @@ namespace looper {
             const auto iChannels = engine.getNumInputChannels();
             const auto oChannels = engine.getNumOutputChannels();
 
-            if (iChannels > 0 && iChannels == oChannels) {
+            for (auto i{0u}; i < nFrames; ++i) {
+                float inputSample = 0.0f;
+                for (auto c{0u}; c < iChannels; ++c) {
+                    inputSample += in[c][i];
+                }
                 for (auto c{0u}; c < oChannels; ++c) {
-                    for (auto i{0u}; i < nFrames; ++i) {
-                        out[c][i] = in[c][i];
-                    }
+                    out[c][i] = inputSample;
                 }
             }
 

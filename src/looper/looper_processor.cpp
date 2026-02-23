@@ -16,6 +16,11 @@ namespace looper {
         return "Invalid State";
     }
 
+    std::string TrackStateSnapshot::toString() const
+    {
+        return std::format("nFrames: {}, position: {}, state: {}", nFrames, position, stateToStr(state));
+    }
+
     void LooperProcessor::process(float *const *data, unsigned int nFrames) noexcept
     {
         consumeCommands();
@@ -407,11 +412,6 @@ namespace looper {
         hasNext = true;
         nextState = next;
         framesLeft = when;
-    }
-
-    std::string TrackStateSnapshot::toString() const
-    {
-        return std::format("nFrames: {}, position: {}, state: {}", nFrames, position, stateToStr(state));
     }
 
 }

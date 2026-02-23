@@ -23,6 +23,20 @@ namespace looper {
 
     const char* stateToStr(State state);
 
+    struct TrackStateSnapshot
+    {
+        unsigned int nFrames;
+        unsigned int position;
+        State state;
+
+        [[nodiscard]] std::string toString() const;
+    };
+
+    struct LooperStateSnapshot
+    {
+        std::array<TrackStateSnapshot, NUM_LOOPER_TRACKS> tracks;
+    };
+
     class LooperProcessor
     {
     public:
@@ -108,20 +122,6 @@ namespace looper {
         std::vector<std::vector<float>> sumBuffers_;
 
         LooperMailbox commandMailbox_{128};
-    };
-
-    struct TrackStateSnapshot
-    {
-        unsigned int nFrames;
-        unsigned int position;
-        State state;
-
-        [[nodiscard]] std::string toString() const;
-    };
-
-    struct LooperStateSnapshot
-    {
-        std::array<TrackStateSnapshot, NUM_LOOPER_TRACKS> tracks;
     };
 
 }
