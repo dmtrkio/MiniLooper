@@ -29,6 +29,7 @@ namespace looper {
         if (!data || numChannels_ == 0) return;
 
         processInternal(data, nFrames);
+        updateSnapshot();
     }
 
     void LooperProcessor::onStart()
@@ -53,12 +54,19 @@ namespace looper {
 
         // ensure mailbox is clear from stale messages
         consumeCommands();
+
         clearAll();
+        updateSnapshot();
     }
 
     void LooperProcessor::onStop()
     {
         clearAll();
+    }
+
+    LooperSharedData& LooperProcessor::getSharedData() noexcept
+    {
+        return sharedData_;
     }
 
     State LooperProcessor::getState(int trackIndex) const noexcept
@@ -233,6 +241,20 @@ namespace looper {
         return std::ranges::any_of(tracks_, [](const auto& track) {
             return track.state.load() == State::RECORDING;
         });
+    }
+
+    void LooperProcessor::updateSnapshot() noexcept
+    {
+        auto writer = sharedData_.state.getWriter();
+        auto& snapshot = writer.data();
+
+        for (auto i{0u}; i < getNumLooperTracks(); ++i) {
+            const auto& track = tracks_[i];
+            auto& [nFrames, position, state] = snapshot.tracks[i];
+            nFrames = track.nFrames.load();
+            position = track.position.load();
+            state = track.state.load();
+        }
     }
 
     void LooperProcessor::consumeCommands() noexcept

@@ -21,21 +21,8 @@ namespace looper {
 
         [[nodiscard]] int getNumLooperTracks() const noexcept;
 
-        struct LooperState
-        {
-            unsigned int nFrames;
-            unsigned int position;
-            State state;
-
-            void printState() const noexcept
-            {
-                std::cout << "nFrames: " << nFrames << std::endl;
-                std::cout << "position: " << position << std::endl;
-                std::cout << "state: " << stateToStr(state) << std::endl;
-            }
-        };
-
-        [[nodiscard]] LooperState getLooperState(int trackIndex) const noexcept;
+        void updateSnapshot() noexcept;
+        [[nodiscard]] TrackStateSnapshot getTrackState(int trackIndex) const noexcept;
 
         void startRecording(int trackIndex);
         void stopRecording(int trackIndex);
@@ -47,6 +34,7 @@ namespace looper {
     private:
         class LooperCallback;
         std::shared_ptr<LooperCallback> cb_;
+        LooperStateSnapshot snapshot_;
     };
 
 }

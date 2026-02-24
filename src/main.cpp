@@ -23,7 +23,7 @@ constexpr float outlineThickness = 3.6f;
 
 void looperTrackWidget(float x, float y, float radius, looper::Looper &looper, int trackIndex)
 {
-    const auto [nFramesInLoop, loopPosition, state] = looper.getLooperState(trackIndex);
+    const auto [nFramesInLoop, loopPosition, state] = looper.getTrackState(trackIndex);
 
     const float widgetRadius = radius;
 
@@ -87,11 +87,11 @@ void looperTrackWidget(float x, float y, float radius, looper::Looper &looper, i
 
 void looperWidget(float x, float y, float width, looper::Looper &looper)
 {
+    looper.updateSnapshot();
     const auto nTracks = looper.getNumLooperTracks();
     if (nTracks < 1) return;
 
     const float padding = 5.0f;
-    //const float diameter = width / static_cast<float>(nTracks) - padding * static_cast<float>(nTracks + 1);
     const float diameter = (width - padding) / static_cast<float>(nTracks) - padding;
     const float radius = diameter / 2.0f;
 
@@ -120,7 +120,7 @@ void looperInput(looper::Looper &looper)
     const auto nTracks = looper.getNumLooperTracks();
 
     for (int i = 0; i < nTracks; ++i) {
-        const auto looperState = looper.getLooperState(i);
+        const auto looperState = looper.getTrackState(i);
         if (IsKeyPressed(KEY_ONE + i)) {
             if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT)) {
                 if (looperState.state == looper::State::PAUSED) {

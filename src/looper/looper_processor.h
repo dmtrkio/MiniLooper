@@ -7,6 +7,7 @@
 
 #include "atomic_wrapper.h"
 #include "looper_commands.h"
+#include "triple_buffer.h"
 
 namespace looper {
 
@@ -37,6 +38,11 @@ namespace looper {
         std::array<TrackStateSnapshot, NUM_LOOPER_TRACKS> tracks;
     };
 
+    struct LooperSharedData
+    {
+        TripleBuffer<LooperStateSnapshot> state;
+    };
+
     class LooperProcessor
     {
     public:
@@ -46,6 +52,7 @@ namespace looper {
 
         static constexpr int getNumLooperTracks() { return NUM_LOOPER_TRACKS; }
 
+        LooperSharedData& getSharedData() noexcept;
         LooperMailbox& getCommandMailbox() noexcept;
 
         State getState(int trackIndex) const noexcept;
@@ -65,6 +72,8 @@ namespace looper {
         unsigned int getNextGridDivision(int frameIndex) const noexcept;
         bool isTrackIndexValid(int trackIndex) const noexcept;
         bool isAnyTrackCurrentlyRecording() const noexcept;
+
+        void updateSnapshot() noexcept;
         void consumeCommands() noexcept;
         void processInternal(float *const *data, unsigned int nFrames) noexcept;
         void processTrack(int trackIndex, float *const *data, unsigned int nFrames) noexcept;
@@ -122,6 +131,7 @@ namespace looper {
         std::vector<std::vector<float>> sumBuffers_;
 
         LooperMailbox commandMailbox_{128};
+        LooperSharedData sharedData_{};
     };
 
 }

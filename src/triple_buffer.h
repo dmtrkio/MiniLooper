@@ -30,7 +30,7 @@ public:
         Reader(DataType& data, bool fresh) : data_(data), fresh_{fresh} {}
 
         const DataType& data() const noexcept { return data_; }
-        bool isFresh() const noexcept { return fresh_; }
+        [[nodiscard]] bool isFresh() const noexcept { return fresh_; }
 
     private:
         DataType& data_;
@@ -76,7 +76,7 @@ public:
         back_buffer_ = reinterpret_cast<DataType*>(prev);
     }
 
-    // Raii scoped wrapper around write+commit for ergonomics
+    // RAII scoped wrapper around write+commit for ergonomics
     class ScopedWriter
     {
     public:

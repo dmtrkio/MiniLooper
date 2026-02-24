@@ -71,19 +71,18 @@ namespace looper {
         return cb_->looper.getNumLooperTracks();
     }
 
-    Looper::LooperState Looper::getLooperState(int trackIndex) const noexcept
+    void Looper::updateSnapshot() noexcept
     {
-        const auto &looper = cb_->looper;
+        const auto reader = cb_->looper.getSharedData().state.read();
+        if (reader.isFresh()) {
+            snapshot_ = reader.data();
+        }
+    }
 
-        const LooperState looperState = {
-            .nFrames = looper.getCurrentNumFrames(trackIndex),
-            .position = looper.getCurrentPosition(trackIndex),
-            .state = looper.getState(trackIndex),
-        };
-
-        //if (trackIndex == 1) looperState.printState();
-
-        return looperState;
+    TrackStateSnapshot Looper::getTrackState(int trackIndex) const noexcept
+    {
+        assert(trackIndex >= 0 && trackIndex < getNumLooperTracks());
+        return snapshot_.tracks[trackIndex];
     }
 
     void Looper::startRecording(int trackIndex)
