@@ -4,7 +4,7 @@
 #include <format>
 #include <cassert>
 
-#include "../audio/audio_engine.h"
+#include "audio/audio_engine.h"
 
 namespace looper {
 

@@ -5,7 +5,6 @@
 #include <vector>
 #include <string>
 
-#include "atomic_wrapper.h"
 #include "looper_commands.h"
 #include "triple_buffer.h"
 
