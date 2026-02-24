@@ -21,7 +21,7 @@ namespace looper {
         [[nodiscard]] int getNumLooperTracks() const noexcept;
 
         void updateSnapshot() noexcept;
-        [[nodiscard]] TrackStateSnapshot getTrackState(int trackIndex) const noexcept;
+        [[nodiscard]] const TrackStateSnapshot& getTrackState(int trackIndex) const noexcept;
 
         void startRecording(int trackIndex);
         void stopRecording(int trackIndex);
@@ -31,9 +31,11 @@ namespace looper {
         void clearAll();
 
     private:
+        LooperMailbox& getCommandMailbox() noexcept;
+
         class LooperCallback;
         std::shared_ptr<LooperCallback> cb_;
-        LooperStateSnapshot snapshot_;
+        LooperStateSnapshot snapshot_{};
     };
 
 }

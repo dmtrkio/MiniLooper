@@ -39,12 +39,14 @@ namespace looper {
 
     struct LooperSharedData
     {
+        LooperMailbox commandMailbox{128};
         TripleBuffer<LooperStateSnapshot> state;
     };
 
     class LooperProcessor
     {
     public:
+        // lifetime callbacks
         void process(float *const *data, unsigned int nFrames) noexcept;
         void onStart();
         void onStop();
@@ -52,7 +54,8 @@ namespace looper {
         static constexpr int getNumLooperTracks() { return NUM_LOOPER_TRACKS; }
 
         LooperSharedData& getSharedData() noexcept;
-        LooperMailbox& getCommandMailbox() noexcept;
+
+        // All the methods below are not thread-safe, they are meant to be used in the same thread where process() is called
 
         State getState(int trackIndex) const noexcept;
         unsigned int getCurrentPosition(int trackIndex) const noexcept;
@@ -64,7 +67,6 @@ namespace looper {
         void clear(int trackIndex) noexcept;
         void pause(int trackIndex) noexcept;
         void resume(int trackIndex) noexcept;
-
         void clearAll() noexcept;
 
     private:
@@ -129,7 +131,6 @@ namespace looper {
 
         std::vector<std::vector<float>> sumBuffers_;
 
-        LooperMailbox commandMailbox_{128};
         LooperSharedData sharedData_{};
     };
 

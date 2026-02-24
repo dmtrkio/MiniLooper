@@ -92,11 +92,6 @@ namespace looper {
         return getCurrentNumFrames(trackIndex) == 0;
     }
 
-    LooperMailbox& LooperProcessor::getCommandMailbox() noexcept
-    {
-        return commandMailbox_;
-    }
-
     void LooperProcessor::startRecording(int trackIndex) noexcept
     {
         if (!isTrackIndexValid(trackIndex)) return;
@@ -258,7 +253,7 @@ namespace looper {
 
     void LooperProcessor::consumeCommands() noexcept
     {
-        commandMailbox_.consumeAll([&](const LooperCommand& cmd) {
+        sharedData_.commandMailbox.consumeAll([&](const LooperCommand& cmd) {
             cmd.apply(*this);
         });
     }

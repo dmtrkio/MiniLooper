@@ -80,7 +80,7 @@ namespace looper {
         }
     }
 
-    TrackStateSnapshot Looper::getTrackState(int trackIndex) const noexcept
+    const TrackStateSnapshot& Looper::getTrackState(int trackIndex) const noexcept
     {
         assert(trackIndex >= 0 && trackIndex < getNumLooperTracks());
         return snapshot_.tracks[trackIndex];
@@ -88,38 +88,43 @@ namespace looper {
 
     void Looper::startRecording(int trackIndex)
     {
-        auto &looperMailbox = cb_->looper.getCommandMailbox();
+        auto &looperMailbox = getCommandMailbox();
         looperMailbox.tryPush(looper::LooperCommand::startRecording(trackIndex));
     }
 
     void Looper::stopRecording(int trackIndex)
     {
-        auto &looperMailbox = cb_->looper.getCommandMailbox();
+        auto &looperMailbox = getCommandMailbox();
         looperMailbox.tryPush(looper::LooperCommand::stopRecording(trackIndex));
     }
 
     void Looper::clear(int trackIndex)
     {
-        auto &looperMailbox = cb_->looper.getCommandMailbox();
+        auto &looperMailbox = getCommandMailbox();
         looperMailbox.tryPush(looper::LooperCommand::clear(trackIndex));
     }
 
     void Looper::pause(int trackIndex)
     {
-        auto &looperMailbox = cb_->looper.getCommandMailbox();
+        auto &looperMailbox = getCommandMailbox();
         looperMailbox.tryPush(looper::LooperCommand::pause(trackIndex));
     }
 
     void Looper::resume(int trackIndex)
     {
-        auto &looperMailbox = cb_->looper.getCommandMailbox();
+        auto &looperMailbox = getCommandMailbox();
         looperMailbox.tryPush(looper::LooperCommand::resume(trackIndex));
     }
 
     void Looper::clearAll()
     {
-        auto &looperMailbox = cb_->looper.getCommandMailbox();
+        auto &looperMailbox = getCommandMailbox();
         looperMailbox.tryPush(LooperCommand::clearAllTracks());
+    }
+
+    LooperMailbox& Looper::getCommandMailbox() noexcept
+    {
+        return cb_->looper.getSharedData().commandMailbox;
     }
 
 }
