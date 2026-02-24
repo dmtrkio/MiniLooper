@@ -115,6 +115,7 @@ namespace looper {
         struct Track
         {
             void init(unsigned int numChannels, unsigned int maxFrames) noexcept;
+            bool isEmpty() const noexcept;
             bool tick();
             void scheduleTransition(State next, unsigned int when);
 

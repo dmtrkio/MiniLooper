@@ -89,7 +89,8 @@ namespace looper {
 
     bool LooperProcessor::isEmpty(int trackIndex) const noexcept
     {
-        return getCurrentNumFrames(trackIndex) == 0;
+        if (!isTrackIndexValid(trackIndex)) return true;
+        return tracks_[trackIndex].isEmpty();
     }
 
     void LooperProcessor::startRecording(int trackIndex) noexcept
@@ -132,7 +133,7 @@ namespace looper {
 
         switch (track.state) {
             case State::RECORDING: {
-                if (track.nFrames == 0) {
+                if (track.isEmpty()) {
                     if (!transport_.isTempoSet()) {
                         transport_.setBarLength(track.position, maxFrames_);
                         track.nFrames = track.position;
@@ -168,7 +169,7 @@ namespace looper {
         position = 0;
         nFrames = 0;
 
-        if (std::ranges::all_of(tracks_, [](const auto& track) { return track.nFrames == 0; })) {
+        if (std::ranges::all_of(tracks_, [](const auto& track) { return track.isEmpty(); })) {
             transport_.reset(maxFrames_);
         }
     }
@@ -201,7 +202,6 @@ namespace looper {
 
     void LooperProcessor::clearAll() noexcept
     {
-        transport_.reset(maxFrames_);
         for (int i = 0; i < getNumLooperTracks(); ++i)
             clear(i);
     }
@@ -212,8 +212,8 @@ namespace looper {
         int distance = target - frameIndex;
 
         while (target > transport_.barLength) {
-            int newTarget = target / 2;
-            int newDistance = newTarget - frameIndex;
+            const auto newTarget = target / 2;
+            const auto newDistance = newTarget - frameIndex;
 
             if ((newDistance < 0) || (newDistance > distance)) break;
 
@@ -284,7 +284,7 @@ namespace looper {
 
         auto &track = tracks_[trackIndex];
 
-        const auto wrapAround = track.nFrames > 0 ? track.nFrames : (transport_.largestPossibleLoopLength + 1);
+        const auto wrapAround = track.isEmpty() ? (transport_.largestPossibleLoopLength + 1) : track.nFrames;
 
         for (auto i{0u}; i < nFrames; ++i) {
             track.tick();
@@ -313,7 +313,7 @@ namespace looper {
             track.position++;
             if (track.position >= wrapAround) {
                 track.position = 0;
-                if (track.nFrames == 0) {
+                if (track.isEmpty()) {
                     if (track.state == State::RECORDING) {
                         track.nFrames = wrapAround;
                         if (!transport_.isTempoSet()) {
@@ -334,6 +334,11 @@ namespace looper {
 
         transitionTimer.hasNext = false;
         transitionTimer.framesLeft = 0;
+    }
+
+    bool LooperProcessor::Track::isEmpty() const noexcept
+    {
+        return nFrames == 0;
     }
 
     bool LooperProcessor::Track::tick()
@@ -386,7 +391,7 @@ namespace looper {
         currentFrame = 0;
         barLength = nFrames;
 
-        if (nFrames == 0) {
+        if (barLength == 0) {
             largestPossibleLoopLength = maxFrames;
             return;
         }
