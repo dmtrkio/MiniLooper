@@ -39,14 +39,14 @@ FetchContent_MakeAvailable(portaudio)
 #set(RTAUDIO_BUILD_TESTING OFF CACHE INTERNAL "")
 #FetchContent_MakeAvailable(rtaudio)
 
-## libremidi - midi library
-#FetchContent_Declare(
-#    libremidi
-#    GIT_REPOSITORY https://github.com/celtera/libremidi.git
-#    GIT_TAG master
-#)
-#set(LIBREMIDI_NO_JACK ON CACHE INTERNAL "")
-#FetchContent_MakeAvailable(libremidi)
+# libremidi - midi library
+FetchContent_Declare(
+    libremidi
+    GIT_REPOSITORY https://github.com/celtera/libremidi.git
+    GIT_TAG master
+)
+set(LIBREMIDI_NO_JACK ON CACHE INTERNAL "")
+FetchContent_MakeAvailable(libremidi)
 
 ## kissfft - FFT(Fast Fourier Transform) library
 #FetchContent_Declare(
@@ -103,7 +103,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     #rtaudio
     raylib
     faust_dsp_lib
-    #libremidi
+    libremidi
     #kissfft 
 )
 
