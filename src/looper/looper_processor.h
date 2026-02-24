@@ -117,9 +117,9 @@ namespace looper {
             bool tick();
             void scheduleTransition(State next, unsigned int when);
 
-            RelaxedAtomic<State> state{State::CLEARED};
-            RelaxedAtomic<unsigned int> position{0};
-            RelaxedAtomic<unsigned int> nFrames{0};
+            State state{State::CLEARED};
+            unsigned int position{0};
+            unsigned int nFrames{0};
 
             std::vector<std::vector<float>> buffers;
 
