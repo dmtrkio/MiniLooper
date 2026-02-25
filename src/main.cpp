@@ -149,7 +149,15 @@ using MidiQueue = SpscMailbox<midi::MidiMessage>;
 void drainMidiQueue(MidiQueue &midiQueue, looper::Looper &looper)
 {
     midiQueue.consumeAll([&](const midi::MidiMessage& msg) {
-        std::cout << msg.typeName() << std::endl;
+        if (msg.isNoteOn()) {
+            const int trackIndex = 0;
+            const auto looperState = looper.getTrackState(trackIndex);
+            if (looperState.state != looper::State::RECORDING) {
+                looper.startRecording(trackIndex);
+            } else {
+                looper.stopRecording(trackIndex);
+            }
+        }
     });
 }
 
@@ -164,7 +172,7 @@ int main()
         });
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
-        exit(EXIT_FAILURE);
+        std::cerr << "Failed to start midi engine. Proceeding without it.\n";
     }
 
     std::cout << "Midi engine started" << std::endl;
