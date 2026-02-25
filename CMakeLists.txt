@@ -23,44 +23,6 @@ FetchContent_Declare(
 set(PA_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(portaudio)
 
-## RtAudio - audio io library
-#FetchContent_Declare(
-#    rtaudio
-#    GIT_REPOSITORY https://github.com/thestk/rtaudio.git
-#    GIT_TAG master
-#)
-#set(RTAUDIO_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-#if(WIN32)
-#    set(RTAUDIO_API_ASIO ON CACHE INTERNAL "")
-#    set(RTAUDIO_API_DS ON CACHE INTERNAL "")
-#else()
-#    set(RTAUDIO_API_JACK OFF CACHE INTERNAL "")
-#endif()
-#set(RTAUDIO_BUILD_TESTING OFF CACHE INTERNAL "")
-#FetchContent_MakeAvailable(rtaudio)
-
-# libremidi - midi library
-FetchContent_Declare(
-    libremidi
-    GIT_REPOSITORY https://github.com/celtera/libremidi.git
-    GIT_TAG master
-)
-set(LIBREMIDI_NO_JACK ON CACHE INTERNAL "")
-FetchContent_MakeAvailable(libremidi)
-
-## kissfft - FFT(Fast Fourier Transform) library
-#FetchContent_Declare(
-#    kissfft
-#    GIT_REPOSITORY https://github.com/mborgerding/kissfft.git
-#    GIT_TAG master
-#)
-#set(KISSFFT_STATIC ON CACHE INTERNAL "")
-#set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "")
-#set(KISSFFT_PKGCONFIG OFF CACHE INTERNAL "")
-#set(KISSFFT_TEST OFF CACHE INTERNAL "")
-#set(KISSFFT_TOOLS OFF CACHE INTERNAL "")
-#FetchContent_MakeAvailable(kissfft)
-
 # Raylib - windowing/inputs/graphics library
 FetchContent_Declare(
     raylib
@@ -100,11 +62,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 target_link_libraries(${PROJECT_NAME} PRIVATE
     readerwriterqueue
     portaudio
-    #rtaudio
     raylib
     faust_dsp_lib
-    libremidi
-    #kissfft 
 )
 
 # Compile options

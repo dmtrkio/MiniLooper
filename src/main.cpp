@@ -2,29 +2,12 @@
 #include <iostream>
 #include <cmath>
 
-#include <libremidi/libremidi.hpp>
-
-#if defined(_WIN32) && __has_include(<winrt/base.h>)
-  #include <winrt/base.h>
-#endif
-
 #include <raylib.h>
 #include <raymath.h>
 
 #include "audio/audio_engine.h"
 #include "looper/looper.h"
-
-inline std::ostream& operator<<(std::ostream& s, const libremidi::message& message)
-{
-    auto nBytes = message.size();
-    s << "[ ";
-    for (auto i = 0U; i < nBytes; i++)
-        s << std::hex << (int)message[i] << std::dec << " ";
-    s << "]";
-    if (nBytes > 0)
-        s << " ; stamp = " << message.timestamp;
-    return s;
-}
+#include "midi/midi.h"
 
 constexpr Color backgroundColor = {50, 50, 60, 255};
 constexpr Color outlineColor = BLACK;
@@ -163,35 +146,12 @@ void looperInput(looper::Looper &looper)
 
 int main()
 {
-#if defined(_WIN32) && __has_include(<winrt/base.h>)
-    // Necessary for using WinUWP and WinMIDI, must be done as early as possible in your main()
-    winrt::init_apartment();
-#endif
-
-    for (const auto& api : libremidi::available_apis()) {
-        std::cout << "API name: " << libremidi::get_api_name(api) << std::endl;
-        libremidi::observer midi{{.track_hardware = true, .track_virtual = true}, libremidi::observer_configuration_for(api)};
-
-        std::cout << "Available midi input devices: " << std::endl;
-        for (const auto& port : midi.get_input_ports()) {
-            std::cout << std::endl;
-            //std::cout << "API: " << libremidi::get_api_name(port.api) << std::endl;
-            std::cout << "Port: " << port.port << std::endl;
-            std::cout << "Manufacturer: " << port.manufacturer << std::endl;
-            std::cout << "Product: " << port.product << std::endl;
-            std::cout << "Serial: " << port.serial << std::endl;
-            std::cout << "Device name: " << port.device_name << std::endl;
-        }
-        std::cout << std::endl;
+    try {
+        midi::MidiEngine midi;
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        exit(EXIT_FAILURE);
     }
-
-    libremidi::midi_in midi_in{{.on_message = [](const libremidi::message& message) {
-        std::cout << message << std::endl;
-    }}};
-
-    libremidi::observer observer;
-    if (auto err = midi_in.open_port(observer.get_input_ports()[0]); err != stdx::error{})
-        err.throw_exception();
 
     looper::Looper looper;
 
