@@ -8,8 +8,11 @@
 #include "porttime.h"
 
 #include "midi_message.h"
+#include "spsc_mailbox.h"
 
 namespace midi {
+
+    using MidiQueue = SpscMailbox<midi::MidiMessage>;
 
     using MidiInputCallback = std::function<void(int, MidiMessage)>;
 

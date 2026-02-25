@@ -5,8 +5,10 @@
 #include <raylib.h>
 #include <raymath.h>
 
+#include "timer.h"
 #include "audio/audio_engine.h"
 #include "looper/looper.h"
+#include "midi/foot_switch.h"
 #include "midi/midi.h"
 
 constexpr Color backgroundColor = {50, 50, 60, 255};
@@ -144,26 +146,9 @@ void looperInput(looper::Looper &looper)
     }
 }
 
-using MidiQueue = SpscMailbox<midi::MidiMessage>;
-
-void drainMidiQueue(MidiQueue &midiQueue, looper::Looper &looper)
-{
-    midiQueue.consumeAll([&](const midi::MidiMessage& msg) {
-        if (msg.isNoteOn()) {
-            const int trackIndex = 0;
-            const auto looperState = looper.getTrackState(trackIndex);
-            if (looperState.state != looper::State::RECORDING) {
-                looper.startRecording(trackIndex);
-            } else {
-                looper.stopRecording(trackIndex);
-            }
-        }
-    });
-}
-
 int main()
 {
-    MidiQueue midiQueue{64};
+    midi::MidiQueue midiQueue{64};
     std::unique_ptr<midi::MidiEngine> midiEngine;
 
     try {
@@ -202,14 +187,44 @@ int main()
     SetTargetFPS(60);
     SetExitKey(KEY_ESCAPE);
 
+    midi::FootSwitch footSwitch;
+    Timer pressTimer;
+    pressTimer.onTimeout = [&]() {
+        const int trackIndex = 0;
+        const auto looperState = looper.getTrackState(trackIndex);
+        if (looperState.state != looper::State::RECORDING) {
+            looper.startRecording(trackIndex);
+        } else {
+            looper.stopRecording(trackIndex);
+        }
+
+        std::cout << "Foot switch pressed\n";
+    };
+    pressTimer.isOneShot = true;
+    pressTimer.timeoutSecs = 0.4f;
+
     while (!WindowShouldClose()) {
+        pressTimer.tick(GetFrameTime());
+        midiQueue.consumeAll([&](const midi::MidiMessage& msg) {
+            if (footSwitch.update(msg)) {
+                if (pressTimer.isRunning()) {
+                    pressTimer.stop();
+
+                    looper.clearAll();
+
+                    std::cout << "Foot switch double pressed\n";
+                } else {
+                    pressTimer.start();
+                }
+            }
+        });
+
         BeginDrawing();
         ClearBackground(backgroundColor);
 
         const float x = static_cast<float>(GetScreenWidth()) / 2.0f;
         const float y = static_cast<float>(GetScreenHeight()) / 2.0f;
 
-        drainMidiQueue(midiQueue, looper);
         looperWidget(x, y, 440.0f, looper);
         looperInput(looper);
 
