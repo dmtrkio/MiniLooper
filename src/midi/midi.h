@@ -1,16 +1,22 @@
 #pragma once
 
 #include <atomic>
+#include <functional>
+#include <utility>
 
 #include "portmidi.h"
 #include "porttime.h"
 
+#include "midi_message.h"
+
 namespace midi {
+
+    using MidiInputCallback = std::function<void(int, MidiMessage)>;
 
     class MidiEngine
     {
     public:
-        MidiEngine()
+        explicit MidiEngine(MidiInputCallback  inputCallback) : inputCallback_(std::move(inputCallback))
         {
             if (Pt_Start(1, &timerCallback, this) != ptNoError) {
                 throw std::runtime_error("PortTime error");
@@ -57,9 +63,6 @@ namespace midi {
             }
 
             active_.store(true, std::memory_order_release);
-
-            std::cout << Pt_Started() << std::endl;
-            std::cout << active_.load() << std::endl;
         }
 
         ~MidiEngine()
@@ -72,24 +75,19 @@ namespace midi {
     private:
         static void timerCallback(PtTimestamp timestamp, void *userData) {
             const auto* midi = static_cast<MidiEngine*>(userData);
+
             if (!midi->active_.load(std::memory_order_acquire)) {
                 return;
             }
 
-            std::cout << "timeout" << std::endl;
-
             PmEvent event;
-            while (const auto result = Pm_Read(midi->inputStream_, &event, 1)) {
-                if (result == pmBufferOverflow) continue;
-
-                const auto status = Pm_MessageStatus(event.message);
-                const auto data1 = Pm_MessageData1(event.message);
-                const auto data2 = Pm_MessageData2(event.message);
-
-                std::cout << timestamp << ' ' << status << ' ' << data1 << ' ' << data2 << std::endl;
+            while (true) {
+                if (Pm_Read(midi->inputStream_, &event, 1) <= 0) break;
+                midi->inputCallback_(timestamp, MidiMessage{event.message});
             }
         }
 
+        MidiInputCallback inputCallback_;
         std::atomic<bool> active_{false};
         PmDeviceID deviceId_{pmNoDevice};
         PmStream *inputStream_{nullptr};

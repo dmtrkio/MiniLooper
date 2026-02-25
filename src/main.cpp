@@ -144,10 +144,23 @@ void looperInput(looper::Looper &looper)
     }
 }
 
+using MidiQueue = SpscMailbox<midi::MidiMessage>;
+
+void drainMidiQueue(MidiQueue &midiQueue, looper::Looper &looper)
+{
+    midiQueue.consumeAll([&](const midi::MidiMessage& msg) {
+        std::cout << msg.typeName() << std::endl;
+    });
+}
+
 int main()
 {
+    MidiQueue midiQueue{64};
+
     try {
-        midi::MidiEngine midi;
+        midi::MidiEngine midi([&](int, midi::MidiMessage msg) {
+            midiQueue.tryPush(msg);
+        });
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         exit(EXIT_FAILURE);
@@ -187,6 +200,7 @@ int main()
         const float x = static_cast<float>(GetScreenWidth()) / 2.0f;
         const float y = static_cast<float>(GetScreenHeight()) / 2.0f;
 
+        drainMidiQueue(midiQueue, looper);
         looperWidget(x, y, 440.0f, looper);
         looperInput(looper);
 
