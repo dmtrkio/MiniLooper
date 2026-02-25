@@ -153,6 +153,8 @@ int main()
         exit(EXIT_FAILURE);
     }
 
+    std::cout << "Midi engine started" << std::endl;
+
     looper::Looper looper;
 
     auto& engine = audio::AudioEngine::getInstance();

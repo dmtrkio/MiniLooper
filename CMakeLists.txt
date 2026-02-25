@@ -23,6 +23,14 @@ FetchContent_Declare(
 set(PA_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(portaudio)
 
+FetchContent_Declare(
+    portmidi
+    GIT_REPOSITORY https://github.com/PortMidi/portmidi.git
+    GIT_TAG master
+)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(portmidi)
+
 # Raylib - windowing/inputs/graphics library
 FetchContent_Declare(
     raylib
@@ -56,12 +64,14 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${portmidi_SOURCE_DIR}/porttime
 )
 
 # Link libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE
     readerwriterqueue
     portaudio
+    portmidi
     raylib
     faust_dsp_lib
 )
