@@ -156,9 +156,10 @@ void drainMidiQueue(MidiQueue &midiQueue, looper::Looper &looper)
 int main()
 {
     MidiQueue midiQueue{64};
+    std::unique_ptr<midi::MidiEngine> midiEngine;
 
     try {
-        midi::MidiEngine midi([&](int, midi::MidiMessage msg) {
+        midiEngine = std::make_unique<midi::MidiEngine>([&](int, midi::MidiMessage msg) {
             midiQueue.tryPush(msg);
         });
     } catch (const std::exception& e) {
