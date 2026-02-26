@@ -155,12 +155,11 @@ int main()
         midiEngine = std::make_unique<midi::MidiEngine>([&](int, midi::MidiMessage msg) {
             midiQueue.tryPush(msg);
         });
+        std::cout << "Midi engine started" << std::endl;
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         std::cerr << "Failed to start midi engine. Proceeding without it.\n";
     }
-
-    std::cout << "Midi engine started" << std::endl;
 
     looper::Looper looper;
 
