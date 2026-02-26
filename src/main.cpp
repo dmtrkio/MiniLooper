@@ -148,20 +148,19 @@ void looperInput(looper::Looper &looper)
 
 int main()
 {
-    midi::MidiQueue midiQueue{64};
+    looper::Looper looper;
+
     std::unique_ptr<midi::MidiEngine> midiEngine;
 
     try {
-        midiEngine = std::make_unique<midi::MidiEngine>([&](int, midi::MidiMessage msg) {
-            midiQueue.tryPush(msg);
+        midiEngine = std::make_unique<midi::MidiEngine>([&looper](int, midi::MidiMessage msg) {
+            looper.sendMidiMessage(msg);
         });
         std::cout << "Midi engine started" << std::endl;
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         std::cerr << "Failed to start midi engine. Proceeding without it.\n";
     }
-
-    looper::Looper looper;
 
     auto& engine = audio::AudioEngine::getInstance();
     engine.setSampleRate(48000);
@@ -186,38 +185,7 @@ int main()
     SetTargetFPS(60);
     SetExitKey(KEY_ESCAPE);
 
-    midi::FootSwitch footSwitch;
-    timer::Timer pressTimer;
-    pressTimer.setOnTimeout([&] {
-        const int trackIndex = 0;
-        const auto looperState = looper.getTrackState(trackIndex);
-        if (looperState.state != looper::State::RECORDING) {
-            looper.startRecording(trackIndex);
-        } else {
-            looper.stopRecording(trackIndex);
-        }
-
-        std::cout << "Foot switch pressed\n";
-    });
-    pressTimer.setOneShot(true);
-    pressTimer.setTimeout(0.4f);
-
     while (!WindowShouldClose()) {
-        pressTimer.tick(GetFrameTime());
-        midiQueue.consumeAll([&](const midi::MidiMessage& msg) {
-            if (footSwitch.update(msg)) {
-                if (pressTimer.isRunning()) {
-                    pressTimer.stop();
-
-                    looper.clearAll();
-
-                    std::cout << "Foot switch double pressed\n";
-                } else {
-                    pressTimer.start();
-                }
-            }
-        });
-
         BeginDrawing();
         ClearBackground(backgroundColor);
 

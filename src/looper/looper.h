@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "looper_processor.h"
+#include "midi/midi_message.h"
 
 namespace looper {
 
@@ -29,6 +30,8 @@ namespace looper {
         void pause(int trackIndex);
         void resume(int trackIndex);
         void clearAll();
+
+        bool sendMidiMessage(const midi::MidiMessage& message);
 
     private:
         LooperMailbox& getCommandMailbox() noexcept;

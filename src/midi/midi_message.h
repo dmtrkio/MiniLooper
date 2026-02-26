@@ -6,8 +6,9 @@
 
 #include "portmidi.h"
 
-namespace midi {
+#include "spsc_mailbox.h"
 
+namespace midi {
     class MidiMessage
     {
     public:
@@ -146,4 +147,5 @@ namespace midi {
         Type type_{Type::Unknown};
     };
 
+    using MidiQueue = SpscMailbox<MidiMessage>;
 }

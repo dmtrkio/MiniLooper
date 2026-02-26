@@ -8,6 +8,8 @@
 #include "audio/audio_engine.h"
 #include "looper_processor.h"
 #include "looper_commands.h"
+#include "midi/foot_switch.h"
+#include "timer.h"
 
 namespace looper {
 
@@ -30,6 +32,11 @@ namespace looper {
                 }
             }
 
+            for (auto i{0u}; i < nFrames; ++i)
+                pressTimer.tick();
+
+            drainMidiQueue();
+
             looper.process(out, nFrames);
 
             /*const auto sr = static_cast<float>(engine.getSampleRate());
@@ -49,16 +56,50 @@ namespace looper {
         void onStart() override
         {
             //std::cout << "onStart()\n";
+
             looper.onStart();
+
+            pressTimer.setOnTimeout([&] {
+                const int trackIndex = 0;
+                if (looper.getState(trackIndex) != looper::State::RECORDING) {
+                    looper.startRecording(trackIndex);
+                } else {
+                    looper.stopRecording(trackIndex);
+                }
+            });
+            pressTimer.setOneShot(true);
+            const auto sampleRate = static_cast<float>(audio::AudioEngine::getInstance().getSampleRate());
+            pressTimer.setTimeoutSecs(sampleRate, 0.15f);
+            pressTimer.stop();
         }
 
         void onStop() override
         {
             //std::cout << "onStop()\n";
+
             looper.onStop();
+
+            pressTimer.stop();
+        }
+
+        void drainMidiQueue()
+        {
+            midiQueue.consumeAll([&](const midi::MidiMessage& msg) {
+                if (footSwitch.update(msg)) {
+                    if (pressTimer.isRunning()) {
+                        pressTimer.stop();
+                        looper.clearAll();
+                    } else {
+                        pressTimer.start();
+                    }
+                }
+            });
         }
 
         looper::LooperProcessor looper;
+        midi::MidiQueue midiQueue{64};
+        midi::FootSwitch footSwitch;
+        timer::AudioRateTimer pressTimer;
     };
 
     Looper::Looper() : cb_(std::make_shared<LooperCallback>())
@@ -120,6 +161,11 @@ namespace looper {
     {
         auto &looperMailbox = getCommandMailbox();
         looperMailbox.tryPush(LooperCommand::clearAllTracks());
+    }
+
+    bool Looper::sendMidiMessage(const midi::MidiMessage& message)
+    {
+        return cb_->midiQueue.tryPush(message);
     }
 
     LooperMailbox& Looper::getCommandMailbox() noexcept
