@@ -187,8 +187,8 @@ int main()
     SetExitKey(KEY_ESCAPE);
 
     midi::FootSwitch footSwitch;
-    Timer pressTimer;
-    pressTimer.onTimeout = [&]() {
+    timer::Timer pressTimer;
+    pressTimer.setOnTimeout([&] {
         const int trackIndex = 0;
         const auto looperState = looper.getTrackState(trackIndex);
         if (looperState.state != looper::State::RECORDING) {
@@ -198,9 +198,9 @@ int main()
         }
 
         std::cout << "Foot switch pressed\n";
-    };
-    pressTimer.isOneShot = true;
-    pressTimer.timeoutSecs = 0.4f;
+    });
+    pressTimer.setOneShot(true);
+    pressTimer.setTimeout(0.4f);
 
     while (!WindowShouldClose()) {
         pressTimer.tick(GetFrameTime());
