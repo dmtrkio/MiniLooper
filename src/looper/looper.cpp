@@ -32,9 +32,6 @@ namespace looper {
                 }
             }
 
-            for (auto i{0u}; i < nFrames; ++i)
-                pressTimer.tick();
-
             drainMidiQueue();
 
             looper.process(out, nFrames);
@@ -58,19 +55,6 @@ namespace looper {
             //std::cout << "onStart()\n";
 
             looper.onStart();
-
-            pressTimer.setOnTimeout([&] {
-                const int trackIndex = 0;
-                if (looper.getState(trackIndex) != looper::State::RECORDING) {
-                    looper.startRecording(trackIndex);
-                } else {
-                    looper.stopRecording(trackIndex);
-                }
-            });
-            pressTimer.setOneShot(true);
-            const auto sampleRate = static_cast<float>(audio::AudioEngine::getInstance().getSampleRate());
-            pressTimer.setTimeoutSecs(sampleRate, 0.15f);
-            pressTimer.stop();
         }
 
         void onStop() override
@@ -78,19 +62,17 @@ namespace looper {
             //std::cout << "onStop()\n";
 
             looper.onStop();
-
-            pressTimer.stop();
         }
 
         void drainMidiQueue()
         {
             midiQueue.consumeAll([&](const midi::MidiMessage& msg) {
                 if (footSwitch.update(msg)) {
-                    if (pressTimer.isRunning()) {
-                        pressTimer.stop();
-                        looper.clearAll();
+                    constexpr int trackIndex = 0;
+                    if (looper.getState(trackIndex) != looper::State::RECORDING) {
+                        looper.startRecording(trackIndex);
                     } else {
-                        pressTimer.start();
+                        looper.stopRecording(trackIndex);
                     }
                 }
             });
@@ -99,7 +81,6 @@ namespace looper {
         looper::LooperProcessor looper;
         midi::MidiQueue midiQueue{64};
         midi::FootSwitch footSwitch;
-        timer::AudioRateTimer pressTimer;
     };
 
     Looper::Looper() : cb_(std::make_shared<LooperCallback>())
