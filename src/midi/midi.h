@@ -19,12 +19,10 @@ namespace midi {
     class MidiEngine
     {
     public:
-        explicit MidiEngine(MidiInputCallback  inputCallback) : inputCallback_(std::move(inputCallback))
+        explicit MidiEngine(MidiInputCallback  inputCallback)
+            : timer_(&timerCallback, this),
+              inputCallback_(std::move(inputCallback))
         {
-            if (Pt_Start(1, &timerCallback, this) != ptNoError) {
-                throw std::runtime_error("PortTime error");
-            }
-
             if (const auto err = Pm_Initialize(); err != pmNoError) {
                 throw std::runtime_error(Pm_GetErrorText(err));
             }
@@ -70,7 +68,6 @@ namespace midi {
 
         ~MidiEngine()
         {
-            Pt_Stop();
             if (inputStream_) Pm_Close(inputStream_);
             Pm_Terminate();
         }
@@ -90,6 +87,25 @@ namespace midi {
             }
         }
 
+        struct PortTimeWrapper
+        {
+            PortTimeWrapper(PtCallback* cb, MidiEngine* engine)
+            {
+                if (Pt_Start(1, cb, engine) != ptNoError) {
+                    throw std::runtime_error("PortTime error");
+                }
+            }
+
+            ~PortTimeWrapper()
+            {
+                if (!Pt_Started()) return;
+                if (const auto err = Pt_Stop(); err != ptNoError) {
+                    std::cerr << "PortTime error when stopping timer: " << err << std::endl;
+                }
+            }
+        };
+
+        PortTimeWrapper timer_;
         MidiInputCallback inputCallback_;
         std::atomic<bool> active_{false};
         PmDeviceID deviceId_{pmNoDevice};
