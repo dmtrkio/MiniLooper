@@ -13,7 +13,7 @@ namespace midi {
 
         bool update(const midi::MidiMessage& msg)
         {
-            if (const auto control = msg.controller(); control.has_value()) {
+            if (const auto control = msg.control(); control.has_value()) {
                 if (*control != cc_) return false;
                 const auto controlValue = *msg.value();
                 const bool pressed = (controlValue >= 64);

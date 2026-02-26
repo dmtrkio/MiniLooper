@@ -12,7 +12,7 @@ namespace midi {
     class MidiMessage
     {
     public:
-        enum class Type : uint8_t
+        enum class Type : std::uint8_t
         {
             NoteOff,
             NoteOn,
@@ -35,10 +35,10 @@ namespace midi {
 
         [[nodiscard]] PmMessage raw() const { return raw_; }
 
-        [[nodiscard]] uint8_t status() const { return status_; }
-        [[nodiscard]] uint8_t channel() const { return channel_; }
-        [[nodiscard]] uint8_t data1() const { return data1_; }
-        [[nodiscard]] uint8_t data2() const { return data2_; }
+        [[nodiscard]] std::uint8_t status() const { return status_; }
+        [[nodiscard]] std::uint8_t channel() const { return channel_; }
+        [[nodiscard]] std::uint8_t data1() const { return data1_; }
+        [[nodiscard]] std::uint8_t data2() const { return data2_; }
 
         [[nodiscard]] Type type() const { return type_; }
 
@@ -48,35 +48,35 @@ namespace midi {
         [[nodiscard]] bool isProgram() const { return type_ == Type::ProgramChange; }
         [[nodiscard]] bool isPitchBend() const { return type_ == Type::PitchBend; }
 
-        [[nodiscard]] std::optional<uint8_t> note() const
+        [[nodiscard]] std::optional<std::uint8_t> note() const
         {
             if (type_ == Type::NoteOn || type_ == Type::NoteOff || type_ == Type::PolyAftertouch)
                 return data1_;
             return std::nullopt;
         }
 
-        [[nodiscard]] std::optional<uint8_t> velocity() const
+        [[nodiscard]] std::optional<std::uint8_t> velocity() const
         {
             if (type_ == Type::NoteOn || type_ == Type::NoteOff)
                 return data2_;
             return std::nullopt;
         }
 
-        [[nodiscard]] std::optional<uint8_t> controller() const
+        [[nodiscard]] std::optional<std::uint8_t> control() const
         {
             if (type_ == Type::ControlChange)
                 return data1_;
             return std::nullopt;
         }
 
-        [[nodiscard]] std::optional<uint8_t> value() const
+        [[nodiscard]] std::optional<std::uint8_t> value() const
         {
             if (type_ == Type::ControlChange || type_ == Type::ChannelAftertouch)
                 return data2_;
             return std::nullopt;
         }
 
-        [[nodiscard]] std::optional<uint8_t> program() const
+        [[nodiscard]] std::optional<std::uint8_t> program() const
         {
             if (type_ == Type::ProgramChange)
                 return data1_;
@@ -84,11 +84,11 @@ namespace midi {
         }
 
         // 14-bit pitch bend centered at 0
-        [[nodiscard]] std::optional<int16_t> pitchBend() const
+        [[nodiscard]] std::optional<std::int16_t> pitchBend() const
         {
             if (type_ == Type::PitchBend) {
-                int value14 = (data2_ << 7) | data1_;
-                return static_cast<int16_t>(value14 - 8192);
+                const int value14 = (data2_ << 7) | data1_;
+                return static_cast<std::int16_t>(value14 - 8192);
             }
             return std::nullopt;
         }
@@ -118,7 +118,7 @@ namespace midi {
 
             if ((status_ & 0xF0) != 0xF0) {
                 channel_ = status_ & 0x0F;
-                const uint8_t code = status_ & 0xF0;
+                const std::uint8_t code = status_ & 0xF0;
 
                 switch (code) {
                     case 0x80: type_ = Type::NoteOff; break;
@@ -140,10 +140,10 @@ namespace midi {
         }
 
         PmMessage raw_{0};
-        uint8_t status_{0};
-        uint8_t channel_{0};
-        uint8_t data1_{0};
-        uint8_t data2_{0};
+        std::uint8_t status_{0};
+        std::uint8_t channel_{0};
+        std::uint8_t data1_{0};
+        std::uint8_t data2_{0};
         Type type_{Type::Unknown};
     };
 
