@@ -64,7 +64,15 @@ namespace midi {
 
         ~MidiEngine()
         {
-            if (inputStream_) Pm_Close(inputStream_);
+            active_.store(false, std::memory_order_release);
+
+            timer_.stop();
+
+            if (inputStream_) {
+                Pm_Close(inputStream_);
+                inputStream_ = nullptr;
+            }
+
             Pm_Terminate();
         }
 
@@ -94,6 +102,17 @@ namespace midi {
 
             ~PortTimeWrapper()
             {
+                stop();
+            }
+
+            PortTimeWrapper(const PortTimeWrapper&) = delete;
+            PortTimeWrapper& operator=(const PortTimeWrapper&) = delete;
+
+            PortTimeWrapper(PortTimeWrapper&&) = delete;
+            PortTimeWrapper& operator=(PortTimeWrapper&&) = delete;
+
+            void stop()
+            {
                 if (!Pt_Started()) return;
                 if (const auto err = Pt_Stop(); err != ptNoError) {
                     std::cerr << "PortTime error when stopping timer: " << err << std::endl;
@@ -101,10 +120,11 @@ namespace midi {
             }
         };
 
-        PortTimeWrapper timer_;
         MidiInputCallback inputCallback_;
         std::atomic<bool> active_{false};
         PmDeviceID deviceId_{pmNoDevice};
         PmStream *inputStream_{nullptr};
+
+        PortTimeWrapper timer_;
     };
 }
