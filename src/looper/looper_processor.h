@@ -1,12 +1,12 @@
 #pragma once
 
 #include <array>
-#include <atomic>
 #include <vector>
 #include <string>
 
 #include "looper_commands.h"
 #include "triple_buffer.h"
+#include "timer.h"
 
 namespace looper {
 
@@ -98,25 +98,10 @@ namespace looper {
         unsigned int numChannels_{0};
         unsigned int maxFrames_{0};
 
-        struct TransitionTimer
-        {
-            void reset() noexcept
-            {
-                hasNext = false;
-                nextState = State::CLEARED;
-                framesLeft = 0;
-            }
-
-            bool hasNext{false};
-            State nextState{State::CLEARED};
-            unsigned int framesLeft{0};
-        };
-
         struct Track
         {
             void init(unsigned int numChannels, unsigned int maxFrames) noexcept;
-            bool isEmpty() const noexcept;
-            bool tick();
+            [[nodiscard]] bool isEmpty() const noexcept;
             void scheduleTransition(State next, unsigned int when);
 
             State state{State::CLEARED};
@@ -125,7 +110,8 @@ namespace looper {
 
             std::vector<std::vector<float>> buffers;
 
-            TransitionTimer transitionTimer;
+            timer::AudioRateTimer transitionTimer;
+            State nextState{State::CLEARED};
         };
 
         std::array<Track, NUM_LOOPER_TRACKS> tracks_{};
