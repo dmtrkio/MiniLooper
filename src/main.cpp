@@ -162,17 +162,17 @@ int main()
         std::cerr << "Failed to start midi engine. Proceeding without it.\n";
     }
 
-    auto& engine = audio::AudioEngine::getInstance();
-    engine.setSampleRate(48000);
-    engine.setBufferSize(64);
-    engine.pickDevices();
+    auto& audioEngine = audio::AudioEngine::getInstance();
+    audioEngine.setSampleRate(48000);
+    audioEngine.setBufferSize(64);
+    audioEngine.pickDevices();
 
-    if (!engine.start()) {
+    if (!audioEngine.start()) {
         std::cerr << "Failed to start audio engine.\n";
         exit(EXIT_FAILURE);
     }
 
-    if (!engine.isRunning()) {
+    if (!audioEngine.isRunning()) {
         std::cerr << "Audio engine not running.\n";
         exit(EXIT_FAILURE);
     }
@@ -200,7 +200,7 @@ int main()
 
     CloseWindow();
 
-    if (engine.stop())
+    if (audioEngine.stop())
         std::cout << "Audio engine stopped successfully.\n";
 
     return 0;

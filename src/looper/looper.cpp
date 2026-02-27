@@ -30,6 +30,8 @@ namespace looper {
                 for (auto c{0u}; c < oChannels; ++c) {
                     out[c][i] = inputSample;
                 }
+
+                footSwitch.tick();
             }
 
             drainMidiQueue();
@@ -55,6 +57,24 @@ namespace looper {
             //std::cout << "onStart()\n";
 
             looper.onStart();
+
+            constexpr int trackIndex = 0;
+
+            footSwitch.setOnSinglePressed([&] {
+                if (looper.getState(trackIndex) != looper::State::RECORDING) {
+                    looper.startRecording(trackIndex);
+                } else {
+                    looper.stopRecording(trackIndex);
+                }
+            });
+
+            footSwitch.setOnDoublePressed([&] {
+                looper.clear(trackIndex);
+            });
+
+            footSwitch.setOnHold([&] {
+                looper.clearAll();
+            });
         }
 
         void onStop() override
@@ -67,14 +87,7 @@ namespace looper {
         void drainMidiQueue()
         {
             midiQueue.consumeAll([&](const midi::MidiMessage& msg) {
-                if (footSwitch.update(msg)) {
-                    constexpr int trackIndex = 0;
-                    if (looper.getState(trackIndex) != looper::State::RECORDING) {
-                        looper.startRecording(trackIndex);
-                    } else {
-                        looper.stopRecording(trackIndex);
-                    }
-                }
+                footSwitch.update(msg);
             });
         }
 

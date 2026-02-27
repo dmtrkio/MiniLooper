@@ -50,11 +50,11 @@ namespace timer {
 
         void tick(float dt)
         {
-            if (!set_ || !onTimeout_) return;
+            if (!set_) return;
 
             currentTime_ += dt;
             if (currentTime_ >= timeoutSecs_) {
-                onTimeout_();
+                if (onTimeout_) onTimeout_();
 
                 currentTime_ = 0.0f;
                 if (isOneShot_) set_ = false;
@@ -123,11 +123,11 @@ namespace timer {
         // call on each audio frame
         void tick() noexcept
         {
-            if (!set_ || !onTimeout_) return;
+            if (!set_) return;
 
             framesLeft_--;
             if (framesLeft_ <= 0) {
-                onTimeout_();
+                if (onTimeout_) onTimeout_();
 
                 if (isOneShot_) {
                     set_ = false;
