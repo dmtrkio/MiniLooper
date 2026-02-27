@@ -370,26 +370,7 @@ namespace looper {
 
         transitionTimer.setOneShot(true);
         transitionTimer.setOnTimeout([&] {
-            switch (nextState) {
-                case State::RECORDING: {
-                    position = 0;
-                    state = State::RECORDING;
-                    break;
-                }
-                case State::PLAYBACK: {
-                    if (state == State::RECORDING) {
-                        nFrames = position;
-                    }
-                    position = 0;
-                    state = State::PLAYBACK;
-                    break;
-                }
-                case State::PAUSED: {
-                    state = State::PAUSED;
-                    break;
-                }
-                default:;
-            }
+            transitionState(nextState);
         });
     }
 
@@ -405,4 +386,27 @@ namespace looper {
         transitionTimer.start();
     }
 
+    void LooperProcessor::Track::transitionState(State newState) noexcept
+    {
+        switch (nextState) {
+            case State::RECORDING: {
+                position = 0;
+                state = State::RECORDING;
+                break;
+            }
+            case State::PLAYBACK: {
+                if (state == State::RECORDING) {
+                    nFrames = position;
+                }
+                position = 0;
+                state = State::PLAYBACK;
+                break;
+            }
+            case State::PAUSED: {
+                state = State::PAUSED;
+                break;
+            }
+            default:;
+        }
+    }
 }

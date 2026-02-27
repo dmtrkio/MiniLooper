@@ -103,6 +103,7 @@ namespace looper {
             void init(unsigned int numChannels, unsigned int maxFrames) noexcept;
             [[nodiscard]] bool isEmpty() const noexcept;
             void scheduleTransition(State next, unsigned int when);
+            void transitionState(State newState) noexcept;
 
             State state{State::CLEARED};
             unsigned int position{0};
