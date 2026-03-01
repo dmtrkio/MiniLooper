@@ -359,6 +359,10 @@ namespace looper {
         }
 
         hasPendingTransition = false;
+
+        constexpr float crossfadeMs = 10.0f;
+        const auto sampleRate = static_cast<float>(audio::AudioEngine::getInstance().getSampleRate());
+        crossfadeLength = static_cast<unsigned int>(crossfadeMs * sampleRate / 1000.0f);
     }
 
     bool LooperProcessor::Track::isEmpty() const noexcept
@@ -432,7 +436,21 @@ namespace looper {
 
     float LooperProcessor::Track::read(unsigned int channel) const noexcept
     {
-        return buffers[channel][position];
+        //return buffers[channel][position];
+
+        if (isEmpty()) return 0.0f;
+
+        if ((nFrames < crossfadeLength) || (position < (nFrames - crossfadeLength)))
+            return buffers[channel][position];
+
+        const auto t = static_cast<float>(position - (nFrames - crossfadeLength)) / static_cast<float>(crossfadeLength);
+        const auto fadeIn = 1.0f - t;
+        const auto fadeOut = t;
+
+        const auto startSample = buffers[channel][position - nFrames + crossfadeLength] * fadeIn;
+        const auto endSample = buffers[channel][position] * fadeOut;
+
+        return startSample + endSample;
     }
 
     void LooperProcessor::Track::writeAdding(unsigned int channel, float value) noexcept

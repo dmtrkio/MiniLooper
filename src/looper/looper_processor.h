@@ -114,6 +114,7 @@ namespace looper {
             unsigned int position{0};
             unsigned int nFrames{0};
 
+            unsigned int crossfadeLength{64};
             std::vector<std::vector<float>> buffers;
 
             State pendingState{State::CLEARED};
