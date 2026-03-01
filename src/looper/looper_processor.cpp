@@ -443,9 +443,9 @@ namespace looper {
         if ((nFrames < crossfadeLength) || (position < (nFrames - crossfadeLength)))
             return buffers[channel][position];
 
-        const auto t = static_cast<float>(position - (nFrames - crossfadeLength)) / static_cast<float>(crossfadeLength);
-        const auto fadeIn = 1.0f - t;
-        const auto fadeOut = t;
+        const auto t = static_cast<float>(position - (nFrames - crossfadeLength)) / static_cast<float>(crossfadeLength - 1);
+        const auto fadeIn = t;
+        const auto fadeOut = 1.0f - t;
 
         const auto startSample = buffers[channel][position - nFrames + crossfadeLength] * fadeIn;
         const auto endSample = buffers[channel][position] * fadeOut;
