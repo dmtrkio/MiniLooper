@@ -6,7 +6,6 @@
 
 #include "looper_commands.h"
 #include "triple_buffer.h"
-#include "timer.h"
 
 namespace looper {
 
@@ -116,8 +115,9 @@ namespace looper {
 
             std::vector<std::vector<float>> buffers;
 
-            timer::AudioRateTimer transitionTimer;
-            State nextState{State::CLEARED};
+            State pendingState{State::CLEARED};
+            bool hasPendingTransition{false};
+            int framesToTransition{0};
         };
 
         std::array<Track, NUM_LOOPER_TRACKS> tracks_{};

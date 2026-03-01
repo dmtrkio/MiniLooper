@@ -1,8 +1,9 @@
 #include "looper_processor.h"
 
 #include <algorithm>
-#include <format>
 #include <cassert>
+#include <format>
+#include <iostream>
 
 #include "audio/audio_engine.h"
 
@@ -98,7 +99,6 @@ namespace looper {
         if (!isTrackIndexValid(trackIndex)) return;
 
         auto& track = tracks_[trackIndex];
-        track.transitionTimer.stop();
 
         if (isAnyTrackCurrentlyRecording()) return;
 
@@ -129,7 +129,6 @@ namespace looper {
         if (!isTrackIndexValid(trackIndex)) return;
 
         auto &track = tracks_[trackIndex];
-        track.transitionTimer.stop();
 
         switch (track.state) {
             case State::RECORDING: {
@@ -165,7 +164,7 @@ namespace looper {
             for (auto& buffer : track.buffers)
                 std::ranges::fill_n(buffer.begin(), toErase, 0.0f);
 
-            track.transitionTimer.stop();
+            track.hasPendingTransition = false;
             track.state = State::CLEARED;
             track.position = 0;
             track.nFrames = 0;
@@ -285,8 +284,6 @@ namespace looper {
         auto &track = tracks_[trackIndex];
 
         for (auto i{0u}; i < nFrames; ++i) {
-            track.transitionTimer.tick();
-
             switch (track.state) {
                 case State::PLAYBACK: {
                     for (auto ch{0u}; ch < numChannels_; ++ch) {
@@ -301,9 +298,6 @@ namespace looper {
                         sumBuffers_[ch][i] += oldSample;
                     }
                     break;
-                }
-                case State::CLEARED: {
-                    continue;
                 }
                 default:;
             }
@@ -355,10 +349,7 @@ namespace looper {
             buffer.resize(maxFrames);
         }
 
-        transitionTimer.setOneShot(true);
-        transitionTimer.setOnTimeout([&] {
-            transitionState(nextState);
-        });
+        hasPendingTransition = false;
     }
 
     bool LooperProcessor::Track::isEmpty() const noexcept
@@ -373,9 +364,9 @@ namespace looper {
             return;
         }
 
-        nextState = next;
-        transitionTimer.setTimeoutFrames(static_cast<int>(when));
-        transitionTimer.start();
+        pendingState = next;
+        hasPendingTransition = true;
+        framesToTransition = static_cast<int>(when);
     }
 
     void LooperProcessor::Track::transitionState(State newState) noexcept
@@ -406,14 +397,25 @@ namespace looper {
     {
         const auto wrapAround = isEmpty() ? (transport.largestPossibleLoopLength + 1) : nFrames;
 
-        position++;
-        if (position >= wrapAround) {
-            position = 0;
-            if (isEmpty() && state == State::RECORDING) {
-                nFrames = wrapAround;
-                if (!transport.isTempoSet()) {
-                    transport.setBarLength(nFrames, maxFrames);
+        if (state != State::CLEARED) {
+            position++;
+
+            if (position >= wrapAround) {
+                position = 0;
+                if (isEmpty() && state == State::RECORDING) {
+                    nFrames = wrapAround;
+                    if (!transport.isTempoSet()) {
+                        transport.setBarLength(nFrames, maxFrames);
+                    }
                 }
+            }
+        }
+
+        if (hasPendingTransition) {
+            framesToTransition--;
+            if (framesToTransition <= 0) {
+                hasPendingTransition = false;
+                transitionState(pendingState);
             }
         }
     }
