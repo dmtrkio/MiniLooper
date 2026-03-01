@@ -436,10 +436,10 @@ namespace looper {
 
     float LooperProcessor::Track::read(unsigned int channel) const noexcept
     {
-        //return buffers[channel][position];
-
         if (isEmpty()) return 0.0f;
 
+#define USE_CROSSFADE 0
+#if USE_CROSSFADE
         if ((nFrames < crossfadeLength) || (position < (nFrames - crossfadeLength)))
             return buffers[channel][position];
 
@@ -451,6 +451,9 @@ namespace looper {
         const auto endSample = buffers[channel][position] * fadeOut;
 
         return startSample + endSample;
+#else
+        return buffers[channel][position];
+#endif
     }
 
     void LooperProcessor::Track::writeAdding(unsigned int channel, float value) noexcept
