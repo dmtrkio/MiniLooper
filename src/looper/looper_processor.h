@@ -105,6 +105,11 @@ namespace looper {
             void scheduleTransition(State next, unsigned int when);
             void transitionState(State newState) noexcept;
 
+            void advance(Transport &transport, unsigned int maxFrames) noexcept;
+            [[nodiscard]] float read(unsigned int channel) const noexcept;
+            void writeAdding(unsigned int channel, float value) noexcept;
+            void overwrite(unsigned int channel, float value) noexcept;
+
             State state{State::CLEARED};
             unsigned int position{0};
             unsigned int nFrames{0};
