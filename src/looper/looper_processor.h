@@ -99,7 +99,7 @@ namespace looper {
 
         struct Track
         {
-            void init(unsigned int numChannels, unsigned int maxFrames) noexcept;
+            void init(int index, unsigned int numChannels, unsigned int maxFrames) noexcept;
             [[nodiscard]] bool isEmpty() const noexcept;
             void scheduleTransition(State next, unsigned int when);
             void transitionState(State newState) noexcept;
@@ -109,6 +109,7 @@ namespace looper {
             void writeAdding(unsigned int channel, float value) noexcept;
             void overwrite(unsigned int channel, float value) noexcept;
 
+            int trackIndex{-1};
             State state{State::CLEARED};
             unsigned int position{0};
             unsigned int nFrames{0};

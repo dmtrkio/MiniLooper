@@ -14,6 +14,7 @@ namespace looper {
         if (state == State::CLEARED) return "CLEARED";
         if (state == State::RECORDING) return "RECORDING";
         if (state == State::PLAYBACK) return "PLAYBACK";
+        if (state == State::PAUSED) return "PAUSED";
         return "Invalid State";
     }
 
@@ -42,8 +43,8 @@ namespace looper {
         numChannels_ = nChannels;
         maxFrames_ = mFrames;
 
-        for (auto& track : tracks_) {
-            track.init(nChannels, mFrames);
+        for (int i = 0; i < tracks_.size(); ++i) {
+            tracks_[i].init(i, nChannels, mFrames);
         }
 
         sumBuffers_.resize(nChannels);
@@ -117,8 +118,12 @@ namespace looper {
                 [[fallthrough]];
             }
             case State::PLAYBACK: {
-                track.state = State::RECORDING;
+                const auto framesToLoop = track.nFrames - track.position;
+                track.scheduleTransition(State::RECORDING, framesToLoop);
                 break;
+
+                //track.state = State::RECORDING;
+                //break;
             }
             default:;
         }
@@ -143,7 +148,10 @@ namespace looper {
                         track.scheduleTransition(State::PLAYBACK, toWait);
                     }
                 } else {
-                    track.state = State::PLAYBACK;
+                    const auto framesToLoop = track.nFrames - track.position;
+                    track.scheduleTransition(State::PLAYBACK, framesToLoop);
+
+                    //track.state = State::PLAYBACK;
                 }
 
                 break;
@@ -342,8 +350,9 @@ namespace looper {
         setBarLength(0, maxFrames);
     }
 
-    void LooperProcessor::Track::init(unsigned int nChannels, unsigned int maxFrames) noexcept
+    void LooperProcessor::Track::init(int index, unsigned int nChannels, unsigned int maxFrames) noexcept
     {
+        trackIndex = index;
         buffers.resize(nChannels);
         for (auto& buffer : buffers) {
             buffer.resize(maxFrames);
@@ -378,10 +387,11 @@ namespace looper {
                 break;
             }
             case State::PLAYBACK: {
-                if (state == State::RECORDING) {
+                if (isEmpty() && state == State::RECORDING) {
                     nFrames = position;
+                    position = 0;
                 }
-                position = 0;
+
                 state = State::PLAYBACK;
                 break;
             }
