@@ -61,7 +61,7 @@ namespace looper {
             constexpr int trackIndex = 0;
 
             footSwitch.setOnSinglePressed([&] {
-                if (looper.getState(trackIndex) != looper::State::RECORDING) {
+                if (looper.getState(trackIndex) != looper::State::Recording) {
                     looper.startRecording(trackIndex);
                 } else {
                     looper.stopRecording(trackIndex);
@@ -113,6 +113,9 @@ namespace looper {
         if (reader.isFresh()) {
             snapshot_ = reader.data();
         }
+
+        // const auto trackState = getTrackState(0);
+        // std::cout << trackState.toString() << std::endl;
     }
 
     const TrackStateSnapshot& Looper::getTrackState(int trackIndex) const noexcept

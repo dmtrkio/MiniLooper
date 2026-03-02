@@ -11,10 +11,10 @@ namespace looper {
 
     const char* stateToStr(State state)
     {
-        if (state == State::CLEARED) return "CLEARED";
-        if (state == State::RECORDING) return "RECORDING";
-        if (state == State::PLAYBACK) return "PLAYBACK";
-        if (state == State::PAUSED) return "PAUSED";
+        if (state == State::Cleared) return "CLEARED";
+        if (state == State::Recording) return "RECORDING";
+        if (state == State::Playback) return "PLAYBACK";
+        if (state == State::Paused) return "PAUSED";
         return "Invalid State";
     }
 
@@ -38,7 +38,7 @@ namespace looper {
     {
         const auto& engine = audio::AudioEngine::getInstance();
         const auto nChannels = engine.getNumOutputChannels();
-        const auto mFrames = engine.getSampleRate() * MAX_LOOP_LENGTH_IN_SECONDS;
+        const auto mFrames = engine.getSampleRate() * kMaxLoopSecs;
 
         numChannels_ = nChannels;
         maxFrames_ = mFrames;
@@ -73,20 +73,21 @@ namespace looper {
 
     State LooperProcessor::getState(int trackIndex) const noexcept
     {
-        if (!isTrackIndexValid(trackIndex)) return State::CLEARED;
+        if (!isTrackIndexValid(trackIndex)) return State::Cleared;
         return tracks_[trackIndex].state;
     }
 
     unsigned int LooperProcessor::getCurrentPosition(int trackIndex) const noexcept
     {
         if (!isTrackIndexValid(trackIndex)) return 0;
-        return tracks_[trackIndex].position;
+        const auto &track = tracks_[trackIndex];
+        return track.phase(transport_.currentFrame);
     }
 
     unsigned int LooperProcessor::getCurrentNumFrames(int trackIndex) const noexcept
     {
         if (!isTrackIndexValid(trackIndex)) return 0;
-        return tracks_[trackIndex].nFrames;
+        return tracks_[trackIndex].length;
     }
 
     bool LooperProcessor::isEmpty(int trackIndex) const noexcept
@@ -104,26 +105,23 @@ namespace looper {
         if (isAnyTrackCurrentlyRecording()) return;
 
         switch (track.state) {
-            case State::CLEARED: {
+            case State::Cleared: {
                 if (!transport_.isTempoSet()) {
-                    track.position = 0;
-                    track.state = State::RECORDING;
+                    track.start = transport_.currentFrame;
+                    track.state = State::Recording;
                 } else {
                     const auto framesToBar = transport_.barLength - transport_.currentFrame % transport_.barLength;
-                    track.scheduleTransition(State::RECORDING, framesToBar);
+                    track.scheduleTransition(State::Recording, framesToBar);
                 }
                 break;
             }
-            case State::PAUSED: {
+            case State::Paused: {
                 [[fallthrough]];
             }
-            case State::PLAYBACK: {
-                const auto framesToLoop = track.nFrames - track.position;
-                track.scheduleTransition(State::RECORDING, framesToLoop);
+            case State::Playback: {
+                const auto framesToLoop = track.length - track.phase(transport_.currentFrame);
+                track.scheduleTransition(State::Recording, framesToLoop);
                 break;
-
-                //track.state = State::RECORDING;
-                //break;
             }
             default:;
         }
@@ -136,22 +134,21 @@ namespace looper {
         auto &track = tracks_[trackIndex];
 
         switch (track.state) {
-            case State::RECORDING: {
+            case State::Recording: {
                 if (track.isEmpty()) {
+                    const auto length = transport_.currentFrame - track.start;
                     if (!transport_.isTempoSet()) {
-                        transport_.setBarLength(track.position, maxFrames_);
-                        track.nFrames = track.position;
-                        track.position = 0;
-                        track.state = State::PLAYBACK;
+                        transport_.setBarLength(length, maxFrames_);
+                        track.start = 0u;
+                        track.length = length;
+                        track.state = State::Playback;
                     } else {
-                        const auto toWait = getNextGridDivision(static_cast<int>(track.position)) - track.position;
-                        track.scheduleTransition(State::PLAYBACK, toWait);
+                        const auto toWait = getNextGridDivision(static_cast<int>(length)) - length;
+                        track.scheduleTransition(State::Playback, toWait);
                     }
                 } else {
-                    const auto framesToLoop = track.nFrames - track.position;
-                    track.scheduleTransition(State::PLAYBACK, framesToLoop);
-
-                    //track.state = State::PLAYBACK;
+                    const auto framesToLoop = track.length - track.phase(transport_.currentFrame);
+                    track.scheduleTransition(State::Playback, framesToLoop);
                 }
 
                 break;
@@ -166,16 +163,16 @@ namespace looper {
 
         {
             auto& track = tracks_[trackIndex];
-            if (track.state == State::CLEARED) return;
+            if (track.state == State::Cleared) return;
 
-            const auto toErase = std::max(track.position, track.nFrames);
+            const auto toErase = std::max(transport_.currentFrame - track.start, static_cast<std::uint64_t>(track.length));
             for (auto& buffer : track.buffers)
                 std::ranges::fill_n(buffer.begin(), toErase, 0.0f);
 
             track.hasPendingTransition = false;
-            track.state = State::CLEARED;
-            track.position = 0;
-            track.nFrames = 0;
+            track.state = State::Cleared;
+            track.start = 0u;
+            track.length = 0u;
         }
 
         if (std::ranges::all_of(tracks_, [](const auto& track) { return track.isEmpty(); })) {
@@ -189,10 +186,10 @@ namespace looper {
 
         auto &track = tracks_[trackIndex];
 
-        if (track.state != State::PLAYBACK) return;
+        if (track.state != State::Playback) return;
 
-        const auto toWait = track.nFrames - track.position;
-        track.scheduleTransition(State::PAUSED, toWait);
+        const auto toWait = track.length - track.phase(transport_.currentFrame);
+        track.scheduleTransition(State::Paused, toWait);
     }
 
     void LooperProcessor::resume(int trackIndex) noexcept
@@ -201,10 +198,10 @@ namespace looper {
 
         auto &track = tracks_[trackIndex];
 
-        if (track.state != State::PAUSED) return;
+        if (track.state != State::Paused) return;
 
-        const auto toWait = track.nFrames - track.position;
-        track.scheduleTransition(State::PLAYBACK, toWait);
+        const auto toWait = track.length - track.phase(transport_.currentFrame);
+        track.scheduleTransition(State::Playback, toWait);
     }
 
     void LooperProcessor::clearAll() noexcept
@@ -240,7 +237,7 @@ namespace looper {
     bool LooperProcessor::isAnyTrackCurrentlyRecording() const noexcept
     {
         return std::ranges::any_of(tracks_, [](const auto& track) {
-            return track.state == State::RECORDING;
+            return track.state == State::Recording;
         });
     }
 
@@ -252,8 +249,8 @@ namespace looper {
         for (auto i{0u}; i < getNumLooperTracks(); ++i) {
             const auto& track = tracks_[i];
             auto& [nFrames, position, state] = snapshot.tracks[i];
-            nFrames = track.nFrames;
-            position = track.position;
+            nFrames = track.length;
+            position = track.phase(transport_.currentFrame);
             state = track.state;
         }
     }
@@ -271,8 +268,6 @@ namespace looper {
             std::ranges::fill_n(buffer.begin(), nFrames, 0.0f);
         }
 
-        transport_.tick(nFrames);
-
         for (int i = 0; i < getNumLooperTracks(); ++i) {
             processTrack(i, data, nFrames);
         }
@@ -283,26 +278,38 @@ namespace looper {
                 data[ch][i] += buffer[i];
             }
         }
+
+        transport_.tick(nFrames);
     }
 
-    void LooperProcessor::processTrack(int trackIndex, float *const *data, unsigned int nFrames) noexcept
+    void LooperProcessor::processTrack(const int trackIndex, float *const *data, const unsigned int nFrames) noexcept
     {
         if (!isTrackIndexValid(trackIndex)) return;
 
         auto &track = tracks_[trackIndex];
 
         for (auto i{0u}; i < nFrames; ++i) {
+            if (track.hasPendingTransition) {
+                track.framesToTransition--;
+                if (track.framesToTransition <= 0) {
+                    track.hasPendingTransition = false;
+                    track.transitionState(track.pendingState, transport_.currentFrame);
+                }
+            }
+
+            const auto pos = track.phase(transport_.currentFrame + i);
+
             switch (track.state) {
-                case State::PLAYBACK: {
+                case State::Playback: {
                     for (auto ch{0u}; ch < numChannels_; ++ch) {
-                        sumBuffers_[ch][i] += track.read(ch);
+                        sumBuffers_[ch][i] += track.buffers[ch][pos];
                     }
                     break;
                 }
-                case State::RECORDING: {
+                case State::Recording: {
                     for (auto ch{0u}; ch < numChannels_; ++ch) {
-                        const float oldSample = track.read(ch);
-                        track.writeAdding(ch, data[ch][i]);
+                        const float oldSample = track.buffers[ch][pos];
+                        track.buffers[ch][pos] = data[ch][i];
                         sumBuffers_[ch][i] += oldSample;
                     }
                     break;
@@ -310,7 +317,14 @@ namespace looper {
                 default:;
             }
 
-            track.advance(transport_, maxFrames_);
+            if (pos == (transport_.largestPossibleLoopLength - 1)) {
+                if (track.isEmpty() && track.state == State::Recording) {
+                    track.length = pos;
+                }
+                if (!transport_.isTempoSet()) {
+                    transport_.setBarLength(track.length, maxFrames_);
+                }
+            }
         }
     }
 
@@ -319,9 +333,9 @@ namespace looper {
         return barLength != 0;
     }
 
-    void LooperProcessor::Transport::tick(unsigned int numFrames) noexcept
+    void LooperProcessor::Transport::tick(const unsigned int nFrames) noexcept
     {
-        if (isTempoSet()) currentFrame += numFrames;
+        currentFrame += nFrames;
     }
 
     void LooperProcessor::Transport::setBarLength(unsigned int nFrames, unsigned int maxFrames) noexcept
@@ -336,8 +350,8 @@ namespace looper {
 
         largestPossibleLoopLength = barLength;
 
-        for (int i = GRID_MULTIPLIERS.size() - 1; i >= 0; --i) {
-            const auto target = static_cast<unsigned int>(GRID_MULTIPLIERS[i] * static_cast<float>(barLength));
+        for (int i = kGridMultipliers.size() - 1; i >= 0; --i) {
+            const auto target = static_cast<unsigned int>(kGridMultipliers[i] * static_cast<float>(barLength));
             if (target < maxFrames) {
                 largestPossibleLoopLength = target;
                 break;
@@ -358,6 +372,9 @@ namespace looper {
             buffer.resize(maxFrames);
         }
 
+        start = 0u;
+        length = 0u;
+
         hasPendingTransition = false;
 
         constexpr float crossfadeMs = 10.0f;
@@ -367,87 +384,61 @@ namespace looper {
 
     bool LooperProcessor::Track::isEmpty() const noexcept
     {
-        return nFrames == 0;
+        return length == 0;
     }
 
     void LooperProcessor::Track::scheduleTransition(State next, unsigned int when)
     {
-        if (when == 0) {
-            transitionState(next);
-            return;
-        }
-
         pendingState = next;
         hasPendingTransition = true;
         framesToTransition = static_cast<int>(when);
     }
 
-    void LooperProcessor::Track::transitionState(State newState) noexcept
+    void LooperProcessor::Track::transitionState(State newState, const unsigned int transportFrame) noexcept
     {
         switch (newState) {
-            case State::RECORDING: {
-                position = 0;
-                state = State::RECORDING;
+            case State::Recording: {
+                start = transportFrame;
+                state = State::Recording;
                 break;
             }
-            case State::PLAYBACK: {
-                if (isEmpty() && state == State::RECORDING) {
-                    nFrames = position;
-                    position = 0;
+            case State::Playback: {
+                if (isEmpty() && state == State::Recording) {
+                    length = transportFrame - start;
                 }
 
-                state = State::PLAYBACK;
+                state = State::Playback;
                 break;
             }
-            case State::PAUSED: {
-                state = State::PAUSED;
+            case State::Paused: {
+                state = State::Paused;
                 break;
             }
             default:;
         }
     }
 
-    void LooperProcessor::Track::advance(Transport& transport, unsigned int maxFrames) noexcept
+    unsigned int LooperProcessor::Track::phase(const unsigned int transportFrame) const noexcept
     {
-        const auto wrapAround = isEmpty() ? (transport.largestPossibleLoopLength + 1) : nFrames;
-
-        if (state != State::CLEARED) {
-            position++;
-
-            if (position >= wrapAround) {
-                position = 0;
-                if (isEmpty() && state == State::RECORDING) {
-                    nFrames = wrapAround;
-                    if (!transport.isTempoSet()) {
-                        transport.setBarLength(nFrames, maxFrames);
-                    }
-                }
-            }
-        }
-
-        if (hasPendingTransition) {
-            framesToTransition--;
-            if (framesToTransition <= 0) {
-                hasPendingTransition = false;
-                transitionState(pendingState);
-            }
-        }
+        if (length == 0) return 0u;
+        return (transportFrame - start) % length;
     }
 
+    /*
     float LooperProcessor::Track::read(unsigned int channel) const noexcept
     {
         if (isEmpty()) return 0.0f;
 
 #define USE_CROSSFADE 0
 #if USE_CROSSFADE
-        if ((nFrames < crossfadeLength) || (position < (nFrames - crossfadeLength)))
+        if ((length < crossfadeLength) || (position < (length - crossfadeLength)))
             return buffers[channel][position];
 
-        const auto t = static_cast<float>(position - (nFrames - crossfadeLength)) / static_cast<float>(crossfadeLength - 1);
+        const auto t = static_cast<float>(position - (length - crossfadeLength)) / static_cast<float>(crossfadeLength - 1);
         const auto fadeIn = t;
         const auto fadeOut = 1.0f - t;
 
-        const auto startSample = buffers[channel][position - nFrames + crossfadeLength] * fadeIn;
+        const auto startSample = buffers[channel][position - length + crossfadeLength] * fadeIn;
         const auto endSample = buffers[channel][position] * fadeOut;
 
         return startSample + endSample;
@@ -465,4 +456,5 @@ namespace looper {
     {
         buffers[channel][position] = value;
     }
+*/
 }

@@ -9,15 +9,15 @@
 
 namespace looper {
 
-    constexpr unsigned int MAX_LOOP_LENGTH_IN_SECONDS = 32;
-    constexpr unsigned int NUM_LOOPER_TRACKS{4};
+    constexpr unsigned int kMaxLoopSecs = 32;
+    constexpr unsigned int kLooperTrackCount{4};
 
     enum class State
     {
-        CLEARED,
-        RECORDING,
-        PLAYBACK,
-        PAUSED,
+        Cleared,
+        Recording,
+        Playback,
+        Paused,
     };
 
     const char* stateToStr(State state);
@@ -33,7 +33,7 @@ namespace looper {
 
     struct LooperStateSnapshot
     {
-        std::array<TrackStateSnapshot, NUM_LOOPER_TRACKS> tracks;
+        std::array<TrackStateSnapshot, kLooperTrackCount> tracks;
     };
 
     struct LooperSharedData
@@ -50,7 +50,7 @@ namespace looper {
         void onStart();
         void onStop();
 
-        static constexpr int getNumLooperTracks() { return NUM_LOOPER_TRACKS; }
+        static constexpr int getNumLooperTracks() { return kLooperTrackCount; }
 
         LooperSharedData& getSharedData() noexcept;
 
@@ -78,16 +78,16 @@ namespace looper {
         void processInternal(float *const *data, unsigned int nFrames) noexcept;
         void processTrack(int trackIndex, float *const *data, unsigned int nFrames) noexcept;
 
-        static constexpr std::array<float, 5> GRID_MULTIPLIERS = { 1.0f, 2.0f, 4.0f, 8.0f, 16.0f };
+        static constexpr std::array<float, 5> kGridMultipliers = { 1.0f, 2.0f, 4.0f, 8.0f, 16.0f };
 
         struct Transport
         {
             [[nodiscard]] bool isTempoSet() const noexcept;
-            void tick(unsigned int numFrames) noexcept;
+            void tick(unsigned int nFrames) noexcept;
             void setBarLength(unsigned int nFrames, unsigned int maxFrames) noexcept;
             void reset(unsigned int maxFrames) noexcept;
 
-            unsigned int currentFrame{};
+            std::uint64_t currentFrame{};
             unsigned int barLength{};
             unsigned int largestPossibleLoopLength{};
         };
@@ -102,27 +102,30 @@ namespace looper {
             void init(int index, unsigned int numChannels, unsigned int maxFrames) noexcept;
             [[nodiscard]] bool isEmpty() const noexcept;
             void scheduleTransition(State next, unsigned int when);
-            void transitionState(State newState) noexcept;
+            void transitionState(State newState, unsigned int transportFrame) noexcept;
+            [[nodiscard]] unsigned int phase(unsigned int transportFrame) const noexcept;
 
+            /*
             void advance(Transport &transport, unsigned int maxFrames) noexcept;
             [[nodiscard]] float read(unsigned int channel) const noexcept;
             void writeAdding(unsigned int channel, float value) noexcept;
             void overwrite(unsigned int channel, float value) noexcept;
+            */
 
             int trackIndex{-1};
-            State state{State::CLEARED};
-            unsigned int position{0};
-            unsigned int nFrames{0};
+            State state{State::Cleared};
+            unsigned int start{0};
+            unsigned int length{0};
 
             unsigned int crossfadeLength{64};
             std::vector<std::vector<float>> buffers;
 
-            State pendingState{State::CLEARED};
+            State pendingState{State::Cleared};
             bool hasPendingTransition{false};
             int framesToTransition{0};
         };
 
-        std::array<Track, NUM_LOOPER_TRACKS> tracks_{};
+        std::array<Track, kLooperTrackCount> tracks_{};
 
         std::vector<std::vector<float>> sumBuffers_;
 
