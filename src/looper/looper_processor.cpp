@@ -165,13 +165,10 @@ namespace looper {
             auto& track = tracks_[trackIndex];
             if (track.state == State::Cleared) return;
 
-            const auto toErase = std::min<std::uint64_t>(
-                maxFrames_,
-                std::max(
-                    transport_.currentFrame - track.start,
-                    static_cast<std::uint64_t>(track.length)
-                )
-            );
+            const auto toErase = std::min(std::max<unsigned int>(
+                transport_.currentFrame - track.start,
+                track.length
+            ), maxFrames_);
 
             for (auto& buffer : track.buffers)
                 std::ranges::fill_n(buffer.begin(), toErase, 0.0f);
@@ -244,7 +241,7 @@ namespace looper {
     bool LooperProcessor::isAnyTrackCurrentlyRecording() const noexcept
     {
         return std::ranges::any_of(tracks_, [](const auto& track) {
-            return track.state == State::Recording;
+            return (track.state == State::Recording) || (track.hasPendingTransition && track.pendingState == State::Recording);
         });
     }
 
@@ -342,7 +339,7 @@ namespace looper {
 
     void LooperProcessor::Transport::tick(const unsigned int nFrames) noexcept
     {
-        currentFrame = (currentFrame + nFrames) % largestPossibleLoopLength;
+        currentFrame = (currentFrame + nFrames);
     }
 
     void LooperProcessor::Transport::setBarLength(unsigned int nFrames, unsigned int maxFrames) noexcept
