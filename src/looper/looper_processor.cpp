@@ -165,7 +165,14 @@ namespace looper {
             auto& track = tracks_[trackIndex];
             if (track.state == State::Cleared) return;
 
-            const auto toErase = std::max(transport_.currentFrame - track.start, static_cast<std::uint64_t>(track.length));
+            const auto toErase = std::min<std::uint64_t>(
+                maxFrames_,
+                std::max(
+                    transport_.currentFrame - track.start,
+                    static_cast<std::uint64_t>(track.length)
+                )
+            );
+
             for (auto& buffer : track.buffers)
                 std::ranges::fill_n(buffer.begin(), toErase, 0.0f);
 
@@ -289,15 +296,15 @@ namespace looper {
         auto &track = tracks_[trackIndex];
 
         for (auto i{0u}; i < nFrames; ++i) {
+            const auto pos = track.phase(transport_.currentFrame + i);
+
             if (track.hasPendingTransition) {
                 track.framesToTransition--;
                 if (track.framesToTransition <= 0) {
                     track.hasPendingTransition = false;
-                    track.transitionState(track.pendingState, transport_.currentFrame);
+                    track.transitionState(track.pendingState, transport_.currentFrame + i);
                 }
             }
-
-            const auto pos = track.phase(transport_.currentFrame + i);
 
             switch (track.state) {
                 case State::Playback: {
@@ -319,7 +326,7 @@ namespace looper {
 
             if (pos == (transport_.largestPossibleLoopLength - 1)) {
                 if (track.isEmpty() && track.state == State::Recording) {
-                    track.length = pos;
+                    track.length = pos + 1;
                 }
                 if (!transport_.isTempoSet()) {
                     transport_.setBarLength(track.length, maxFrames_);
@@ -420,7 +427,12 @@ namespace looper {
 
     unsigned int LooperProcessor::Track::phase(const unsigned int transportFrame) const noexcept
     {
-        if (length == 0) return 0u;
+        if (state == State::Recording && length == 0)
+            return transportFrame - start;
+
+        if (length == 0)
+            return 0u;
+
         return (transportFrame - start) % length;
     }
 
