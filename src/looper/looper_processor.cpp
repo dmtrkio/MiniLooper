@@ -316,7 +316,7 @@ namespace looper {
                 case State::Recording: {
                     for (auto ch{0u}; ch < numChannels_; ++ch) {
                         const float oldSample = track.buffers[ch][pos];
-                        track.buffers[ch][pos] = data[ch][i];
+                        track.buffers[ch][pos] += data[ch][i];
                         sumBuffers_[ch][i] += oldSample;
                     }
                     break;
@@ -342,7 +342,7 @@ namespace looper {
 
     void LooperProcessor::Transport::tick(const unsigned int nFrames) noexcept
     {
-        currentFrame += nFrames;
+        currentFrame = (currentFrame + nFrames) % largestPossibleLoopLength;
     }
 
     void LooperProcessor::Transport::setBarLength(unsigned int nFrames, unsigned int maxFrames) noexcept
