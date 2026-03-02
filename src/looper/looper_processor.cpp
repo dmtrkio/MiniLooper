@@ -10,11 +10,11 @@
 namespace looper {
     const char* stateToStr(State state)
     {
-        if (state == State::Cleared) return "CLEARED";
-        if (state == State::Recording) return "RECORDING";
-        if (state == State::Playback) return "PLAYBACK";
-        if (state == State::Paused) return "PAUSED";
-        return "Invalid State";
+        if (state == State::Cleared) return "Cleared";
+        if (state == State::Recording) return "Recording";
+        if (state == State::Playback) return "Playback";
+        if (state == State::Paused) return "Paused";
+        return "Unknown State";
     }
 
     std::string TrackStateSnapshot::toString() const
