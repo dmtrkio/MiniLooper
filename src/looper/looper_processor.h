@@ -9,7 +9,6 @@
 #include "triple_buffer.h"
 
 namespace looper {
-
     constexpr unsigned int kMaxLoopSecs = 32;
     constexpr unsigned int kLooperTrackCount{4};
 
@@ -107,13 +106,6 @@ namespace looper {
             [[nodiscard]] unsigned int phase(unsigned int transportFrame) const noexcept;
             [[nodiscard]] std::tuple<float, float> getFadeScalars(unsigned int pos) const noexcept;
 
-            /*
-            void advance(Transport &transport, unsigned int maxFrames) noexcept;
-            [[nodiscard]] float read(unsigned int channel) const noexcept;
-            void writeAdding(unsigned int channel, float value) noexcept;
-            void overwrite(unsigned int channel, float value) noexcept;
-            */
-
             int trackIndex{-1};
             State state{State::Cleared};
             unsigned int start{0};
@@ -135,5 +127,4 @@ namespace looper {
 
         LooperSharedData sharedData_{};
     };
-
 }

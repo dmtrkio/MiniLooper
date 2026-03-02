@@ -8,7 +8,6 @@
 #include "audio/audio_engine.h"
 
 namespace looper {
-
     const char* stateToStr(State state)
     {
         if (state == State::Cleared) return "CLEARED";
@@ -229,7 +228,6 @@ namespace looper {
             distance = newDistance;
         }
 
-        //std::cout << "bars: " << target / transport_.barLength << std::endl;
         return target;
     }
 
@@ -450,38 +448,4 @@ namespace looper {
 
         return std::make_tuple(fadeIn, fadeOut);
     }
-
-    /*
-    float LooperProcessor::Track::read(unsigned int channel) const noexcept
-    {
-        if (isEmpty()) return 0.0f;
-
-#define USE_CROSSFADE 0
-#if USE_CROSSFADE
-        if ((length < crossfadeLength) || (position < (length - crossfadeLength)))
-            return buffers[channel][position];
-
-        const auto t = static_cast<float>(position - (length - crossfadeLength)) / static_cast<float>(crossfadeLength - 1);
-        const auto fadeIn = t;
-        const auto fadeOut = 1.0f - t;
-
-        const auto startSample = buffers[channel][position - length + crossfadeLength] * fadeIn;
-        const auto endSample = buffers[channel][position] * fadeOut;
-
-        return startSample + endSample;
-#else
-        return buffers[channel][position];
-#endif
-    }
-
-    void LooperProcessor::Track::writeAdding(unsigned int channel, float value) noexcept
-    {
-        buffers[channel][position] += value;
-    }
-
-    void LooperProcessor::Track::overwrite(unsigned int channel, float value) noexcept
-    {
-        buffers[channel][position] = value;
-    }
-*/
 }
