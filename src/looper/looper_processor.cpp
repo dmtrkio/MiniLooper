@@ -303,16 +303,19 @@ namespace looper {
                 }
             }
 
+            const auto [fadeIn, fadeOut] = track.getFadeScalars(pos);
+            const auto fade = fadeIn * fadeOut;
+
             switch (track.state) {
                 case State::Playback: {
                     for (auto ch{0u}; ch < numChannels_; ++ch) {
-                        sumBuffers_[ch][i] += track.buffers[ch][pos];
+                        sumBuffers_[ch][i] += track.buffers[ch][pos] * fade;
                     }
                     break;
                 }
                 case State::Recording: {
                     for (auto ch{0u}; ch < numChannels_; ++ch) {
-                        const float oldSample = track.buffers[ch][pos];
+                        const float oldSample = track.buffers[ch][pos] * fade;
                         track.buffers[ch][pos] += data[ch][i];
                         sumBuffers_[ch][i] += oldSample;
                     }
@@ -381,9 +384,8 @@ namespace looper {
 
         hasPendingTransition = false;
 
-        constexpr float crossfadeMs = 10.0f;
         const auto sampleRate = static_cast<float>(audio::AudioEngine::getInstance().getSampleRate());
-        crossfadeLength = static_cast<unsigned int>(crossfadeMs * sampleRate / 1000.0f);
+        fadeLength = static_cast<unsigned int>(kFadeLengthMs * sampleRate / 1000.0f);
     }
 
     bool LooperProcessor::Track::isEmpty() const noexcept
@@ -431,6 +433,22 @@ namespace looper {
             return 0u;
 
         return (transportFrame - start) % length;
+    }
+
+    std::tuple<float, float> LooperProcessor::Track::getFadeScalars(const unsigned int pos) const noexcept
+    {
+        float fadeIn = 1.0f;
+        float fadeOut = 1.0f;
+
+        if (pos <= fadeLength) {
+            fadeIn = static_cast<float>(pos) / static_cast<float>(fadeLength + 1);
+        }
+
+        if ((length - pos) <= fadeLength) {
+            fadeOut = static_cast<float>(length - pos) / static_cast<float>(fadeLength + 1);
+        }
+
+        return std::make_tuple(fadeIn, fadeOut);
     }
 
     /*

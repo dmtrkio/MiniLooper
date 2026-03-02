@@ -3,6 +3,7 @@
 #include <array>
 #include <vector>
 #include <string>
+#include <tuple>
 
 #include "looper_commands.h"
 #include "triple_buffer.h"
@@ -104,6 +105,7 @@ namespace looper {
             void scheduleTransition(State next, unsigned int when);
             void transitionState(State newState, unsigned int transportFrame) noexcept;
             [[nodiscard]] unsigned int phase(unsigned int transportFrame) const noexcept;
+            [[nodiscard]] std::tuple<float, float> getFadeScalars(unsigned int pos) const noexcept;
 
             /*
             void advance(Transport &transport, unsigned int maxFrames) noexcept;
@@ -117,7 +119,9 @@ namespace looper {
             unsigned int start{0};
             unsigned int length{0};
 
-            unsigned int crossfadeLength{64};
+            static constexpr float kFadeLengthMs = 5.0f;
+            unsigned int fadeLength{64};
+
             std::vector<std::vector<float>> buffers;
 
             State pendingState{State::Cleared};
