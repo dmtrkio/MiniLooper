@@ -31,7 +31,17 @@ FetchContent_Declare(
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(portmidi)
 
-# Raylib - windowing/inputs/graphics library
+find_package(SDL3 QUIET)
+if (NOT SDL3_FOUND)
+    FetchContent_Declare(
+        SDL3
+        GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+        GIT_TAG release-3.4.2
+    )
+    FetchContent_MakeAvailable(SDL3)
+endif()
+
+#[[# Raylib - windowing/inputs/graphics library
 FetchContent_Declare(
     raylib
     GIT_REPOSITORY https://github.com/raysan5/raylib.git
@@ -40,7 +50,7 @@ FetchContent_Declare(
 set(SUPPORT_MODULE_RMODELS OFF CACHE INTERNAL "")
 set(USE_AUDIO OFF CACHE INTERNAL "")
 set(SUPPORT_MODULE_RAUDIO OFF CACHE INTERNAL "")
-FetchContent_MakeAvailable(raylib)
+FetchContent_MakeAvailable(raylib)]]
 
 # Faust Generated DSP
 add_subdirectory(faust)
@@ -48,14 +58,14 @@ add_subdirectory(faust)
 # Source files
 set(SOURCE_FILES
     src/audio/audio_engine.cpp
-    src/main.cpp
+    src/main_callbacks.cpp
     src/looper/looper_processor.cpp
     src/looper/looper_commands.cpp
     src/looper/looper.cpp
 )
 
 # Build Executable
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -67,14 +77,17 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${portmidi_SOURCE_DIR}/porttime
 )
 
+target_include_directories(${PROJECT_NAME} PUBLIC ${SDL3_INCLUDE_DIRS})
+
 # Link libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE
     readerwriterqueue
     portaudio
     portmidi
-    raylib
-    faust_dsp_lib
+    SDL3::SDL3-static
 )
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE SDL_MAIN_USE_CALLBACKS)
 
 # Compile options
 target_compile_options(${PROJECT_NAME} PRIVATE
