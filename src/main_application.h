@@ -20,6 +20,13 @@ public:
     void onFrame();
 
 private:
+    void looperUi();
+    void trackUi(int trackIndex);
+    void toggleRec(int trackIndex);
+    void togglePlay(int trackIndex);
+
+    bool midiIsOn{false};
+
     looper::Looper looper_;
     std::unique_ptr<midi::MidiEngine> midiEngine_;
 };

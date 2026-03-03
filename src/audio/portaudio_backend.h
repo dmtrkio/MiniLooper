@@ -83,6 +83,10 @@ namespace audio {
             const auto outputHostApiInfo = Pa_GetHostApiInfo(outputDeviceInfo->hostApi);
             std::cout << "Output Host Api: " << outputHostApiInfo->name << std::endl;
 
+            if ((inputHostApiInfo->type == paWASAPI) || (outputHostApiInfo->type == paWASAPI)) {
+                params.sampleRate = static_cast<unsigned int>(outputDeviceInfo->defaultSampleRate);
+            }
+
             if (Pa_IsFormatSupported(&inputParameters, &outputParameters, params.sampleRate) != paFormatIsSupported) {
                 std::cerr << "Format not supported by devices used" << std::endl;
                 return false;

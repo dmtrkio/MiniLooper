@@ -139,7 +139,10 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
             break;
         }
         case SDL_EVENT_KEY_DOWN: {
-            std::cout << "Key pressed: " << SDL_GetKeyName(event->key.key) << std::endl;
+            //std::cout << "Key pressed: " << SDL_GetKeyName(event->key.key) << std::endl;
+            if (event->key.key == SDLK_ESCAPE) {
+                return SDL_APP_SUCCESS;
+            }
             break;
         }
         default: {
