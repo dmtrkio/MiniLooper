@@ -1,10 +1,17 @@
 #include <iostream>
 
+#include "imgui.h"
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_sdlrenderer3.h"
+
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
+auto clearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
 SDL_Window *window;
 SDL_Renderer *renderer;
+float mainScale;
 
 SDL_AppResult initializeSDL()
 {
@@ -13,7 +20,7 @@ SDL_AppResult initializeSDL()
         return SDL_APP_FAILURE;
     }
 
-    const float mainScale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
+    mainScale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
     constexpr SDL_WindowFlags windowFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
     window = SDL_CreateWindow("MiniLooper", static_cast<int>(1280 * mainScale), static_cast<int>(800 * mainScale), windowFlags);
     if (window == nullptr) {
@@ -35,23 +42,86 @@ SDL_AppResult initializeSDL()
     return SDL_APP_CONTINUE;
 }
 
+bool initializeImgui()
+{
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+
+    //ImGui::StyleColorsDark();
+    ImGui::StyleColorsLight();
+
+    // Setup scaling
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.ScaleAllSizes(mainScale);
+    style.FontScaleDpi = mainScale;
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
+    ImGui_ImplSDLRenderer3_Init(renderer);
+
+    return true;
+}
+
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
 {
     std::cout << "SDL_AppInit" << std::endl;
 
-    return initializeSDL();
+    if (const auto res = initializeSDL(); res != SDL_APP_CONTINUE) {
+        return res;
+    }
+
+    if (!initializeImgui()) {
+        return SDL_APP_FAILURE;
+    }
+
+    return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
+    if (SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) {
+        SDL_Delay(10);
+        return SDL_APP_CONTINUE;
+    }
+
+    ImGui_ImplSDLRenderer3_NewFrame();
+    ImGui_ImplSDL3_NewFrame();
+    ImGui::NewFrame();
+
+    const ImGuiIO& io = ImGui::GetIO();
+
+    {
+        ImGui::Begin("MiniLooper");
+
+        ImGui::End();
+    }
+
+    ImGui::Render();
+    SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
+    SDL_SetRenderDrawColorFloat(renderer, clearColor.x, clearColor.y, clearColor.z, clearColor.w);
+    SDL_RenderClear(renderer);
+    ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
+    SDL_RenderPresent(renderer);
+
     return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 {
+    ImGui_ImplSDL3_ProcessEvent(event);
+
     switch (event->type) {
         case SDL_EVENT_QUIT: {
             return SDL_APP_SUCCESS;
+        }
+        case SDL_EVENT_WINDOW_CLOSE_REQUESTED: {
+            if (event->window.windowID == SDL_GetWindowID(window)) {
+                return SDL_APP_SUCCESS;
+            }
+            break;
         }
         case SDL_EVENT_KEY_DOWN: {
             std::cout << "Key pressed: " << SDL_GetKeyName(event->key.key) << std::endl;
@@ -61,11 +131,16 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
             break;
         }
     }
+
     return SDL_APP_CONTINUE;
 }
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result)
 {
+    ImGui_ImplSDLRenderer3_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
+    ImGui::DestroyContext();
+
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

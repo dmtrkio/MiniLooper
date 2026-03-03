@@ -41,6 +41,28 @@ if (NOT SDL3_FOUND)
     FetchContent_MakeAvailable(SDL3)
 endif()
 
+# Setting up DearImGui, which is not a cmake project
+FetchContent_Declare(
+    imgui
+    GIT_REPOSITORY https://github.com/ocornut/imgui.git
+    GIT_TAG docking
+)
+FetchContent_MakeAvailable(imgui)
+
+set(imgui_INCLUDES
+    ${imgui_SOURCE_DIR}
+    ${imgui_SOURCE_DIR}/backends
+)
+
+set(imgui_SOURCES
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_sdlrenderer3.cpp
+)
+
 #[[# Raylib - windowing/inputs/graphics library
 FetchContent_Declare(
     raylib
@@ -62,6 +84,7 @@ set(SOURCE_FILES
     src/looper/looper_processor.cpp
     src/looper/looper_commands.cpp
     src/looper/looper.cpp
+    ${imgui_SOURCES}
 )
 
 # Build Executable
@@ -75,9 +98,12 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${portmidi_SOURCE_DIR}/porttime
+    ${imgui_INCLUDES}
 )
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${SDL3_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PUBLIC
+    ${SDL3_INCLUDE_DIRS}
+)
 
 # Link libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE
