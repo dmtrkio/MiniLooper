@@ -3,6 +3,7 @@
 #include <atomic>
 #include <functional>
 #include <utility>
+#include <iostream>
 
 #include "portmidi.h"
 #include "porttime.h"

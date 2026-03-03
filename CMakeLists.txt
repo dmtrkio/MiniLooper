@@ -80,6 +80,7 @@ add_subdirectory(faust)
 # Source files
 set(SOURCE_FILES
     src/audio/audio_engine.cpp
+    src/main_application.cpp
     src/main_callbacks.cpp
     src/looper/looper_processor.cpp
     src/looper/looper_commands.cpp
