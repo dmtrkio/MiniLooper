@@ -1,11 +1,25 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 #include "looper_processor.h"
 #include "midi/midi_message.h"
 
 namespace looper {
+    struct TrackStateSnapshot
+    {
+        unsigned int nFrames;
+        unsigned int position;
+        State state;
+
+        [[nodiscard]] std::string toString() const;
+    };
+
+    struct LooperStateSnapshot
+    {
+        std::array<TrackStateSnapshot, kLooperTrackCount> tracks;
+    };
 
     class Looper
     {
@@ -40,5 +54,4 @@ namespace looper {
         std::shared_ptr<LooperCallback> cb_;
         LooperStateSnapshot snapshot_{};
     };
-
 }

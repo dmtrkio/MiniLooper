@@ -1,17 +1,25 @@
 #include "looper.h"
 
-#include <iostream>
-#include <algorithm>
-#include <numbers>
-#include <cmath>
+#include <format>
 
 #include "audio/audio_engine.h"
 #include "looper_processor.h"
 #include "looper_commands.h"
 #include "midi/foot_switch.h"
-#include "timer.h"
+#include "spsc_mailbox.h"
+#include "triple_buffer.h"
 
 namespace looper {
+    struct LooperSharedData
+    {
+        LooperMailbox commandMailbox{128};
+        TripleBuffer<LooperStateSnapshot> state;
+    };
+
+    std::string TrackStateSnapshot::toString() const
+    {
+        return std::format("nFrames: {}, position: {}, state: {}", nFrames, position, stateToStr(state));
+    }
 
     class Looper::LooperCallback : public audio::AudioCallback
     {
@@ -35,8 +43,11 @@ namespace looper {
             }
 
             drainMidiQueue();
+            consumeCommands();
 
             looper.process(out, nFrames);
+
+            updateSnapshot();
 
             /*const auto sr = static_cast<float>(engine.getSampleRate());
             constexpr auto twoPi = 2.0f * std::numbers::pi_v<float>;
@@ -54,9 +65,11 @@ namespace looper {
 
         void onStart() override
         {
-            //std::cout << "onStart()\n";
-
             looper.onStart();
+            // ensure mailbox is clear from stale messages
+            consumeCommands();
+            looper.clearAll();
+            updateSnapshot();
 
             constexpr int trackIndex = 0;
 
@@ -79,8 +92,6 @@ namespace looper {
 
         void onStop() override
         {
-            //std::cout << "onStop()\n";
-
             looper.onStop();
         }
 
@@ -91,7 +102,29 @@ namespace looper {
             });
         }
 
+        void consumeCommands() noexcept
+        {
+            sharedData.commandMailbox.consumeAll([&](const LooperCommand& cmd) {
+                cmd.apply(looper);
+            });
+        }
+
+        void updateSnapshot() noexcept
+        {
+            auto writer = sharedData.state.getWriter();
+            auto& snapshot = writer.data();
+
+            for (auto i{0}; i < LooperProcessor::getNumLooperTracks(); ++i) {
+                auto& [nFrames, position, state] = snapshot.tracks[i];
+                nFrames = looper.getCurrentNumFrames(i);
+                position = looper.getCurrentPosition(i);
+                state = looper.getState(i);
+            }
+        }
+
         looper::LooperProcessor looper;
+        looper::LooperSharedData sharedData;
+
         midi::MidiQueue midiQueue{64};
         midi::FootSwitch footSwitch;
     };
@@ -104,18 +137,15 @@ namespace looper {
 
     int Looper::getNumLooperTracks() const noexcept
     {
-        return cb_->looper.getNumLooperTracks();
+        return LooperProcessor::getNumLooperTracks();
     }
 
     void Looper::updateSnapshot() noexcept
     {
-        const auto reader = cb_->looper.getSharedData().state.read();
+        const auto reader = cb_->sharedData.state.read();
         if (reader.isFresh()) {
             snapshot_ = reader.data();
         }
-
-        // const auto trackState = getTrackState(0);
-        // std::cout << trackState.toString() << std::endl;
     }
 
     const TrackStateSnapshot& Looper::getTrackState(int trackIndex) const noexcept
@@ -167,7 +197,6 @@ namespace looper {
 
     LooperMailbox& Looper::getCommandMailbox() noexcept
     {
-        return cb_->looper.getSharedData().commandMailbox;
+        return cb_->sharedData.commandMailbox;
     }
-
 }

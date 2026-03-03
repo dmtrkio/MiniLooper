@@ -2,15 +2,14 @@
 
 #include <array>
 #include <vector>
-#include <string>
 #include <tuple>
 
 #include "looper_commands.h"
-#include "triple_buffer.h"
 
 namespace looper {
     constexpr unsigned int kMaxLoopSecs = 32;
-    constexpr unsigned int kLooperTrackCount{4};
+    constexpr unsigned int kLooperTrackCount = 4;
+    constexpr float kFadeLengthMs = 5.0f;
 
     enum class State
     {
@@ -22,26 +21,6 @@ namespace looper {
 
     const char* stateToStr(State state);
 
-    struct TrackStateSnapshot
-    {
-        unsigned int nFrames;
-        unsigned int position;
-        State state;
-
-        [[nodiscard]] std::string toString() const;
-    };
-
-    struct LooperStateSnapshot
-    {
-        std::array<TrackStateSnapshot, kLooperTrackCount> tracks;
-    };
-
-    struct LooperSharedData
-    {
-        LooperMailbox commandMailbox{128};
-        TripleBuffer<LooperStateSnapshot> state;
-    };
-
     class LooperProcessor
     {
     public:
@@ -52,14 +31,12 @@ namespace looper {
 
         static constexpr int getNumLooperTracks() { return kLooperTrackCount; }
 
-        LooperSharedData& getSharedData() noexcept;
-
         // All the methods below are not thread-safe, they are meant to be used in the same thread where process() is called
 
-        State getState(int trackIndex) const noexcept;
-        unsigned int getCurrentPosition(int trackIndex) const noexcept;
-        unsigned int getCurrentNumFrames(int trackIndex) const noexcept;
-        bool isEmpty(int trackIndex) const noexcept;
+        [[nodiscard]] State getState(int trackIndex) const noexcept;
+        [[nodiscard]] unsigned int getCurrentPosition(int trackIndex) const noexcept;
+        [[nodiscard]] unsigned int getCurrentNumFrames(int trackIndex) const noexcept;
+        [[nodiscard]] bool isEmpty(int trackIndex) const noexcept;
 
         void startRecording(int trackIndex) noexcept;
         void stopRecording(int trackIndex) noexcept;
@@ -69,12 +46,10 @@ namespace looper {
         void clearAll() noexcept;
 
     private:
-        unsigned int getNextGridDivision(int frameIndex) const noexcept;
-        bool isTrackIndexValid(int trackIndex) const noexcept;
-        bool isAnyTrackCurrentlyRecording() const noexcept;
+        [[nodiscard]] unsigned int getNextGridDivision(int frameIndex) const noexcept;
+        static constexpr bool isTrackIndexValid(int trackIndex);
+        [[nodiscard]] bool isAnyTrackCurrentlyRecording() const noexcept;
 
-        void updateSnapshot() noexcept;
-        void consumeCommands() noexcept;
         void processInternal(float *const *data, unsigned int nFrames) noexcept;
         void processTrack(int trackIndex, float *const *data, unsigned int nFrames) noexcept;
 
@@ -111,7 +86,6 @@ namespace looper {
             unsigned int start{0};
             unsigned int length{0};
 
-            static constexpr float kFadeLengthMs = 5.0f;
             unsigned int fadeLength{64};
 
             std::vector<std::vector<float>> buffers;
@@ -124,7 +98,5 @@ namespace looper {
         std::array<Track, kLooperTrackCount> tracks_{};
 
         std::vector<std::vector<float>> sumBuffers_;
-
-        LooperSharedData sharedData_{};
     };
 }

@@ -2,8 +2,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include <format>
-#include <iostream>
 
 #include "audio/audio_engine.h"
 
@@ -17,20 +15,12 @@ namespace looper {
         return "Unknown State";
     }
 
-    std::string TrackStateSnapshot::toString() const
-    {
-        return std::format("nFrames: {}, position: {}, state: {}", nFrames, position, stateToStr(state));
-    }
-
     void LooperProcessor::process(float *const *data, unsigned int nFrames) noexcept
     {
-        consumeCommands();
-
         assert(nFrames <= maxFrames_);
         if (!data || numChannels_ == 0) return;
 
         processInternal(data, nFrames);
-        updateSnapshot();
     }
 
     void LooperProcessor::onStart()
@@ -52,22 +42,11 @@ namespace looper {
         }
 
         transport_.reset(maxFrames_);
-
-        // ensure mailbox is clear from stale messages
-        consumeCommands();
-
-        clearAll();
-        updateSnapshot();
     }
 
     void LooperProcessor::onStop()
     {
         clearAll();
-    }
-
-    LooperSharedData& LooperProcessor::getSharedData() noexcept
-    {
-        return sharedData_;
     }
 
     State LooperProcessor::getState(int trackIndex) const noexcept
@@ -231,7 +210,7 @@ namespace looper {
         return target;
     }
 
-    bool LooperProcessor::isTrackIndexValid(int trackIndex) const noexcept
+    constexpr bool LooperProcessor::isTrackIndexValid(int trackIndex)
     {
         return trackIndex >= 0 && trackIndex < getNumLooperTracks();
     }
@@ -240,27 +219,6 @@ namespace looper {
     {
         return std::ranges::any_of(tracks_, [](const auto& track) {
             return (track.state == State::Recording) || (track.hasPendingTransition && track.pendingState == State::Recording);
-        });
-    }
-
-    void LooperProcessor::updateSnapshot() noexcept
-    {
-        auto writer = sharedData_.state.getWriter();
-        auto& snapshot = writer.data();
-
-        for (auto i{0u}; i < getNumLooperTracks(); ++i) {
-            const auto& track = tracks_[i];
-            auto& [nFrames, position, state] = snapshot.tracks[i];
-            nFrames = track.length;
-            position = track.phase(transport_.currentFrame);
-            state = track.state;
-        }
-    }
-
-    void LooperProcessor::consumeCommands() noexcept
-    {
-        sharedData_.commandMailbox.consumeAll([&](const LooperCommand& cmd) {
-            cmd.apply(*this);
         });
     }
 
