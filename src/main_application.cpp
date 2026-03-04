@@ -150,9 +150,13 @@ void MainApplication::audioEngineSettings()
         displayDeviceSettings(true);
     }
 
+    ImGui::Separator();
+
     if (ImGui::CollapsingHeader("Output Device")) {
         displayDeviceSettings(false);
     }
+
+    ImGui::Separator();
 
     if (ImGui::Button("Restart Audio Stream")) {
         if (audioEngine.restart()) {
@@ -160,6 +164,10 @@ void MainApplication::audioEngineSettings()
         } else {
             std::cerr << "Failed to restart" << std::endl;
         }
+    }
+
+    if (ImGui::Button("Rescan audio devices")) {
+        audioEngine.rescanDevices();
     }
 
     ImGui::EndGroup();
