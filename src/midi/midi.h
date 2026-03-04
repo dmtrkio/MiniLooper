@@ -37,6 +37,33 @@ namespace midi {
 
             deviceId_ = Pm_GetDefaultInputDeviceID();
 
+            start();
+        }
+
+        ~MidiEngine()
+        {
+            active_.store(false, std::memory_order_release);
+
+            timer_.stop();
+
+            if (inputStream_) {
+                if (const auto err = Pm_Close(inputStream_); err != pmNoError) {
+                    std::cerr << "Error closing input stream: " << err << std::endl;
+                }
+
+                inputStream_ = nullptr;
+            }
+
+            Pm_Terminate();
+        }
+
+        void start()
+        {
+            if (active_.load(std::memory_order_acquire)) {
+                std::cerr << "MidiEngine already started" << std::endl;
+                return;
+            }
+
             {
                 const auto err = Pm_OpenInput(&inputStream_,
                                                      deviceId_,
@@ -57,27 +84,17 @@ namespace midi {
             active_.store(true, std::memory_order_release);
         }
 
-        ~MidiEngine()
+        void stop()
         {
             active_.store(false, std::memory_order_release);
 
-            timer_.stop();
-
             if (inputStream_) {
                 if (const auto err = Pm_Close(inputStream_); err != pmNoError) {
-                    std::cerr << "Error closing input stream: " << err << std::endl;
+                    throw std::runtime_error(Pm_GetErrorText(err));
                 }
 
                 inputStream_ = nullptr;
             }
-
-            Pm_Terminate();
-        }
-
-        bool start()
-        {
-
-            return false;
         }
 
         void rescanDevices()
@@ -122,34 +139,13 @@ namespace midi {
         {
             deviceId_ = deviceIndex;
 
-            active_.store(false, std::memory_order_release);
-            timer_.stop();
-            if (inputStream_) {
-                if (const auto err = Pm_Close(inputStream_); err != pmNoError) {
-                    std::cerr << "Error closing input stream: " << err << std::endl;
-                    return false;
-                }
-
-                inputStream_ = nullptr;
-            }
-
-            const auto err = Pm_OpenInput(&inputStream_,
-                                                 deviceId_,
-                                                 nullptr,
-                                                 0,
-                                                 nullptr,
-                                                 nullptr);
-
-            if (err != pmNoError) {
-                std::cerr << "Error opening input device: " << Pm_GetErrorText(err) << std::endl;
+            try {
+                stop();
+                start();
+            } catch (std::exception& e) {
+                std::cerr << e.what() << std::endl;
                 return false;
             }
-
-            if (!timer_.start(&timerCallback, this)) {
-                return false;
-            }
-
-            active_.store(true, std::memory_order_release);
 
             return true;
         }
@@ -189,20 +185,21 @@ namespace midi {
             PortTimeWrapper(PortTimeWrapper&&) = delete;
             PortTimeWrapper& operator=(PortTimeWrapper&&) = delete;
 
-            bool start(PtCallback* cb, MidiEngine* engine)
+            void start(PtCallback* cb, MidiEngine* engine)
             {
+                if (!Pt_Started()) return;
+
                 if (Pt_Start(1, cb, engine) != ptNoError) {
-                    std::cerr << "Error starting PortTime" << std::endl;
-                    return false;
+                    throw std::runtime_error("PortTime error");
                 }
-                return true;
             }
 
             void stop()
             {
                 if (!Pt_Started()) return;
-                if (const auto err = Pt_Stop(); err != ptNoError) {
-                    std::cerr << "PortTime error when stopping timer: " << err << std::endl;
+
+                if (Pt_Stop() != ptNoError) {
+                    std::cerr << "PortTime error" << std::endl;
                 }
             }
         };
