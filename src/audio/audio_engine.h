@@ -5,6 +5,8 @@
 #include <mutex>
 #include <memory>
 
+#include "audio_device.h"
+
 namespace audio {
 
     class AudioBackend;
@@ -46,15 +48,26 @@ namespace audio {
         unsigned int getBufferSize() const noexcept;
         // -------------------------------------------------------------
 
+        // rescanning will stop ongoing audio stream
+        void rescanDevices();
+        [[nodiscard]] const std::vector<AudioDevice>& getInputDevices() const;
+        [[nodiscard]] const std::vector<AudioDevice>& getOutputDevices() const;
+        [[nodiscard]] DeviceIndex getCurrentInputDevice() const;
+        [[nodiscard]] DeviceIndex getCurrentOutputDevice() const;
+
+        // these won't take effect until starting a new stream with fresh settings
         void setSampleRate(unsigned int sampleRate);
         void setBufferSize(unsigned int bufferSize);
+        void setInputDevice(int inputDeviceIndex);
+        void setOutputDevice(int outputDeviceIndex);
+        void pickDevices();
+
         void setAudioCallback(std::shared_ptr<AudioCallback> cb);
 
         bool start();
         bool stop();
         bool restart();
         bool isRunning() const;
-        void pickDevices();
 
     private:
         AudioEngine();
@@ -71,11 +84,14 @@ namespace audio {
         std::atomic<unsigned int> sampleRate_{48000};
         std::atomic<unsigned int> bufferSize_{256};
 
-        int inputDeviceIndex_{-1};
-        int outputDeviceIndex_{-1};
+        DeviceIndex inputDeviceIndex_{kNoDevice};
+        DeviceIndex outputDeviceIndex_{kNoDevice};
 
         unsigned int inputChannels_{2};
         unsigned int outputChannels_{2};
+
+        std::vector<AudioDevice> inputDevices_;
+        std::vector<AudioDevice> outputDevices_;
 
         struct PlanarAudioData
         {

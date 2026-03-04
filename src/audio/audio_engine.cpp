@@ -48,15 +48,11 @@ unsigned int AudioEngine::getBufferSize() const noexcept { return bufferSize_.lo
 void AudioEngine::setSampleRate(unsigned int sampleRate)
 {
     sampleRate_.store(sampleRate, std::memory_order_relaxed);
-    if (isRunning())
-        restart();
 }
 
 void AudioEngine::setBufferSize(unsigned int bufferSize)
 {
     bufferSize_.store(bufferSize, std::memory_order_relaxed);
-    if (isRunning())
-        restart();
 }
 
 void AudioEngine::setAudioCallback(std::shared_ptr<AudioCallback> cb)
@@ -124,6 +120,51 @@ bool AudioEngine::isRunning() const
 {
     std::lock_guard<std::mutex> lock(streamMutex_);
     return backend_->isStreamRunning();
+}
+
+void AudioEngine::rescanDevices()
+{
+    stop();
+
+    const auto devices = backend_->getAvailableDevices();
+    for (const auto& device : devices) {
+        if (device.maxInputChannels > 0) {
+            inputDevices_.push_back(device);
+        }
+        if (device.maxOutputChannels > 0) {
+            outputDevices_.push_back(device);
+        }
+    }
+}
+
+const std::vector<AudioDevice>& AudioEngine::getInputDevices() const
+{
+    return inputDevices_;
+}
+
+const std::vector<AudioDevice>& AudioEngine::getOutputDevices() const
+{
+    return outputDevices_;
+}
+
+DeviceIndex AudioEngine::getCurrentInputDevice() const
+{
+    return inputDeviceIndex_;
+}
+
+DeviceIndex AudioEngine::getCurrentOutputDevice() const
+{
+    return outputDeviceIndex_;
+}
+
+void AudioEngine::setInputDevice(int inputDeviceIndex)
+{
+    inputDeviceIndex_ = inputDeviceIndex;
+}
+
+void AudioEngine::setOutputDevice(int outputDeviceIndex)
+{
+    outputDeviceIndex_ = outputDeviceIndex;
 }
 
 void AudioEngine::pickDevices()

@@ -1,5 +1,6 @@
 #include "main_application.h"
 
+#include <algorithm>
 #include <iostream>
 #include <format>
 
@@ -26,7 +27,7 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
     auto& audioEngine = audio::AudioEngine::getInstance();
     audioEngine.setSampleRate(48000);
     audioEngine.setBufferSize(64);
-    audioEngine.pickDevices();
+    audioEngine.rescanDevices();
 
     if (!audioEngine.start() || !audioEngine.isRunning()) {
         throw std::runtime_error("Failed to start audio engine.");
@@ -69,6 +70,99 @@ void MainApplication::onFrame()
     }
 
     looperUi();
+    settings();
+}
+
+void MainApplication::settings()
+{
+    ImGui::Begin("Audio settings");
+
+    audioEngineSettings();
+
+    ImGui::End();
+}
+
+void MainApplication::audioEngineSettings()
+{
+    ImGui::BeginGroup();
+
+    using namespace audio;
+
+    auto &audioEngine = AudioEngine::getInstance();
+    const auto &inputDevices = audioEngine.getInputDevices();
+    const auto &outputDevices = audioEngine.getOutputDevices();
+
+    const auto displayDeviceSettings = [&](const bool input) {
+        ImGui::PushID(input ? "input device" : "output device");
+
+        const auto index = input ? audioEngine.getCurrentInputDevice() : audioEngine.getCurrentOutputDevice();
+        const std::vector<AudioDevice> &devices = input ? inputDevices : outputDevices;
+
+        const auto pred = [index](const AudioDevice& device) { return device.deviceIndex == index; };
+        const auto it = std::ranges::find_if(devices, pred);
+        constexpr auto noDeviceStr = "No device";
+
+        std::string previewLabel = noDeviceStr;
+        if (it != devices.end() && it->deviceIndex != kNoDevice) {
+            previewLabel = std::format("({}) ", it->hostApiName) + it->deviceName;
+        }
+
+        if (ImGui::BeginCombo("Available devices", previewLabel.c_str())) {
+            for (const auto &device : devices) {
+                ImGui::PushID(device.deviceIndex);
+
+                const bool isSelected = (device.deviceIndex == index);
+
+                const auto label = std::format("({}) ", device.hostApiName) + device.deviceName;
+                if (ImGui::Selectable(label.c_str(), isSelected)) {
+                    if (input) {
+                        audioEngine.setInputDevice(device.deviceIndex);
+                    } else {
+                        audioEngine.setOutputDevice(device.deviceIndex);
+                    }
+                }
+
+                if (isSelected) {
+                    ImGui::SetItemDefaultFocus();
+                }
+
+                ImGui::PopID();
+            }
+
+            ImGui::EndCombo();
+        }
+
+        if (it != devices.end() && it->deviceIndex != kNoDevice) {
+            const auto &device = *it;
+
+            ImGui::Text("Device Index: %i", device.deviceIndex);
+            ImGui::Text("Device Name: %s", device.deviceName.c_str());
+            ImGui::Text("Host API: %s", device.hostApiName.c_str());
+            ImGui::Text("Max Channels: %d", input ? device.maxInputChannels : device.maxOutputChannels);
+        } else {
+            ImGui::TextUnformatted(noDeviceStr);
+        }
+
+        ImGui::PopID();
+    };
+
+    if (ImGui::CollapsingHeader("Input Device")) {
+        displayDeviceSettings(true);
+    }
+
+    if (ImGui::CollapsingHeader("Output Device")) {
+        displayDeviceSettings(false);
+    }
+
+    if (ImGui::Button("Restart Audio Stream")) {
+        if (audioEngine.restart()) {
+            std::cout << "Audio Engine restarted" << std::endl;
+        } else {
+            std::cerr << "Failed to restart" << std::endl;
+        }
+    }
+
+    ImGui::EndGroup();
 }
 
 void MainApplication::looperUi()

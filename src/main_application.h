@@ -20,6 +20,9 @@ public:
     void onFrame();
 
 private:
+    void settings();
+    void audioEngineSettings();
+
     void looperUi();
     void trackUi(int trackIndex);
     void toggleRec(int trackIndex);

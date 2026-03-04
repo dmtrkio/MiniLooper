@@ -38,7 +38,7 @@ namespace audio {
             return devices_;
         }
 
-        bool startStream(int inputDeviceIndex, int outputDeviceIndex, StreamParams &params) override
+        bool startStream(DeviceIndex &inputDeviceIndex, DeviceIndex &outputDeviceIndex, StreamParams &params) override
         {
             if (isStreamRunning()) {
                 std::cerr << "Stream is already running" << std::endl;
@@ -56,6 +56,8 @@ namespace audio {
             if (!validateStreamParameters(inputDevice, outputDevice, params)) {
                 inputDevice = Pa_GetDefaultInputDevice();
                 outputDevice = Pa_GetDefaultOutputDevice();
+                inputDeviceIndex = inputDevice;
+                outputDeviceIndex = outputDevice;
                 std::cerr << "Failed to use given devices. Default devices picked" << std::endl;
             }
 
