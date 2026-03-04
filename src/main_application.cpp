@@ -33,6 +33,13 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
     }
 
     std::cout << "Audio engine started\n";
+
+    auto &style = ImGui::GetStyle();
+    constexpr float rounding = 4.0f;
+    style.FrameRounding = rounding;
+    style.WindowRounding = rounding;
+    style.ChildRounding = rounding;
+    style.PopupRounding = rounding;
 }
 
 MainApplication::~MainApplication()
@@ -68,20 +75,24 @@ void MainApplication::looperUi()
 {
     const auto nTracks = looper_.getNumLooperTracks();
 
-    ImGui::Begin("MiniLooper");
+    ImGui::Begin("Tracks");
 
     for (auto i{0}; i < nTracks; ++i) {
         const auto trackIndex = i;
         const auto label = std::format("Track {}", trackIndex);
         ImGui::PushID(label.c_str());
+
         ImGui::BeginGroup();
 
         ImGui::Text("%s", label.c_str());
         trackUi(trackIndex);
 
         ImGui::EndGroup();
+
         ImGui::PopID();
         ImGui::Separator();
+
+        ImGui::SameLine();
     }
 
     if (ImGui::Button("Clear All")) {

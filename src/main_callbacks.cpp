@@ -54,8 +54,8 @@ void initializeImgui()
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
-    //ImGui::StyleColorsDark();
-    ImGui::StyleColorsLight();
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsLight();
 
     // Setup scaling
     ImGuiStyle& style = ImGui::GetStyle();
@@ -73,18 +73,18 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
 {
     std::cout << "SDL_AppInit" << std::endl;
 
+    if (const auto res = initializeSDL(); res != SDL_APP_CONTINUE) {
+        return res;
+    }
+
+    initializeImgui();
+
     try {
         app = std::make_unique<MainApplication>(argc, argv);
     } catch (std::exception &e) {
         std::cerr << e.what() << std::endl;
         return SDL_APP_FAILURE;
     }
-
-    if (const auto res = initializeSDL(); res != SDL_APP_CONTINUE) {
-        return res;
-    }
-
-    initializeImgui();
 
     return SDL_APP_CONTINUE;
 }
@@ -100,6 +100,19 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     ImGui_ImplSDL3_NewFrame();
     ImGui::NewFrame();
 
+    const auto *viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(viewport->Pos);
+    ImGui::SetNextWindowSize(viewport->Size);
+    ImGui::SetNextWindowViewport(viewport->ID);
+
+    ImGuiWindowFlags flags =
+        ImGuiWindowFlags_NoDecoration |
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoSavedSettings;
+
+    ImGui::Begin("MiniLooper", nullptr, flags);
+
     {
         if (!app) {
             return SDL_APP_FAILURE;
@@ -112,6 +125,8 @@ SDL_AppResult SDL_AppIterate(void *appstate)
             return SDL_APP_FAILURE;
         }
     }
+
+    ImGui::End();
 
     ImGui::Render();
     const ImGuiIO& io = ImGui::GetIO();
