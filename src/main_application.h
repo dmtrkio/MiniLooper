@@ -20,8 +20,11 @@ public:
     void onFrame();
 
 private:
+    static constexpr auto kNoDeviceString = "No device";
+
     void settings();
     void audioEngineSettings();
+    void midiEngineSettings();
 
     void looperUi();
     void trackUi(int trackIndex);

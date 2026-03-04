@@ -12,36 +12,30 @@
 
 namespace midi {
     using MidiInputCallback = std::function<void(int, MidiMessage)>;
+    using DeviceIndex = int;
+    constexpr DeviceIndex kNoDevice = pmNoDevice;
+
+    struct MidiDevice
+    {
+        DeviceIndex deviceIndex;
+        std::string deviceName;
+        std::string apiName;
+    };
 
     class MidiEngine
     {
     public:
         explicit MidiEngine(MidiInputCallback  inputCallback)
-            : timer_(&timerCallback, this),
-              inputCallback_(std::move(inputCallback))
+            : inputCallback_(std::move(inputCallback))
+            , timer_(&timerCallback, this)
         {
             if (const auto err = Pm_Initialize(); err != pmNoError) {
                 throw std::runtime_error(Pm_GetErrorText(err));
             }
 
-            std::cout << std::endl;
-            std::cout << "Available MIDI devices" << std::endl;
-            for (auto i{0}; i < Pm_CountDevices(); ++i) {
-                const auto deviceId = i;
-                const auto* deviceInfo = Pm_GetDeviceInfo(deviceId);
-                if (!deviceInfo) continue;
-                if (!deviceInfo->input) continue;
+            rescanDevices();
 
-                std::cout << "Device Id: " << deviceId << std::endl;
-                std::cout << "Device api: " << deviceInfo->interf << std::endl;
-                std::cout << "Device name: " << deviceInfo->name << std::endl;
-                std::cout << "Virtual device: " << (deviceInfo->is_virtual ? "true" : "false") << std::endl;
-                std::cout << std::endl;
-            }
-
-            std::cout << "Pick midi input device: ";
-            std::cin >> deviceId_;
-            std::cout << std::endl;
+            deviceId_ = Pm_GetDefaultInputDeviceID();
 
             {
                 const auto err = Pm_OpenInput(&inputStream_,
@@ -70,11 +64,94 @@ namespace midi {
             timer_.stop();
 
             if (inputStream_) {
-                Pm_Close(inputStream_);
+                if (const auto err = Pm_Close(inputStream_); err != pmNoError) {
+                    std::cerr << "Error closing input stream: " << err << std::endl;
+                }
+
                 inputStream_ = nullptr;
             }
 
             Pm_Terminate();
+        }
+
+        bool start()
+        {
+
+            return false;
+        }
+
+        void rescanDevices()
+        {
+            devices_.clear();
+
+            std::cout << std::endl;
+            std::cout << "Available MIDI devices" << std::endl;
+            for (auto i{0}; i < Pm_CountDevices(); ++i) {
+                const auto deviceId = i;
+                const auto* deviceInfo = Pm_GetDeviceInfo(deviceId);
+                if (!deviceInfo) continue;
+                if (!deviceInfo->input) continue;
+
+                const MidiDevice device = {
+                    .deviceIndex = deviceId,
+                    .deviceName = deviceInfo->name,
+                    .apiName = deviceInfo->interf
+                };
+
+                devices_.emplace_back(device);
+
+                std::cout << "Device Id: " << deviceId << std::endl;
+                std::cout << "Device api: " << deviceInfo->interf << std::endl;
+                std::cout << "Device name: " << deviceInfo->name << std::endl;
+                std::cout << "Virtual device: " << (deviceInfo->is_virtual ? "true" : "false") << std::endl;
+                std::cout << std::endl;
+            }
+        }
+
+        std::vector<MidiDevice> getMidiInputDevices() const
+        {
+            return devices_;
+        }
+
+        DeviceIndex getCurrentMidiInputDevice() const noexcept
+        {
+            return deviceId_;
+        }
+
+        bool setMidiInputDevice(const DeviceIndex deviceIndex)
+        {
+            deviceId_ = deviceIndex;
+
+            active_.store(false, std::memory_order_release);
+            timer_.stop();
+            if (inputStream_) {
+                if (const auto err = Pm_Close(inputStream_); err != pmNoError) {
+                    std::cerr << "Error closing input stream: " << err << std::endl;
+                    return false;
+                }
+
+                inputStream_ = nullptr;
+            }
+
+            const auto err = Pm_OpenInput(&inputStream_,
+                                                 deviceId_,
+                                                 nullptr,
+                                                 0,
+                                                 nullptr,
+                                                 nullptr);
+
+            if (err != pmNoError) {
+                std::cerr << "Error opening input device: " << Pm_GetErrorText(err) << std::endl;
+                return false;
+            }
+
+            if (!timer_.start(&timerCallback, this)) {
+                return false;
+            }
+
+            active_.store(true, std::memory_order_release);
+
+            return true;
         }
 
     private:
@@ -112,6 +189,15 @@ namespace midi {
             PortTimeWrapper(PortTimeWrapper&&) = delete;
             PortTimeWrapper& operator=(PortTimeWrapper&&) = delete;
 
+            bool start(PtCallback* cb, MidiEngine* engine)
+            {
+                if (Pt_Start(1, cb, engine) != ptNoError) {
+                    std::cerr << "Error starting PortTime" << std::endl;
+                    return false;
+                }
+                return true;
+            }
+
             void stop()
             {
                 if (!Pt_Started()) return;
@@ -127,5 +213,7 @@ namespace midi {
         PmStream *inputStream_{nullptr};
 
         PortTimeWrapper timer_;
+
+        std::vector<MidiDevice> devices_;
     };
 }

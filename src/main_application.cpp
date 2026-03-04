@@ -76,14 +76,17 @@ void MainApplication::onFrame()
 void MainApplication::settings()
 {
     ImGui::Begin("Audio settings");
-
     audioEngineSettings();
+    ImGui::End();
 
+    ImGui::Begin("Midi settings");
+    midiEngineSettings();
     ImGui::End();
 }
 
 void MainApplication::audioEngineSettings()
 {
+    ImGui::PushID("audio");
     ImGui::BeginGroup();
 
     using namespace audio;
@@ -100,9 +103,8 @@ void MainApplication::audioEngineSettings()
 
         const auto pred = [index](const AudioDevice& device) { return device.deviceIndex == index; };
         const auto it = std::ranges::find_if(devices, pred);
-        constexpr auto noDeviceStr = "No device";
 
-        std::string previewLabel = noDeviceStr;
+        std::string previewLabel = kNoDeviceString;
         if (it != devices.end() && it->deviceIndex != kNoDevice) {
             previewLabel = std::format("({}) ", it->hostApiName) + it->deviceName;
         }
@@ -140,7 +142,7 @@ void MainApplication::audioEngineSettings()
             ImGui::Text("Host API: %s", device.hostApiName.c_str());
             ImGui::Text("Max Channels: %d", input ? device.maxInputChannels : device.maxOutputChannels);
         } else {
-            ImGui::TextUnformatted(noDeviceStr);
+            ImGui::TextUnformatted(kNoDeviceString);
         }
 
         ImGui::PopID();
@@ -171,6 +173,73 @@ void MainApplication::audioEngineSettings()
     }
 
     ImGui::EndGroup();
+    ImGui::PopID();
+}
+
+void MainApplication::midiEngineSettings()
+{
+    if (!midiEngine_) return;
+
+    using namespace midi;
+    ImGui::PushID("MIDI settings");
+
+    ImGui::BeginGroup();
+    auto &engine = *midiEngine_;
+
+    const auto devices = engine.getMidiInputDevices();
+    const auto index = engine.getCurrentMidiInputDevice();
+
+    const auto pred = [index](const MidiDevice& device) { return device.deviceIndex == index; };
+    const auto it = std::ranges::find_if(devices, pred);
+
+    std::string previewLabel = kNoDeviceString;
+    if (it != devices.end() && it->deviceIndex != kNoDevice) {
+        previewLabel = std::format("({}) ", it->apiName) + it->deviceName;
+    }
+
+    if (ImGui::BeginCombo("Available devices", previewLabel.c_str())) {
+        for (const auto &device : devices) {
+            ImGui::PushID(device.deviceIndex);
+
+            const bool isSelected = (device.deviceIndex == index);
+
+            const auto label = std::format("({}) ", device.apiName) + device.deviceName;
+            if (ImGui::Selectable(label.c_str(), isSelected)) {
+                if (engine.setMidiInputDevice(device.deviceIndex)) {
+                    std::cout << "Midi input device set\n";
+                } else {
+                    std::cerr << "Failed to set midi input device\n";
+                }
+            }
+
+            if (isSelected) {
+                ImGui::SetItemDefaultFocus();
+            }
+
+            ImGui::PopID();
+        }
+
+        ImGui::EndCombo();
+    }
+
+    if (it != devices.end() && it->deviceIndex != kNoDevice) {
+        const auto &device = *it;
+
+        ImGui::Text("Device Index: %i", device.deviceIndex);
+        ImGui::Text("Device Name: %s", device.deviceName.c_str());
+        ImGui::Text("Host API: %s", device.apiName.c_str());
+    } else {
+        ImGui::TextUnformatted(kNoDeviceString);
+    }
+
+    ImGui::Separator();
+
+    if (ImGui::Button("Rescan midi input devices")) {
+        engine.rescanDevices();
+    }
+
+    ImGui::EndGroup();
+    ImGui::PopID();
 }
 
 void MainApplication::looperUi()

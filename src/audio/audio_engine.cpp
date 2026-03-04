@@ -126,6 +126,9 @@ void AudioEngine::rescanDevices()
 {
     stop();
 
+    inputDevices_.clear();
+    outputDevices_.clear();
+
     const auto devices = backend_->getAvailableDevices();
     for (const auto& device : devices) {
         if (device.maxInputChannels > 0) {
