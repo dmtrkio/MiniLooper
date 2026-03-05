@@ -18,7 +18,6 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
             this->looper_.sendMidiMessage(msg);
         });
         std::cout << "Midi engine started" << std::endl;
-        midiIsOn = true;
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         std::cerr << "Failed to start midi engine. Proceeding without it.\n";
@@ -52,7 +51,21 @@ MainApplication::~MainApplication()
 void MainApplication::onFrame()
 {
     looper_.updateSnapshot();
+    processInput();
 
+    ImGui::BeginMainMenuBar();
+    ImGui::MenuItem("Audio settings", nullptr, &showAudioSettings_);
+    ImGui::MenuItem("MIDI settings", nullptr, &showMidiSettings_);
+    ImGui::MenuItem("Tracks", nullptr, &showTracks_);
+    ImGui::EndMainMenuBar();
+
+    if (showTracks_) looperUi();
+    if (showAudioSettings_) audioEngineSettings();
+    if (showMidiSettings_) midiEngineSettings();
+}
+
+void MainApplication::processInput()
+{
     for (auto trackIndex = 0; trackIndex < looper_.getNumLooperTracks(); ++trackIndex) {
         const auto key = ImGuiKey_1 + trackIndex;
 
@@ -69,24 +82,12 @@ void MainApplication::onFrame()
         looper_.clearAll();
     }
 
-    looperUi();
-    settings();
-}
-
-void MainApplication::settings()
-{
-    ImGui::Begin("Audio settings");
-    audioEngineSettings();
-    ImGui::End();
-
-    ImGui::Begin("Midi settings");
-    midiEngineSettings();
-    ImGui::End();
 }
 
 void MainApplication::audioEngineSettings()
 {
-    ImGui::PushID("audio");
+    ImGui::Begin("Audio settings");
+    ImGui::PushID("Audio settings");
     ImGui::BeginGroup();
 
     using namespace audio;
@@ -94,6 +95,8 @@ void MainApplication::audioEngineSettings()
     auto &audioEngine = AudioEngine::getInstance();
     const auto &inputDevices = audioEngine.getInputDevices();
     const auto &outputDevices = audioEngine.getOutputDevices();
+
+    std::vector<unsigned int> sampleRates;
 
     const auto displayDeviceSettings = [&](const bool input) {
         ImGui::PushID(input ? "input device" : "output device");
@@ -137,6 +140,14 @@ void MainApplication::audioEngineSettings()
         if (it != devices.end() && it->deviceIndex != kNoDevice) {
             const auto &device = *it;
 
+            if (input) {
+                sampleRates = device.supportedSampleRates;
+            } else {
+                std::erase_if(sampleRates, [&device](const auto& sr) {
+                    return !std::ranges::contains(device.supportedSampleRates, sr);
+                });
+            }
+
             ImGui::Text("Device Index: %i", device.deviceIndex);
             ImGui::Text("Device Name: %s", device.deviceName.c_str());
             ImGui::Text("Host API: %s", device.hostApiName.c_str());
@@ -160,6 +171,18 @@ void MainApplication::audioEngineSettings()
 
     ImGui::Separator();
 
+    const auto currentSr = audioEngine.getSampleRate();
+    if (ImGui::BeginCombo("Sample rate", std::to_string(currentSr).c_str())) {
+        for (const auto sr : sampleRates) {
+            if (ImGui::Selectable(std::to_string(sr).c_str(), (sr == currentSr))) {
+                audioEngine.setSampleRate(sr);
+            }
+        }
+        ImGui::EndCombo();
+    }
+
+    ImGui::Separator();
+
     if (ImGui::Button("Restart Audio Stream")) {
         if (audioEngine.restart()) {
             std::cout << "Audio Engine restarted" << std::endl;
@@ -174,16 +197,18 @@ void MainApplication::audioEngineSettings()
 
     ImGui::EndGroup();
     ImGui::PopID();
+    ImGui::End();
 }
 
 void MainApplication::midiEngineSettings()
 {
     if (!midiEngine_) return;
 
-    using namespace midi;
+    ImGui::Begin("MIDI settings");
     ImGui::PushID("MIDI settings");
-
     ImGui::BeginGroup();
+
+    using namespace midi;
     auto &engine = *midiEngine_;
 
     const auto devices = engine.getMidiInputDevices();
@@ -240,6 +265,7 @@ void MainApplication::midiEngineSettings()
 
     ImGui::EndGroup();
     ImGui::PopID();
+    ImGui::End();
 }
 
 void MainApplication::looperUi()

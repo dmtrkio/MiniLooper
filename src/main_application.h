@@ -22,7 +22,7 @@ public:
 private:
     static constexpr auto kNoDeviceString = "No device";
 
-    void settings();
+    void processInput();
     void audioEngineSettings();
     void midiEngineSettings();
 
@@ -31,7 +31,9 @@ private:
     void toggleRec(int trackIndex);
     void togglePlay(int trackIndex);
 
-    bool midiIsOn{false};
+    bool showAudioSettings_ = false;
+    bool showMidiSettings_ = false;
+    bool showTracks_ = true;
 
     looper::Looper looper_;
     std::unique_ptr<midi::MidiEngine> midiEngine_;
