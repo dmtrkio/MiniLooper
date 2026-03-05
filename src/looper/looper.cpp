@@ -8,6 +8,7 @@
 #include "midi/foot_switch.h"
 #include "spsc_mailbox.h"
 #include "triple_buffer.h"
+#include "dsp/dsp.h"
 
 namespace looper {
     struct LooperSharedData
@@ -38,7 +39,9 @@ namespace looper {
                 for (auto c{0u}; c < oChannels; ++c) {
                     out[c][i] = inputSample;
                 }
+            }
 
+            for (auto i{0u}; i < nFrames; ++i) {
                 footSwitch.tick();
             }
 
@@ -46,6 +49,12 @@ namespace looper {
             consumeCommands();
 
             looper.process(out, nFrames);
+
+            assert(oChannels >= 2);
+            for (auto i{0u}; i < nFrames; ++i) {
+                rmsL.updateSum(out[0][i]);
+                rmsR.updateSum(out[1][i]);
+            }
 
             updateSnapshot();
 
@@ -120,6 +129,9 @@ namespace looper {
                 position = looper.getCurrentPosition(i);
                 state = looper.getState(i);
             }
+
+            snapshot.levelL = dsp::linearToDb(rmsL.getRms());
+            snapshot.levelR = dsp::linearToDb(rmsR.getRms());
         }
 
         looper::LooperProcessor looper;
@@ -127,6 +139,9 @@ namespace looper {
 
         midi::MidiQueue midiQueue{64};
         midi::FootSwitch footSwitch;
+
+        dsp::Rms rmsL;
+        dsp::Rms rmsR;
     };
 
     Looper::Looper() : cb_(std::make_shared<LooperCallback>())
@@ -152,6 +167,11 @@ namespace looper {
     {
         assert(trackIndex >= 0 && trackIndex < getNumLooperTracks());
         return snapshot_.tracks[trackIndex];
+    }
+
+    const LooperStateSnapshot& Looper::getLooperState() const noexcept
+    {
+        return snapshot_;
     }
 
     void Looper::startRecording(int trackIndex)

@@ -19,6 +19,8 @@ namespace looper {
     struct LooperStateSnapshot
     {
         std::array<TrackStateSnapshot, kLooperTrackCount> tracks;
+        float levelL;
+        float levelR;
     };
 
     class Looper
@@ -37,6 +39,7 @@ namespace looper {
 
         void updateSnapshot() noexcept;
         [[nodiscard]] const TrackStateSnapshot& getTrackState(int trackIndex) const noexcept;
+        [[nodiscard]] const LooperStateSnapshot& getLooperState() const noexcept;
 
         void startRecording(int trackIndex);
         void stopRecording(int trackIndex);

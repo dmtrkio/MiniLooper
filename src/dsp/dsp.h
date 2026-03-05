@@ -44,7 +44,7 @@ namespace dsp {
 
         [[nodiscard]] float getRms() const noexcept
         {
-            return sum_ / static_cast<float>(buffer_.size());
+            return std::sqrt(sum_ / static_cast<float>(buffer_.size()));
         }
 
         float processSample(const float sample)

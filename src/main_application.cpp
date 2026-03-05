@@ -48,15 +48,35 @@ MainApplication::~MainApplication()
         std::cout << "Audio engine stopped successfully.\n";
 }
 
+void volumeMeter(float left, float right)
+{
+    static constexpr float kMinDb = -100.0f;
+    static constexpr float kMaxDb = 12.0f;
+
+    left = std::clamp(left, kMinDb, kMaxDb);
+    right = std::clamp(right, kMinDb, kMaxDb);
+
+    constexpr float range = kMaxDb - kMinDb;
+    const auto percentageL = (left - kMinDb) / range;
+    const auto percentageR = (right - kMinDb) / range;
+
+    ImGui::Value("L", left);
+    ImGui::Value("R", right);
+}
+
 void MainApplication::onFrame()
 {
     looper_.updateSnapshot();
     processInput();
 
     ImGui::BeginMainMenuBar();
+
     ImGui::MenuItem("Audio settings", nullptr, &showAudioSettings_);
     ImGui::MenuItem("MIDI settings", nullptr, &showMidiSettings_);
     ImGui::MenuItem("Tracks", nullptr, &showTracks_);
+
+    volumeMeter(looper_.getLooperState().levelL, looper_.getLooperState().levelR);
+
     ImGui::EndMainMenuBar();
 
     if (showTracks_) looperUi();
