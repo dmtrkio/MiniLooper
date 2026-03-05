@@ -52,8 +52,8 @@ namespace looper {
 
             assert(oChannels >= 2);
             for (auto i{0u}; i < nFrames; ++i) {
-                rmsL.updateSum(out[0][i]);
-                rmsR.updateSum(out[1][i]);
+                ballisticsL(dsp::linearToDb(rmsL(out[0][i])));
+                ballisticsR(dsp::linearToDb(rmsR(out[1][i])));
             }
 
             updateSnapshot();
@@ -97,6 +97,14 @@ namespace looper {
             footSwitch.setOnHold([&] {
                 looper.clearAll();
             });
+
+            const auto sampleRate = audio::AudioEngine::getInstance().getSampleRate();
+            const float rmsMs = 5.0f;
+            const float rmsSize = rmsMs * sampleRate / 1000.0f;
+            rmsL.prepare(rmsSize);
+            rmsR.prepare(rmsSize);
+            ballisticsL.prepare(sampleRate, 10.0f, 300.0f, -100.0f);
+            ballisticsR.prepare(sampleRate, 10.0f, 300.0f, -100.0f);
         }
 
         void onStop() override
@@ -130,8 +138,8 @@ namespace looper {
                 state = looper.getState(i);
             }
 
-            snapshot.levelL = dsp::linearToDb(rmsL.getRms());
-            snapshot.levelR = dsp::linearToDb(rmsR.getRms());
+            snapshot.levelL = ballisticsL.getState();
+            snapshot.levelR = ballisticsR.getState();
         }
 
         looper::LooperProcessor looper;
@@ -142,6 +150,8 @@ namespace looper {
 
         dsp::Rms rmsL;
         dsp::Rms rmsR;
+        dsp::BallisticsFilter ballisticsL;
+        dsp::BallisticsFilter ballisticsR;
     };
 
     Looper::Looper() : cb_(std::make_shared<LooperCallback>())

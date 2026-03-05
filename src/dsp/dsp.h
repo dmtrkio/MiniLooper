@@ -23,12 +23,13 @@ namespace dsp {
     public:
         explicit Rms(const std::size_t windowSize = 64)
         {
-            reset(windowSize);
+            prepare(windowSize);
         }
 
-        void reset(const std::size_t windowSize)
+        void prepare(const std::size_t windowSize)
         {
-            buffer_.resize(windowSize, 0.0f);
+            assert(windowSize > 0);
+            buffer_.assign(windowSize, 0.0f);
             sum_ = 0.0f;
             index_ = 0;
         }
@@ -47,13 +48,13 @@ namespace dsp {
             return std::sqrt(sum_ / static_cast<float>(buffer_.size()));
         }
 
-        float processSample(const float sample)
+        float operator()(const float sample)
         {
             updateSum(sample);
             return getRms();
         }
 
-        float processBlock(const float* samples, const std::size_t nSamples)
+        float operator()(const float* samples, const std::size_t nSamples)
         {
             for (auto i{0u}; i < nSamples; ++i)
                 updateSum(samples[i]);
@@ -64,5 +65,33 @@ namespace dsp {
         std::vector<float> buffer_;
         float sum_{0.0f};
         std::size_t index_{0};
+    };
+
+    class BallisticsFilter
+    {
+    public:
+        void prepare(float sampleRate, float attackMs, float releaseMs, float initial)
+        {
+            attack_  = std::exp(-1.0f / (attackMs  * sampleRate / 1000.0f));
+            release_ = std::exp(-1.0f / (releaseMs * sampleRate / 1000.0f));
+            state_ = initial;
+        }
+
+        [[nodiscard]] float getState() const noexcept
+        {
+            return state_;
+        }
+
+        float operator()(float x)
+        {
+            const auto coeff = (x > state_) ? attack_ : release_;
+            state_ = coeff * state_ + (1.0f - coeff) * x;
+            return state_;
+        }
+
+    private:
+        float attack_{0.0f};
+        float release_{0.0f};
+        float state_{0.0f};
     };
 }

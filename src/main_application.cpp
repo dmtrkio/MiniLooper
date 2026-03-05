@@ -48,20 +48,24 @@ MainApplication::~MainApplication()
         std::cout << "Audio engine stopped successfully.\n";
 }
 
-void volumeMeter(float left, float right)
+void volumeMeter(float leftDb, float rightDb)
 {
-    static constexpr float kMinDb = -100.0f;
-    static constexpr float kMaxDb = 12.0f;
+    constexpr float kMinDb = -60.0f;
+    constexpr float kMaxDb = 12.0f;
 
-    left = std::clamp(left, kMinDb, kMaxDb);
-    right = std::clamp(right, kMinDb, kMaxDb);
+    auto normalize = [&](float db) {
+        db = std::clamp(db, kMinDb, kMaxDb);
+        return (db - kMinDb) / (kMaxDb - kMinDb);
+    };
 
-    constexpr float range = kMaxDb - kMinDb;
-    const auto percentageL = (left - kMinDb) / range;
-    const auto percentageR = (right - kMinDb) / range;
+    float l = normalize(leftDb);
+    float r = normalize(rightDb);
 
-    ImGui::Value("L", left);
-    ImGui::Value("R", right);
+    ImGui::Text("L");
+    ImGui::ProgressBar(l, ImVec2(200, 0));
+
+    ImGui::Text("R");
+    ImGui::ProgressBar(r, ImVec2(200, 0));
 }
 
 void MainApplication::onFrame()
