@@ -48,7 +48,7 @@ MainApplication::~MainApplication()
         std::cout << "Audio engine stopped successfully.\n";
 }
 
-void volumeMeter(float leftDb, float rightDb)
+void volumeMeter(const float leftDb, const float rightDb)
 {
     constexpr float kMinDb = -60.0f;
     constexpr float kMaxDb = looper::kHeadRoomDb;
@@ -58,20 +58,19 @@ void volumeMeter(float leftDb, float rightDb)
     constexpr float height = 140.0f;
     constexpr float spacing = 8.0f;
     constexpr float gap = 2.0f;
-    constexpr float tickWidth = 6.0f;
 
     auto normalize = [&](float db) {
         db = std::clamp(db, kMinDb, kMaxDb);
         return (db - kMinDb) / (kMaxDb - kMinDb);
     };
 
-    float l = normalize(leftDb);
-    float r = normalize(rightDb);
+    const float l = normalize(leftDb);
+    const float r = normalize(rightDb);
 
     ImDrawList* draw = ImGui::GetWindowDrawList();
-    ImVec2 pos = ImGui::GetCursorScreenPos();
+    const ImVec2 pos = ImGui::GetCursorScreenPos();
 
-    float meterWidth = width * 2 + spacing;
+    constexpr float meterWidth = width * 2 + spacing;
     ImGui::InvisibleButton("##meter", ImVec2(meterWidth + 30.0f, height));
 
     const float top = pos.y;
@@ -110,9 +109,10 @@ void volumeMeter(float leftDb, float rightDb)
         return bottom - (bottom - top) * t;
     };
 
-    constexpr float ticks[] = { -60, -48, -36, -24, -12, -6, 0, 6};
+    constexpr float ticks[] = { -60, -48, -36, -24, -12, -6, 0, 6 };
 
     for (const float db : ticks) {
+        constexpr float tickWidth = 6.0f;
         const float y = dbToY(db);
 
         const ImVec2 t0(pos.x + meterWidth + 4, y);
