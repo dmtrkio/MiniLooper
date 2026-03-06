@@ -56,6 +56,13 @@ namespace looper {
                 ballisticsR(dsp::linearToDb(rmsR(out[1][i])));
             }
 
+            const auto headroomScalar = dsp::dBtoLinear(-kHeadRoomDb);
+            for (auto ch{0u}; ch < oChannels; ++ch) {
+                for (auto i{0u}; i < nFrames; ++i) {
+                    out[ch][i] = std::tanhf(out[ch][i] * headroomScalar);
+                }
+            }
+
             updateSnapshot();
 
             /*const auto sr = static_cast<float>(engine.getSampleRate());

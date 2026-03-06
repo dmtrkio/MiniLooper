@@ -51,7 +51,7 @@ MainApplication::~MainApplication()
 void volumeMeter(float leftDb, float rightDb)
 {
     constexpr float kMinDb = -60.0f;
-    constexpr float kMaxDb = 12.0f;
+    constexpr float kMaxDb = looper::kHeadRoomDb;
 
     constexpr int segments = 30;
     constexpr float width = 18.0f;
@@ -74,31 +74,30 @@ void volumeMeter(float leftDb, float rightDb)
     float meterWidth = width * 2 + spacing;
     ImGui::InvisibleButton("##meter", ImVec2(meterWidth + 30.0f, height));
 
-    float top = pos.y;
-    float bottom = pos.y + height;
+    const float top = pos.y;
+    const float bottom = pos.y + height;
 
-    auto segmentColor = [&](int i) {
-        float t = (float)i / segments;
-
+    auto segmentColor = [&](const int i) {
+        const auto t = static_cast<float>(i) / static_cast<float>(segments);
         if (t > 0.9f)   return IM_COL32(255, 60, 60, 255);
         if (t > 0.7f)   return IM_COL32(255, 210, 60, 255);
         return IM_COL32(60, 220, 90, 255);
     };
 
-    auto drawMeter = [&](float value, float xOffset) {
-        float segHeight = (height - gap * (segments - 1)) / segments;
+    auto drawMeter = [&](const float value, const float xOffset) {
+        constexpr float segHeight = (height - gap * (segments - 1)) / segments;
 
         for (int i = 0; i < segments; i++) {
-            float threshold = (float)(i + 1) / segments;
-            bool active = value >= threshold;
+            const float threshold = static_cast<float>(i + 1) / static_cast<float>(segments);
+            const bool active = (value >= threshold);
 
-            float y0 = pos.y + height - (i + 1) * segHeight - i * gap;
-            float y1 = y0 + segHeight;
+            const float y0 = pos.y + height - static_cast<float>(i + 1) * segHeight - static_cast<float>(i) * gap;
+            const float y1 = y0 + segHeight;
 
             ImVec2 p0(pos.x + xOffset, y0);
             ImVec2 p1(pos.x + xOffset + width, y1);
 
-            ImU32 col = active ? segmentColor(i) : IM_COL32(40, 40, 40, 255);
+            const ImU32 col = active ? segmentColor(i) : IM_COL32(40, 40, 40, 255);
             draw->AddRectFilled(p0, p1, col, 2.0f);
         }
     };
@@ -106,18 +105,18 @@ void volumeMeter(float leftDb, float rightDb)
     drawMeter(l, 0);
     drawMeter(r, width + spacing);
 
-    auto dbToY = [&](float db, float top, float bottom) {
-        float t = normalize(db);
+    auto dbToY = [&](const float db) {
+        const float t = normalize(db);
         return bottom - (bottom - top) * t;
     };
 
-    constexpr float ticks[] = { -60, -48, -36, -24, -12, -6, 0, 6, 12 };
+    constexpr float ticks[] = { -60, -48, -36, -24, -12, -6, 0, 6};
 
-    for (float db : ticks) {
-        float y = dbToY(db, top, bottom);
+    for (const float db : ticks) {
+        const float y = dbToY(db);
 
-        ImVec2 t0(pos.x + meterWidth + 4, y);
-        ImVec2 t1(pos.x + meterWidth + 4 + tickWidth, y);
+        const ImVec2 t0(pos.x + meterWidth + 4, y);
+        const ImVec2 t1(pos.x + meterWidth + 4 + tickWidth, y);
 
         //draw->AddLine(t0, t1, IM_COL32(200, 200, 200, 255), 1.0f);
 
