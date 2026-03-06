@@ -8,6 +8,7 @@
 #include "audio_device.h"
 
 namespace audio {
+    static constexpr unsigned int kMaxFramesInBuffer = 8096;
 
     class AudioBackend;
 
@@ -99,7 +100,6 @@ namespace audio {
             void deinterleave(const float *data, unsigned int nFrames);
             void interleave(float *data, unsigned int nFrames);
 
-            static constexpr unsigned int MAX_FRAMES_IN_BUFFER = 8096;
             std::vector<float*> planar;
             std::vector<std::vector<float>> buffers;
         };

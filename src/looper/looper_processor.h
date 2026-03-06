@@ -5,6 +5,7 @@
 #include <tuple>
 
 #include "looper_commands.h"
+#include "looper_mixer.h"
 
 namespace looper {
     constexpr unsigned int kMaxLoopSecs = 32;
@@ -97,6 +98,7 @@ namespace looper {
 
         std::array<Track, kLooperTrackCount> tracks_{};
 
+        Mixer mixer_{};
         std::vector<std::vector<float>> sumBuffers_;
     };
 }

@@ -215,14 +215,14 @@ void AudioEngine::PlanarAudioData::setNumChannels(unsigned int numChannels)
     buffers.resize(numChannels);
 
     for (auto i{0u}; i < numChannels; ++i) {
-        buffers[i].resize(MAX_FRAMES_IN_BUFFER);
+        buffers[i].resize(kMaxFramesInBuffer);
         planar[i] = buffers[i].data();
     }
 }
 
 void AudioEngine::PlanarAudioData::deinterleave(const float *data, unsigned int nFrames)
 {
-    assert(nFrames <= MAX_FRAMES_IN_BUFFER);
+    assert(nFrames <= kMaxFramesInBuffer);
 
     const auto nChannels = buffers.size();
     for (auto c{0u}; c < nChannels; ++c) {
@@ -235,7 +235,7 @@ void AudioEngine::PlanarAudioData::deinterleave(const float *data, unsigned int 
 
 void AudioEngine::PlanarAudioData::interleave(float *data, unsigned int nFrames)
 {
-    assert(nFrames <= MAX_FRAMES_IN_BUFFER);
+    assert(nFrames <= kMaxFramesInBuffer);
 
     const auto nChannels = buffers.size();
     for (auto c{0u}; c < nChannels; ++c) {

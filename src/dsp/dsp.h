@@ -1,7 +1,10 @@
 #pragma once
 
+#include <algorithm>
 #include <cmath>
 #include <vector>
+#include <utility>
+#include <numbers>
 
 namespace dsp {
     constexpr float linearToDb(const float value, const float minDb = -100.0f)
@@ -16,6 +19,15 @@ namespace dsp {
     {
         static constexpr float scale = 1.f / 20.f;
         return std::pow<float>(10.0f, value * scale);
+    }
+
+    inline std::tuple<float, float> equalPowerPanGains(float pan)
+    {
+        pan = std::clamp(pan, -1.0f, 1.0f);
+        const auto angle = (pan + 1.0f) * 0.25f * std::numbers::pi_v<float>;
+        const auto leftGain = std::cos(angle);
+        const auto rightGain = std::sin(angle);
+        return {leftGain, rightGain};
     }
 
     class Rms

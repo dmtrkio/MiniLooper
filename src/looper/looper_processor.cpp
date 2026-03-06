@@ -27,6 +27,7 @@ namespace looper {
     {
         const auto& engine = audio::AudioEngine::getInstance();
         const auto nChannels = engine.getNumOutputChannels();
+        assert(nChannels == 2);
         const auto mFrames = engine.getSampleRate() * kMaxLoopSecs;
 
         numChannels_ = nChannels;
@@ -35,6 +36,8 @@ namespace looper {
         for (int i = 0; i < tracks_.size(); ++i) {
             tracks_[i].init(i, nChannels, mFrames);
         }
+
+        mixer_.prepare(tracks_.size());
 
         sumBuffers_.resize(nChannels);
         for (auto& buffer : sumBuffers_) {
@@ -232,12 +235,7 @@ namespace looper {
             processTrack(i, data, nFrames);
         }
 
-        for (auto ch{0u}; ch < numChannels_; ++ch) {
-            const auto& buffer = sumBuffers_[ch];
-            for (auto i{0u}; i < nFrames; ++i) {
-                data[ch][i] += buffer[i];
-            }
-        }
+        mixer_.process(data, nFrames);
 
         transport_.tick(nFrames);
     }
@@ -247,6 +245,9 @@ namespace looper {
         if (!isTrackIndexValid(trackIndex)) return;
 
         auto &track = tracks_[trackIndex];
+        auto &loopBufferL = track.buffers[0];
+        auto &loopBufferR = track.buffers[1];
+        auto [mixerL, mixerR] = mixer_.getChannelBuffers(trackIndex);
 
         for (auto i{0u}; i < nFrames; ++i) {
             const auto pos = track.phase(transport_.currentFrame + i);
@@ -264,20 +265,22 @@ namespace looper {
 
             switch (track.state) {
                 case State::Playback: {
-                    for (auto ch{0u}; ch < numChannels_; ++ch) {
-                        sumBuffers_[ch][i] += track.buffers[ch][pos] * fade;
-                    }
+                    mixerL[i] = loopBufferL[pos] * fade;
+                    mixerR[i] = loopBufferR[pos] * fade;
                     break;
                 }
                 case State::Recording: {
-                    for (auto ch{0u}; ch < numChannels_; ++ch) {
-                        const float oldSample = track.buffers[ch][pos] * fade;
-                        track.buffers[ch][pos] += data[ch][i];
-                        sumBuffers_[ch][i] += oldSample;
-                    }
+                    mixerL[i] = loopBufferL[pos] * fade;
+                    mixerR[i] = loopBufferR[pos] * fade;
+                    loopBufferL[pos] += data[0][i];
+                    loopBufferR[pos] += data[1][i];
                     break;
                 }
-                default:;
+                default: {
+                    mixerL[i] = 0.0f;
+                    mixerR[i] = 0.0f;
+                    break;
+                }
             }
 
             if (pos == (transport_.largestPossibleLoopLength - 1)) {
