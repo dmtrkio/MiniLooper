@@ -8,46 +8,6 @@
 
 #include "audio/audio_engine.h"
 
-MainApplication::MainApplication(const int argc, const char* const* argv)
-{
-    (void)argc;
-    (void)argv;
-
-    try {
-        midiEngine_ = std::make_unique<midi::MidiEngine>([this](int, midi::MidiMessage msg) {
-            this->looper_.sendMidiMessage(msg);
-        });
-        std::cout << "Midi engine started" << std::endl;
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        std::cerr << "Failed to start midi engine. Proceeding without it.\n";
-    }
-
-    auto& audioEngine = audio::AudioEngine::getInstance();
-    audioEngine.setSampleRate(48000);
-    audioEngine.setBufferSize(64);
-    audioEngine.rescanDevices();
-
-    if (!audioEngine.start() || !audioEngine.isRunning()) {
-        throw std::runtime_error("Failed to start audio engine.");
-    }
-
-    std::cout << "Audio engine started\n";
-
-    auto &style = ImGui::GetStyle();
-    constexpr float rounding = 4.0f;
-    style.FrameRounding = rounding;
-    style.WindowRounding = rounding;
-    style.ChildRounding = rounding;
-    style.PopupRounding = rounding;
-}
-
-MainApplication::~MainApplication()
-{
-    if (audio::AudioEngine::getInstance().stop())
-        std::cout << "Audio engine stopped successfully.\n";
-}
-
 void volumeMeter(const float leftDb, const float rightDb)
 {
     constexpr float kMinDb = -60.0f;
@@ -131,6 +91,70 @@ void volumeMeter(const float leftDb, const float rightDb)
     }
 }
 
+void mixerUi(const looper::Looper &looper)
+{
+    ImGui::Begin("Mixer");
+    ImGui::PushID("Mixer");
+
+    for (auto i{0}; i < looper.getNumLooperTracks(); ++i) {
+        ImGui::PushID(i);
+        ImGui::BeginGroup();
+
+        const auto &track = looper.getTrackState(i);
+        const auto [left, right] = track.level;
+        volumeMeter(left, right);
+
+        ImGui::EndGroup();
+        ImGui::PopID();
+
+        if (i < looper.getNumLooperTracks() - 1)
+            ImGui::SameLine();
+    }
+
+    ImGui::PopID();
+    ImGui::End();
+}
+
+MainApplication::MainApplication(const int argc, const char* const* argv)
+{
+    (void)argc;
+    (void)argv;
+
+    try {
+        midiEngine_ = std::make_unique<midi::MidiEngine>([this](int, midi::MidiMessage msg) {
+            this->looper_.sendMidiMessage(msg);
+        });
+        std::cout << "Midi engine started" << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        std::cerr << "Failed to start midi engine. Proceeding without it.\n";
+    }
+
+    auto& audioEngine = audio::AudioEngine::getInstance();
+    audioEngine.setSampleRate(48000);
+    audioEngine.setBufferSize(64);
+    audioEngine.rescanDevices();
+
+    if (!audioEngine.start() || !audioEngine.isRunning()) {
+        throw std::runtime_error("Failed to start audio engine.");
+    }
+
+    std::cout << "Audio engine started\n";
+
+    auto &style = ImGui::GetStyle();
+    constexpr float rounding = 4.0f;
+    style.FrameRounding = rounding;
+    style.WindowRounding = rounding;
+    style.ChildRounding = rounding;
+    style.PopupRounding = rounding;
+}
+
+MainApplication::~MainApplication()
+{
+    if (audio::AudioEngine::getInstance().stop())
+        std::cout << "Audio engine stopped successfully.\n";
+}
+
 void MainApplication::onFrame()
 {
     looper_.updateSnapshot();
@@ -142,6 +166,7 @@ void MainApplication::onFrame()
     ImGui::MenuItem("MIDI settings", nullptr, &showMidiSettings_);
     ImGui::MenuItem("Tracks", nullptr, &showTracks_);
     ImGui::MenuItem("Meter", nullptr, &showVolumeMeter_);
+    ImGui::MenuItem("Mixer", nullptr, &showMixer_);
 
     ImGui::EndMainMenuBar();
 
@@ -154,6 +179,7 @@ void MainApplication::onFrame()
         volumeMeter(leftDb, rightDb);
         ImGui::End();
     }
+    if (showMixer_) mixerUi(looper_);
 }
 
 void MainApplication::processInput()
