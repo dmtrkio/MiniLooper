@@ -1,0 +1,7 @@
+Todo:
+    1. Make a mixer that manages the mixdown and processing for looper tracks and inputs, an imgui window for it;
+    2. AudioEngine/AudioBackend:
+        Make the stream start/stop functions throw exceptions rather than just log+return,
+        then propagate those errors up to imgui layer and display them as modal windows;
+    3. Make a utility namespace/directory and put all the syncing primitives, containers, wrappers, helpers there;
+    4. Make a dsp processing chain for mixer channels
