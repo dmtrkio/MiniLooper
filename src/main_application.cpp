@@ -53,6 +53,12 @@ void volumeMeter(float leftDb, float rightDb)
     constexpr float kMinDb = -60.0f;
     constexpr float kMaxDb = 12.0f;
 
+    constexpr int segments = 30;
+    constexpr float width = 18.0f;
+    constexpr float height = 140.0f;
+    constexpr float spacing = 6.0f;
+    constexpr float gap = 2.0f;
+
     auto normalize = [&](float db) {
         db = std::clamp(db, kMinDb, kMaxDb);
         return (db - kMinDb) / (kMaxDb - kMinDb);
@@ -61,11 +67,40 @@ void volumeMeter(float leftDb, float rightDb)
     float l = normalize(leftDb);
     float r = normalize(rightDb);
 
-    ImGui::Text("L");
-    ImGui::ProgressBar(l, ImVec2(200, 0));
+    ImDrawList* draw = ImGui::GetWindowDrawList();
+    ImVec2 pos = ImGui::GetCursorScreenPos();
 
-    ImGui::Text("R");
-    ImGui::ProgressBar(r, ImVec2(200, 0));
+    ImGui::InvisibleButton("##meter", ImVec2(width * 2 + spacing, height));
+
+    auto segmentColor = [&](int i) {
+        float t = (float)i / segments;
+
+        if (t > 0.9f) return IM_COL32(255, 60, 60, 255); // red
+        if (t > 0.7f) return IM_COL32(255, 210, 60, 255); // yellow
+        return IM_COL32(60, 220, 90, 255); // green
+    };
+
+    auto drawMeter = [&](float value, float xOffset) {
+        float segHeight = (height - gap * (segments - 1)) / segments;
+
+        for (int i = 0; i < segments; i++) {
+            float threshold = (float)(i + 1) / segments;
+            bool active = value >= threshold;
+
+            float y0 = pos.y + height - (i + 1) * segHeight - i * gap;
+            float y1 = y0 + segHeight;
+
+            ImVec2 p0(pos.x + xOffset, y0);
+            ImVec2 p1(pos.x + xOffset + width, y1);
+
+            ImU32 col = active ? segmentColor(i) : IM_COL32(40, 40, 40, 255);
+
+            draw->AddRectFilled(p0, p1, col, 2.0f);
+        }
+    };
+
+    drawMeter(l, 0);
+    drawMeter(r, width + spacing);
 }
 
 void MainApplication::onFrame()
@@ -78,14 +113,18 @@ void MainApplication::onFrame()
     ImGui::MenuItem("Audio settings", nullptr, &showAudioSettings_);
     ImGui::MenuItem("MIDI settings", nullptr, &showMidiSettings_);
     ImGui::MenuItem("Tracks", nullptr, &showTracks_);
-
-    volumeMeter(looper_.getLooperState().levelL, looper_.getLooperState().levelR);
+    ImGui::MenuItem("Meter", nullptr, &showVolumeMeter_);
 
     ImGui::EndMainMenuBar();
 
     if (showTracks_) looperUi();
     if (showAudioSettings_) audioEngineSettings();
     if (showMidiSettings_) midiEngineSettings();
+    if (showVolumeMeter_) {
+        ImGui::Begin("Volume Meter");
+        volumeMeter(looper_.getLooperState().levelL, looper_.getLooperState().levelR);
+        ImGui::End();
+    }
 }
 
 void MainApplication::processInput()
