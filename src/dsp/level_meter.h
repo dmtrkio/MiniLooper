@@ -9,7 +9,7 @@ namespace dsp {
         void prepare(const float sampleRate)
         {
             constexpr float rmsMs = 5.0f;
-            const auto rmsSize = static_cast<std::size_t>(rmsMs * sampleRate / 1000.0f);
+            const auto rmsSize = rmsMs * sampleRate * 0.001f;
 
             rmsL.prepare(rmsSize);
             rmsR.prepare(rmsSize);

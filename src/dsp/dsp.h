@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <vector>
 #include <utility>
 #include <numbers>
 
@@ -33,31 +32,23 @@ namespace dsp {
     class Rms
     {
     public:
-        explicit Rms(const std::size_t windowSize = 64)
+        void prepare(const float windowSizeSamples)
         {
-            prepare(windowSize);
-        }
+            assert(windowSizeSamples > 0.0f);
 
-        void prepare(const std::size_t windowSize)
-        {
-            assert(windowSize > 0);
-            buffer_.assign(windowSize, 0.0f);
-            sum_ = 0.0f;
-            index_ = 0;
+            alpha_ = std::exp(-1.0f / windowSizeSamples);
+            state_ = 0.0f;
         }
 
         void updateSum(const float sample)
         {
             const float squared = sample * sample;
-            sum_ -= buffer_[index_];
-            sum_ += squared;
-            buffer_[index_] = squared;
-            index_ = (index_ + 1) % buffer_.size();
+            state_ = alpha_ * state_ + (1.0f - alpha_) * squared;
         }
 
         [[nodiscard]] float getRms() const noexcept
         {
-            return std::sqrt(sum_ / static_cast<float>(buffer_.size()));
+            return std::sqrt(std::max(state_, 0.0f));;
         }
 
         float operator()(const float sample)
@@ -74,10 +65,10 @@ namespace dsp {
         }
 
     private:
-        std::vector<float> buffer_;
-        float sum_{0.0f};
-        std::size_t index_{0};
+        float alpha_{0.0f};
+        float state_{0.0f};
     };
+
 
     class BallisticsFilter
     {
