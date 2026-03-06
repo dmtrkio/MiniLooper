@@ -8,7 +8,7 @@
 #include "midi/foot_switch.h"
 #include "spsc_mailbox.h"
 #include "triple_buffer.h"
-#include "dsp/dsp.h"
+#include "dsp/level_meter.h"
 
 namespace looper {
     struct LooperSharedData
@@ -30,6 +30,7 @@ namespace looper {
             const auto& engine = audio::AudioEngine::getInstance();
             const auto iChannels = engine.getNumInputChannels();
             const auto oChannels = engine.getNumOutputChannels();
+            assert(oChannels >= 2);
 
             for (auto i{0u}; i < nFrames; ++i) {
                 float inputSample = 0.0f;
@@ -50,11 +51,7 @@ namespace looper {
 
             looper.process(out, nFrames);
 
-            assert(oChannels >= 2);
-            for (auto i{0u}; i < nFrames; ++i) {
-                ballisticsL(dsp::linearToDb(rmsL(out[0][i])));
-                ballisticsR(dsp::linearToDb(rmsR(out[1][i])));
-            }
+            levelMeter_(out[0], out[1], nFrames);
 
             const auto headroomScalar = dsp::dBtoLinear(-kHeadRoomDb);
             for (auto ch{0u}; ch < oChannels; ++ch) {
@@ -105,13 +102,8 @@ namespace looper {
                 looper.clearAll();
             });
 
-            const auto sampleRate = audio::AudioEngine::getInstance().getSampleRate();
-            const float rmsMs = 5.0f;
-            const float rmsSize = rmsMs * sampleRate / 1000.0f;
-            rmsL.prepare(rmsSize);
-            rmsR.prepare(rmsSize);
-            ballisticsL.prepare(sampleRate, 10.0f, 300.0f, -100.0f);
-            ballisticsR.prepare(sampleRate, 10.0f, 300.0f, -100.0f);
+            const auto sampleRate = static_cast<float>(audio::AudioEngine::getInstance().getSampleRate());
+            levelMeter_.prepare(sampleRate);
         }
 
         void onStop() override
@@ -136,29 +128,26 @@ namespace looper {
         void updateSnapshot() noexcept
         {
             auto writer = sharedData.state.getWriter();
-            auto& snapshot = writer.data();
+            auto &snapshot = writer.data();
 
             for (auto i{0}; i < LooperProcessor::getNumLooperTracks(); ++i) {
-                auto& [nFrames, position, state] = snapshot.tracks[i];
+                auto& [nFrames, position, state, level] = snapshot.tracks[i];
                 nFrames = looper.getCurrentNumFrames(i);
                 position = looper.getCurrentPosition(i);
                 state = looper.getState(i);
+                level = looper.getMixer().channels[i].meter.getLevel();
             }
 
-            snapshot.levelL = ballisticsL.getState();
-            snapshot.levelR = ballisticsR.getState();
+            snapshot.level = levelMeter_.getLevel();
         }
 
-        looper::LooperProcessor looper;
-        looper::LooperSharedData sharedData;
+        LooperProcessor looper;
+        LooperSharedData sharedData;
 
         midi::MidiQueue midiQueue{64};
         midi::FootSwitch footSwitch;
 
-        dsp::Rms rmsL;
-        dsp::Rms rmsR;
-        dsp::BallisticsFilter ballisticsL;
-        dsp::BallisticsFilter ballisticsR;
+        dsp::LevelMeter levelMeter_;
     };
 
     Looper::Looper() : cb_(std::make_shared<LooperCallback>())

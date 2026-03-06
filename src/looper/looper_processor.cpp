@@ -52,6 +52,11 @@ namespace looper {
         clearAll();
     }
 
+    Mixer& LooperProcessor::getMixer() noexcept
+    {
+        return mixer_;
+    }
+
     State LooperProcessor::getState(int trackIndex) const noexcept
     {
         if (!isTrackIndexValid(trackIndex)) return State::Cleared;

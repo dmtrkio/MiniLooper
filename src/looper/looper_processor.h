@@ -34,6 +34,7 @@ namespace looper {
 
         // All the methods below are not thread-safe, they are meant to be used in the same thread where process() is called
 
+        [[nodiscard]] Mixer& getMixer() noexcept;
         [[nodiscard]] State getState(int trackIndex) const noexcept;
         [[nodiscard]] unsigned int getCurrentPosition(int trackIndex) const noexcept;
         [[nodiscard]] unsigned int getCurrentNumFrames(int trackIndex) const noexcept;

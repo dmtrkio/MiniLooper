@@ -150,7 +150,8 @@ void MainApplication::onFrame()
     if (showMidiSettings_) midiEngineSettings();
     if (showVolumeMeter_) {
         ImGui::Begin("Volume Meter");
-        volumeMeter(looper_.getLooperState().levelL, looper_.getLooperState().levelR);
+        const auto [leftDb, rightDb] = looper_.getLooperState().level;
+        volumeMeter(leftDb, rightDb);
         ImGui::End();
     }
 }

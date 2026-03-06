@@ -14,6 +14,7 @@ namespace looper {
         unsigned int nFrames;
         unsigned int position;
         State state;
+        std::pair<float, float> level;
 
         [[nodiscard]] std::string toString() const;
     };
@@ -21,8 +22,7 @@ namespace looper {
     struct LooperStateSnapshot
     {
         std::array<TrackStateSnapshot, kLooperTrackCount> tracks;
-        float levelL;
-        float levelR;
+        std::pair<float, float> level;
     };
 
     class Looper
