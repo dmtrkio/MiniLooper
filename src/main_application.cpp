@@ -91,6 +91,51 @@ void volumeMeter(const float leftDb, const float rightDb)
     }
 }
 
+void parameterUi(dsp::parameter::Parameter &param)
+{
+    using namespace dsp::parameter;
+    ImGui::PushID(&param);
+
+    switch (param.getType()) {
+        case ParameterType::Float: {
+            auto value = param.get<float>();
+            const auto [min, max] = *param.getRange<float>();
+            if (ImGui::SliderFloat(param.getName().c_str(), &value, min, max)) {
+                param.set(value);
+            }
+            break;
+        }
+        case ParameterType::Integer: {
+            auto value = param.get<std::int32_t>();
+            const auto [min, max] = *param.getRange<std::int32_t>();
+            if (ImGui::SliderInt(param.getName().c_str(), &value, min, max)) {
+                param.set(value);
+            }
+            break;
+        }
+        case ParameterType::Boolean: {
+            bool value = param.get<bool>();
+            if (ImGui::Checkbox(param.getName().c_str(), &value)) {
+                param.set(value);
+            }
+            break;
+        }
+    }
+
+    if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(1)) {
+        ImGui::OpenPopup("ParameterContext");
+    }
+
+    if (ImGui::BeginPopup("ParameterContext")) {
+        if (ImGui::MenuItem("Set to Default")) {
+            param.setToDefault();
+        }
+        ImGui::EndPopup();
+    }
+
+    ImGui::PopID();
+}
+
 void mixerUi(looper::Looper &looper)
 {
     ImGui::Begin("Mixer");
@@ -115,23 +160,11 @@ void mixerUi(looper::Looper &looper)
 
         auto &params = mixer.channels[i];
 
-        {
-            float gainDb = params.gainDb.get<float>();
-            const auto [min, max] = *params.gainDb.getRange<float>();
+        ImGui::Dummy(ImVec2(0, 2.0f));
+        parameterUi(params.gainDb);
 
-            ImGui::Dummy(ImVec2(0, 2.0f));
-            ImGui::SliderFloat(params.gainDb.getName().c_str(), &gainDb, min, max);
-            params.gainDb.set(gainDb);
-        }
-
-        {
-            float pan = params.pan.get<float>();
-            const auto [min, max] = *params.pan.getRange<float>();
-
-            ImGui::Dummy(ImVec2(0, 2.0f));
-            ImGui::SliderFloat(params.pan.getName().c_str(), &pan, min, max);
-            params.pan.set(pan);
-        }
+        ImGui::Dummy(ImVec2(0, 2.0f));
+        parameterUi(params.pan);
 
         ImGui::PopItemWidth();
         ImGui::EndGroup();
