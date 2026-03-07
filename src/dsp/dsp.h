@@ -29,6 +29,16 @@ namespace dsp {
         return {leftGain, rightGain};
     }
 
+    template<typename T>
+    struct Range
+    {
+        T min; // inclusive
+        T max; // inclusive
+
+        [[nodiscard]] T clamp(T value) const { return std::clamp(value, min, max); }
+        [[nodiscard]] bool contains(T value) const { return value >= min && value <= max; }
+    };
+
     class Rms
     {
     public:

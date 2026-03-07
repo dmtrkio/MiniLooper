@@ -8,20 +8,67 @@
 #include "audio/audio_engine.h"
 #include "dsp/dsp.h"
 #include "dsp/level_meter.h"
+#include "dsp/audio_parameter.h"
 
 namespace looper {
-    class Mixer
+    struct MixerParams
     {
-    public:
-        void prepare(unsigned int nMixerChannels)
+        using Param = dsp::parameter::Parameter;
+
+        struct ChannelParams
         {
-            channels.assign(nMixerChannels, {});
-            for (auto& channel : channels) {
-                channel.gain = 1.0f;
-                channel.pan = 0.0f;
-                channel.meter.prepare(static_cast<float>(audio::AudioEngine::getInstance().getSampleRate()));
+            Param gainDb;
+            Param pan;
+        };
+
+        std::vector<ChannelParams> channels;
+
+        explicit MixerParams(const unsigned int nChannels)
+        {
+            channels.reserve(nChannels);
+            for (auto i{0u}; i < nChannels; ++i) {
+                channels.emplace_back(ChannelParams{
+                    .gainDb = Param::makeFloat("GainDb", 0.0f, dsp::Range{-60.0f, 12.0f}),
+                    .pan = Param::makeFloat("Pan", 0.0f, dsp::Range{-1.0f, 1.0f})
+                });
+            }
+        }
+    };
+
+    struct Mixer
+    {
+        void prepare(const MixerParams& params)
+        {
+            const auto nChannels = params.channels.size();
+            const auto sampleRate = static_cast<float>(audio::AudioEngine::getInstance().getSampleRate());
+            static constexpr float kSmoothingMs = 1.0f;
+            const auto smoothFrames = kSmoothingMs * sampleRate * 0.001f;
+
+            channels.assign(nChannels, {});
+            for (auto i{0u}; i < nChannels; ++i) {
+                auto &channel = channels[i];
+                const auto &chParams = params.channels[i];
+                channel.gain.init(dsp::dBtoLinear(chParams.gainDb.get<float>()));
+                channel.pan.init(chParams.pan.get<float>());
+                channel.gain.setSmoothingFrames(smoothFrames);
+                channel.pan.setSmoothingFrames(smoothFrames);
+
+                channel.meter.prepare(sampleRate);
                 channel.bufferL.assign(audio::kMaxFramesInBuffer, 0.0f);
                 channel.bufferR.assign(audio::kMaxFramesInBuffer, 0.0f);
+            }
+        }
+
+        void applyParams(const MixerParams& params)
+        {
+            const auto nChannels = params.channels.size();
+            assert(channels.size() == nChannels);
+
+            for (auto i{0u}; i < nChannels; ++i) {
+                auto &channel = channels[i];
+                const auto &chParams = params.channels[i];
+                channel.gain.setTarget(dsp::dBtoLinear(chParams.gainDb.get<float>()));
+                channel.pan.setTarget(chParams.pan.get<float>());
             }
         }
 
@@ -38,9 +85,10 @@ namespace looper {
             float *rightData = data[1];
 
             for (auto& channel : channels) {
-                auto [leftGain, rightGain] = dsp::equalPowerPanGains(channel.pan);
-                leftGain *= channel.gain;
-                rightGain *= channel.gain;
+                auto [leftGain, rightGain] = dsp::equalPowerPanGains(channel.pan());
+                const auto gain = channel.gain();
+                leftGain *= gain;
+                rightGain *= gain;
 
                 for (auto i{0u}; i < nFrames; ++i) {
                     const auto leftSample = channel.bufferL[i] * leftGain;;
@@ -51,10 +99,11 @@ namespace looper {
                 }
             }
         }
+
         struct Channel
         {
-            float gain;
-            float pan;
+            dsp::FloatSmoother gain;
+            dsp::FloatSmoother pan;
             dsp::LevelMeter meter;
             std::vector<float> bufferL;
             std::vector<float> bufferR;

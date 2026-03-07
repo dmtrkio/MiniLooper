@@ -2,9 +2,10 @@
 
 #include <algorithm>
 #include <atomic_wrapper.h>
-#include <memory>
 #include <string>
 #include <variant>
+
+#include "dsp/dsp.h"
 
 namespace dsp::parameter {
     enum class ParameterType
@@ -23,16 +24,6 @@ namespace dsp::parameter {
             default: return "Invalid parameter type";
         }
     }
-
-    template<typename T>
-    struct Range
-    {
-        T min; // inclusive
-        T max; // inclusive
-
-        T clamp(T value) const { return std::clamp(value, min, max); }
-        bool contains(T value) const { return value >= min && value <= max; }
-    };
 
     class Parameter
     {
@@ -82,13 +73,13 @@ namespace dsp::parameter {
         template<typename T>
         void set(T value) noexcept
         {
-            std::visit([&](const auto &p) {
+            std::visit([&](auto &p) {
+                using PType = std::decay_t<decltype(p)>;
                 const auto v = static_cast<decltype(p.defaultValue)>(value);
-                if constexpr (std::is_same_v<T, FloatData>) {
+                if constexpr (std::is_same_v<PType, FloatData> || std::is_same_v<PType, IntegerData>) {
+                    assert(p.contains(v));
                     p.value.store(p.range.clamp(v));
-                } else if constexpr (std::is_same_v<T, IntegerData>) {
-                    p.value.store(p.range.clamp(v));
-                } else if constexpr (std::is_same_v<T, BooleanData>) {
+                } else if constexpr (std::is_same_v<PType, BooleanData>) {
                     p.value.store(v);
                 }
             }, data_);
@@ -104,7 +95,8 @@ namespace dsp::parameter {
     private:
         template<typename T>
         Parameter(std::string name, T&& data)
-            : name_(std::move(name)), data_(std::forward<T>(data)) {}
+            : name_(std::move(name)), data_(std::forward<T>(data))
+        {}
 
         struct FloatData
         {

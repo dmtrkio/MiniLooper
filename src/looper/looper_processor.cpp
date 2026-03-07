@@ -37,7 +37,8 @@ namespace looper {
             tracks_[i].init(i, nChannels, mFrames);
         }
 
-        mixer_.prepare(tracks_.size());
+        const MixerParams mixerParams{static_cast<unsigned int>(tracks_.size())};
+        mixer_.prepare(mixerParams);
 
         sumBuffers_.resize(nChannels);
         for (auto& buffer : sumBuffers_) {
