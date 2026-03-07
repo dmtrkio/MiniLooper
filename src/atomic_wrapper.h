@@ -39,7 +39,7 @@ public:
         return *this;
     }
 
-    explicit operator T() const noexcept
+    operator T() const noexcept
     {
         return value.load(std::memory_order_relaxed);
     }
