@@ -143,9 +143,7 @@ void mixerUi(looper::Looper &looper)
 
     auto &mixer = looper.getMixerParams();
 
-    constexpr float meterWidth = 18.0f * 2 + 8.0f + 30.0f; // Width from volumeMeter
-    constexpr float sliderWidth = 100.0f; // Fixed width for gain slider
-    constexpr float groupWidth = meterWidth + sliderWidth + 20.0f; // Total width per channel
+    constexpr float sliderWidth = 100.0f;
 
     for (auto i{0}; i < looper.getNumLooperTracks(); ++i) {
         ImGui::PushID(i);
