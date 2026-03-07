@@ -37,7 +37,9 @@ namespace looper {
 
     struct Mixer
     {
-        void prepare(const MixerParams& params)
+        explicit Mixer(const unsigned int nChannels) : params(nChannels) {}
+
+        void prepare()
         {
             const auto nChannels = params.channels.size();
             const auto sampleRate = static_cast<float>(audio::AudioEngine::getInstance().getSampleRate());
@@ -59,7 +61,7 @@ namespace looper {
             }
         }
 
-        void applyParams(const MixerParams& params)
+        void applyParams()
         {
             const auto nChannels = params.channels.size();
             assert(channels.size() == nChannels);
@@ -81,6 +83,8 @@ namespace looper {
 
         void process(float *const *data, const unsigned int nFrames)
         {
+            applyParams();
+
             float *leftData = data[0];
             float *rightData = data[1];
 
@@ -110,5 +114,7 @@ namespace looper {
         };
 
         std::vector<Channel> channels;
+
+        MixerParams params;
     };
 }

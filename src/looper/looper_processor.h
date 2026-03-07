@@ -25,6 +25,8 @@ namespace looper {
     class LooperProcessor
     {
     public:
+        LooperProcessor();
+
         // lifetime callbacks
         void process(float *const *data, unsigned int nFrames) noexcept;
         void onStart();
@@ -99,7 +101,7 @@ namespace looper {
 
         std::array<Track, kLooperTrackCount> tracks_{};
 
-        Mixer mixer_{};
+        Mixer mixer_;
         std::vector<std::vector<float>> sumBuffers_;
     };
 }

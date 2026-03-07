@@ -180,6 +180,11 @@ namespace looper {
         return snapshot_;
     }
 
+    MixerParams& Looper::getMixerParams() noexcept
+    {
+        return cb_->looper.getMixer().params;
+    }
+
     void Looper::startRecording(int trackIndex)
     {
         auto &looperMailbox = getCommandMailbox();

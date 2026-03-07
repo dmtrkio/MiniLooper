@@ -91,24 +91,61 @@ void volumeMeter(const float leftDb, const float rightDb)
     }
 }
 
-void mixerUi(const looper::Looper &looper)
+void mixerUi(looper::Looper &looper)
 {
     ImGui::Begin("Mixer");
     ImGui::PushID("Mixer");
 
+    auto &mixer = looper.getMixerParams();
+
+    constexpr float meterWidth = 18.0f * 2 + 8.0f + 30.0f; // Width from volumeMeter
+    constexpr float sliderWidth = 100.0f; // Fixed width for gain slider
+    constexpr float groupWidth = meterWidth + sliderWidth + 20.0f; // Total width per channel
+
     for (auto i{0}; i < looper.getNumLooperTracks(); ++i) {
         ImGui::PushID(i);
+
         ImGui::BeginGroup();
+
+        ImGui::PushItemWidth(sliderWidth);
 
         const auto &track = looper.getTrackState(i);
         const auto [left, right] = track.level;
         volumeMeter(left, right);
 
-        ImGui::EndGroup();
-        ImGui::PopID();
+        auto &params = mixer.channels[i];
 
-        if (i < looper.getNumLooperTracks() - 1)
+        {
+            float gainDb = params.gainDb.get<float>();
+            const auto [min, max] = *params.gainDb.getRange<float>();
+
+            ImGui::Dummy(ImVec2(0, 2.0f));
+            ImGui::SliderFloat(params.gainDb.getName().c_str(), &gainDb, min, max);
+            params.gainDb.set(gainDb);
+        }
+
+        {
+            float pan = params.pan.get<float>();
+            const auto [min, max] = *params.pan.getRange<float>();
+
+            ImGui::Dummy(ImVec2(0, 2.0f));
+            ImGui::SliderFloat(params.pan.getName().c_str(), &pan, min, max);
+            params.pan.set(pan);
+        }
+
+        ImGui::PopItemWidth();
+        ImGui::EndGroup();
+
+        // Same line for all except last
+        if (i < looper.getNumLooperTracks() - 1) {
             ImGui::SameLine();
+
+            // Add some spacing between groups
+            ImGui::Dummy(ImVec2(10.0f, 0));
+            ImGui::SameLine();
+        }
+
+        ImGui::PopID();
     }
 
     ImGui::PopID();

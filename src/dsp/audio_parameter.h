@@ -4,6 +4,7 @@
 #include <atomic_wrapper.h>
 #include <string>
 #include <variant>
+#include <optional>
 
 #include "dsp/dsp.h"
 
@@ -71,13 +72,26 @@ namespace dsp::parameter {
         }
 
         template<typename T>
+        [[nodiscard]] std::optional<Range<T>> getRange() const noexcept
+        {
+            return std::visit([](const auto &p) -> std::optional<Range<T>> {
+                using PType = std::decay_t<decltype(p)>;
+                if constexpr (isRangedParameter<PType>() && std::is_same_v<decltype(p.defaultValue), T>) {
+                    return p.range;
+                }
+
+                return std::nullopt;
+            }, data_);
+        }
+
+        template<typename T>
         void set(T value) noexcept
         {
             std::visit([&](auto &p) {
                 using PType = std::decay_t<decltype(p)>;
                 const auto v = static_cast<decltype(p.defaultValue)>(value);
-                if constexpr (std::is_same_v<PType, FloatData> || std::is_same_v<PType, IntegerData>) {
-                    assert(p.contains(v));
+                if constexpr (isRangedParameter<PType>()) {
+                    assert(p.range.contains(v));
                     p.value.store(p.range.clamp(v));
                 } else if constexpr (std::is_same_v<PType, BooleanData>) {
                     p.value.store(v);
@@ -97,6 +111,12 @@ namespace dsp::parameter {
         Parameter(std::string name, T&& data)
             : name_(std::move(name)), data_(std::forward<T>(data))
         {}
+
+        template<typename T>
+        static constexpr bool isRangedParameter()
+        {
+            return std::is_same_v<T, FloatData> || std::is_same_v<T, IntegerData>;
+        }
 
         struct FloatData
         {

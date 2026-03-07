@@ -15,6 +15,8 @@ namespace looper {
         return "Unknown State";
     }
 
+    LooperProcessor::LooperProcessor() : mixer_(kLooperTrackCount) {}
+
     void LooperProcessor::process(float *const *data, unsigned int nFrames) noexcept
     {
         assert(nFrames <= maxFrames_);
@@ -37,8 +39,7 @@ namespace looper {
             tracks_[i].init(i, nChannels, mFrames);
         }
 
-        const MixerParams mixerParams{static_cast<unsigned int>(tracks_.size())};
-        mixer_.prepare(mixerParams);
+        mixer_.prepare();
 
         sumBuffers_.resize(nChannels);
         for (auto& buffer : sumBuffers_) {

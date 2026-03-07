@@ -42,6 +42,7 @@ namespace looper {
         void updateSnapshot() noexcept;
         [[nodiscard]] const TrackStateSnapshot& getTrackState(int trackIndex) const noexcept;
         [[nodiscard]] const LooperStateSnapshot& getLooperState() const noexcept;
+        [[nodiscard]] MixerParams& getMixerParams() noexcept;
 
         void startRecording(int trackIndex);
         void stopRecording(int trackIndex);
