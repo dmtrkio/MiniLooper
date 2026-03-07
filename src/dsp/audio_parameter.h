@@ -32,14 +32,14 @@ namespace dsp::parameter {
         static Parameter makeFloat(const std::string& name, const float defaultValue, const Range<float> range)
         {
             if (!range.contains(defaultValue))
-                throw std::exception("defaultValue out of range");
+                throw std::runtime_error("defaultValue out of range");
             return Parameter(name, FloatData{RelaxedAtomic(defaultValue), defaultValue, range});
         }
 
         static Parameter makeInteger(const std::string& name, const std::int32_t defaultValue, const Range<std::int32_t> range)
         {
             if (!range.contains(defaultValue))
-                throw std::exception("defaultValue out of range");
+                throw std::runtime_error("defaultValue out of range");
             return Parameter(name, IntegerData{RelaxedAtomic(defaultValue), defaultValue, range});
         }
 
