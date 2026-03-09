@@ -5,6 +5,14 @@
 #include <numbers>
 
 namespace dsp::filter {
+    template <typename T>
+    constexpr T normalizeFrequency(T sf, T f)
+    {
+        assert(sf != 0);
+        static constexpr T kTwoPi = std::numbers::pi_v<T> * 2;
+        return kTwoPi * f / sf;
+    }
+
     template<typename T>
     struct BiquadCoefficients
     {
@@ -57,7 +65,7 @@ namespace dsp::filter {
             return normalize(x, a0);
         }
 
-        static BiquadCoefficients bandPass(T cf, T bw, T q)
+        static BiquadCoefficients bandPass(T cf, T q, T bw)
         {
             const T sine = std::sin(cf);
             const T cosine = std::cos(cf);
@@ -73,7 +81,7 @@ namespace dsp::filter {
             return normalize(x, a0);
         }
 
-        static BiquadCoefficients notch(T cf, T bw, T q)
+        static BiquadCoefficients notch(T cf, T bw)
         {
             const T sine = std::sin(cf);
             const T cosine = std::cos(cf);
@@ -155,13 +163,6 @@ namespace dsp::filter {
             x.a1 *= scale;
             x.a2 *= scale;
             return x;
-        }
-
-        static T normalizeFrequency(T samplingFrequency, T f)
-        {
-            assert(samplingFrequency != 0);
-            static constexpr T kTwoPi = std::numbers::pi_v<T> * 2;
-            return kTwoPi * f / samplingFrequency;
         }
     };
 }

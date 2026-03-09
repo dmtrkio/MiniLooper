@@ -130,6 +130,12 @@ namespace dsp {
             return current_;
         }
 
+        Smoother& operator=(T newTarget) noexcept
+        {
+            setTarget(newTarget);
+            return *this;
+        }
+
         T getCurrent() const noexcept { return current_; }
         T getTarget() const noexcept { return target_; }
 
