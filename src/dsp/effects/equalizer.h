@@ -1,11 +1,9 @@
 #pragma once
 
-#include <vector>
 #include <array>
 
 #include "dsp/filter/biquad_filter.h"
-#include "dsp/audio_parameter.h"
-#include "dsp/dsp.h"
+#include "../parameter/parameter_tree.h"
 
 namespace dsp::effects {
     class Equalizer

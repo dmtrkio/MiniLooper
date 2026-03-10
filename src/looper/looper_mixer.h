@@ -8,7 +8,7 @@
 #include "audio/audio_engine.h"
 #include "dsp/dsp.h"
 #include "dsp/level_meter.h"
-#include "dsp/audio_parameter.h"
+#include "../dsp/parameter/audio_parameter.h"
 
 namespace looper {
     struct MixerParams
