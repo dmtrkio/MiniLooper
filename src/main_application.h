@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include "dsp/parameter/parameter_tree.h"
 #include "looper/looper.h"
 #include "midi/midi.h"
 
@@ -36,6 +37,8 @@ private:
     bool showTracks_ = true;
     bool showVolumeMeter_ = false;
     bool showMixer_ = true;
+
+    dsp::parameter::ParameterTree testParamTree_;
 
     looper::Looper looper_;
     std::unique_ptr<midi::MidiEngine> midiEngine_;

@@ -2,6 +2,7 @@
 
 #include <map>
 #include <variant>
+#include <vector>
 #include <optional>
 #include <ranges>
 #include <concepts>
@@ -14,6 +15,11 @@ namespace dsp::parameter {
     public:
         explicit ParameterTree(std::string name) : name_(std::move(name)), data_(Map{}) {}
         explicit ParameterTree(Parameter param) : name_(param.getName()), data_(param) {}
+
+        ParameterTree(std::string name, std::vector<Parameter> parameters) : ParameterTree(std::move(name))
+        {
+            addParameters(std::move(parameters));
+        }
 
         [[nodiscard]] const std::string& getName() const { return name_; }
 
@@ -65,7 +71,7 @@ namespace dsp::parameter {
 
         template <typename Fn>
         requires std::invocable<Fn, ParameterTree&>
-        void forEach(Fn&& fn)
+        void forEachChild(Fn&& fn)
         {
             if (!isSubTree()) return;
 
@@ -91,15 +97,23 @@ namespace dsp::parameter {
         ParameterTree* addSubTree(ParameterTree&& subtree)
         {
             if (!isSubTree()) return nullptr;
-            auto [it, inserted] = std::get<Map>(data_).emplace(subtree.getName(), std::move(subtree));
-            return &it->second;
+            auto [it, inserted] = std::get<Map>(data_).try_emplace(subtree.getName(), std::move(subtree));
+            return inserted ? &it->second : nullptr;
         }
 
         Parameter* addParameter(Parameter&& parameter)
         {
             if (!isSubTree()) return nullptr;
-            auto [it, inserted] = std::get<Map>(data_).emplace(parameter.getName(), std::move(parameter));
-            return &it->second.asParameterUnsafe();
+            auto [it, inserted] = std::get<Map>(data_).try_emplace(parameter.getName(), std::move(parameter));
+            return inserted ? &it->second.asParameterUnsafe() : nullptr;
+        }
+
+        void addParameters(std::vector<Parameter> parameters)
+        {
+            if (!isSubTree()) return;
+            for (auto& parameter : parameters) {
+                addParameter(std::move(parameter));
+            }
         }
 
     private:

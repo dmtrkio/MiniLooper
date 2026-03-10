@@ -5,6 +5,7 @@
 #include <string>
 #include <variant>
 #include <optional>
+#include <stdexcept>
 
 #include "dsp/dsp.h"
 

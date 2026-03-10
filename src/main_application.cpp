@@ -7,6 +7,7 @@
 #include "imgui.h"
 
 #include "audio/audio_engine.h"
+#include "ui/parameter_ui.h"
 
 void volumeMeter(const float leftDb, const float rightDb)
 {
@@ -91,51 +92,6 @@ void volumeMeter(const float leftDb, const float rightDb)
     }
 }
 
-void parameterUi(dsp::parameter::Parameter &param)
-{
-    using namespace dsp::parameter;
-    ImGui::PushID(&param);
-
-    switch (param.getType()) {
-        case ParameterType::Float: {
-            auto value = param.get<float>();
-            const auto [min, max] = *param.getRange<float>();
-            if (ImGui::SliderFloat(param.getName().c_str(), &value, min, max)) {
-                param.set(value);
-            }
-            break;
-        }
-        case ParameterType::Integer: {
-            auto value = param.get<std::int32_t>();
-            const auto [min, max] = *param.getRange<std::int32_t>();
-            if (ImGui::SliderInt(param.getName().c_str(), &value, min, max)) {
-                param.set(value);
-            }
-            break;
-        }
-        case ParameterType::Boolean: {
-            bool value = param.get<bool>();
-            if (ImGui::Checkbox(param.getName().c_str(), &value)) {
-                param.set(value);
-            }
-            break;
-        }
-    }
-
-    if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(1)) {
-        ImGui::OpenPopup("ParameterContext");
-    }
-
-    if (ImGui::BeginPopup("ParameterContext")) {
-        if (ImGui::MenuItem("Set to Default")) {
-            param.setToDefault();
-        }
-        ImGui::EndPopup();
-    }
-
-    ImGui::PopID();
-}
-
 void mixerUi(looper::Looper &looper)
 {
     ImGui::Begin("Mixer");
@@ -159,10 +115,10 @@ void mixerUi(looper::Looper &looper)
         auto &params = mixer.channels[i];
 
         ImGui::Dummy(ImVec2(0, 2.0f));
-        parameterUi(params.gainDb);
+        ui::parameterUi(params.gainDb);
 
         ImGui::Dummy(ImVec2(0, 2.0f));
-        parameterUi(params.pan);
+        ui::parameterUi(params.pan);
 
         ImGui::PopItemWidth();
         ImGui::EndGroup();
@@ -183,7 +139,7 @@ void mixerUi(looper::Looper &looper)
     ImGui::End();
 }
 
-MainApplication::MainApplication(const int argc, const char* const* argv)
+MainApplication::MainApplication(const int argc, const char* const* argv) : testParamTree_(ui::testParameterTree())
 {
     (void)argc;
     (void)argv;
@@ -248,6 +204,8 @@ void MainApplication::onFrame()
         ImGui::End();
     }
     if (showMixer_) mixerUi(looper_);
+
+    ui::parameterTreeUi(testParamTree_);
 }
 
 void MainApplication::processInput()

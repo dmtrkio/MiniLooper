@@ -85,6 +85,7 @@ set(SOURCE_FILES
     src/looper/looper_processor.cpp
     src/looper/looper_commands.cpp
     src/looper/looper.cpp
+    src/ui/parameter_ui.cpp
     ${imgui_SOURCES}
 )
 
