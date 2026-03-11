@@ -66,10 +66,11 @@ namespace ui {
         }
     }
 
-    void parameterTreeUi(dsp::parameter::ParameterTree &paramTree)
+    void parameterTreeUi(dsp::parameter::ParameterTree &paramTree, const std::string& prefix)
     {
         ImGui::PushID(&paramTree);
-        ImGui::Begin(paramTree.getName().c_str());
+        const std::string title = prefix + paramTree.getName();
+        ImGui::Begin(title.c_str());
 
         if (paramTree.isSubTree()) {
             paramTree.forEachChild(traverseParameterTree);

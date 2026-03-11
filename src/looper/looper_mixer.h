@@ -9,6 +9,7 @@
 #include "dsp/dsp.h"
 #include "dsp/level_meter.h"
 #include "../dsp/parameter/audio_parameter.h"
+#include "dsp/effects/equalizer.h"
 
 namespace looper {
     struct MixerParams
@@ -19,6 +20,7 @@ namespace looper {
         {
             Param gainDb;
             Param pan;
+            dsp::parameter::ParameterTree *eqParamTree;
         };
 
         std::vector<ChannelParams> channels;
@@ -29,7 +31,8 @@ namespace looper {
             for (auto i{0u}; i < nChannels; ++i) {
                 channels.emplace_back(ChannelParams{
                     .gainDb = Param::makeFloat("GainDb", 0.0f, dsp::Range{-60.0f, 12.0f}),
-                    .pan = Param::makeFloat("Pan", 0.0f, dsp::Range{-1.0f, 1.0f})
+                    .pan = Param::makeFloat("Pan", 0.0f, dsp::Range{-1.0f, 1.0f}),
+                    .eqParamTree = nullptr,
                 });
             }
         }
@@ -43,6 +46,7 @@ namespace looper {
         {
             const auto nChannels = params.channels.size();
             const auto sampleRate = static_cast<float>(audio::AudioEngine::getInstance().getSampleRate());
+
             static constexpr float kSmoothingMs = 1.0f;
             const auto smoothFrames = kSmoothingMs * sampleRate * 0.001f;
 
@@ -58,6 +62,9 @@ namespace looper {
                 channel.meter.prepare(sampleRate);
                 channel.bufferL.assign(audio::kMaxFramesInBuffer, 0.0f);
                 channel.bufferR.assign(audio::kMaxFramesInBuffer, 0.0f);
+
+                channel.eq.prepare(sampleRate);
+                params.channels[i].eqParamTree = &channel.eq.getParameterTree();
             }
         }
 
@@ -85,10 +92,9 @@ namespace looper {
         {
             applyParams();
 
-            float *leftData = data[0];
-            float *rightData = data[1];
-
             for (auto& channel : channels) {
+                //channel.eq(data, nFrames);
+
                 auto [leftGain, rightGain] = dsp::equalPowerPanGains(channel.pan());
                 const auto gain = channel.gain();
                 leftGain *= gain;
@@ -98,8 +104,8 @@ namespace looper {
                     const auto leftSample = channel.bufferL[i] * leftGain;;
                     const auto rightSample = channel.bufferR[i] * rightGain;
                     channel.meter(leftSample, rightSample);
-                    leftData[i] += leftSample;
-                    rightData[i] += rightSample;
+                    data[0][i] += leftSample;
+                    data[1][i] += rightSample;
                 }
             }
         }
@@ -109,6 +115,8 @@ namespace looper {
             dsp::FloatSmoother gain;
             dsp::FloatSmoother pan;
             dsp::LevelMeter meter;
+            dsp::effects::Equalizer eq;
+
             std::vector<float> bufferL;
             std::vector<float> bufferR;
         };

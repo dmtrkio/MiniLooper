@@ -18,32 +18,32 @@ namespace dsp::effects {
             using namespace dsp::filter::FilterDefaults;
 
             auto lowPass = ParameterTree("LowPass", {
-                Parameter::makeFloat("Frequency", kDefaultFrequencies[0], {20.0f, 1000.0f}),
+                Parameter::makeFloat("Frequency", kDefaultFrequencies[0], kBandRanges[0]),
                 Parameter::makeFloat("Q", kDefaultQ, {0.5f, 8.0f}),
             });
 
             auto lowShelf = ParameterTree("LowShelf", {
-                Parameter::makeFloat("Frequency", kDefaultFrequencies[1], {20.0f, 1000.0f}),
+                Parameter::makeFloat("Frequency", kDefaultFrequencies[1], kBandRanges[1]),
                 Parameter::makeFloat("GainDb", 0.0f, {-12.0f, 12.0f}),
             });
 
             auto peaking1 = ParameterTree("Peak1", {
-                Parameter::makeFloat("Frequency", kDefaultFrequencies[2], {80.0f, 600.0f}),
+                Parameter::makeFloat("Frequency", kDefaultFrequencies[2], kBandRanges[2]),
                 Parameter::makeFloat("GainDb", 0.0f, {-12.0f, 12.0f}),
             });
 
             auto peaking2 = ParameterTree("Peak2", {
-                Parameter::makeFloat("Frequency", kDefaultFrequencies[3], {600.0f, 2000.0f}),
+                Parameter::makeFloat("Frequency", kDefaultFrequencies[3], kBandRanges[3]),
                 Parameter::makeFloat("GainDb", 0.0f, {-12.0f, 12.0f}),
             });
 
             auto highShelf = ParameterTree("HighShelf", {
-                Parameter::makeFloat("Frequency", kDefaultFrequencies[4], {200.0f, 20000.0f}),
+                Parameter::makeFloat("Frequency", kDefaultFrequencies[4], kBandRanges[4]),
                 Parameter::makeFloat("GainDb", 0.0f, {-12.0f, 12.0f}),
             });
 
             auto highPass = ParameterTree("HighPass", {
-                Parameter::makeFloat("Frequency", kDefaultFrequencies[5], {200.0f, 20000.0f}),
+                Parameter::makeFloat("Frequency", kDefaultFrequencies[5], kBandRanges[5]),
                 Parameter::makeFloat("Q", kDefaultQ, {0.5f, 8.0f}),
             });
 
@@ -126,8 +126,17 @@ namespace dsp::effects {
             filter::FilterType::HighPass,
         };
 
+        static constexpr std::array<Range<float>, kBands> kBandRanges = {
+            Range{20.0f, 1000.0f},
+            Range{20.0f, 1000.0f},
+            Range{50.0f , 800.0f},
+            Range{50.0f, 800.0f},
+            Range{800.0f, 20000.0f},
+            Range{800.0f, 20000.0f},
+        };
+
         static constexpr std::array<Filter::DataType, kBands> kDefaultFrequencies = {
-            25, 80, 200, 500, 1000, 18000
+            25, 80, 200, 500, 1500, 18000
         };
 
         float sampleRate_{44100.0f};

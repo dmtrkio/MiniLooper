@@ -123,14 +123,14 @@ void mixerUi(looper::Looper &looper)
         ImGui::PopItemWidth();
         ImGui::EndGroup();
 
-        // Same line for all except last
         if (i < looper.getNumLooperTracks() - 1) {
             ImGui::SameLine();
 
-            // Add some spacing between groups
             ImGui::Dummy(ImVec2(10.0f, 0));
             ImGui::SameLine();
         }
+
+        ui::parameterTreeUi(*params.eqParamTree, std::format("Track {}: ", i));
 
         ImGui::PopID();
     }
@@ -139,7 +139,7 @@ void mixerUi(looper::Looper &looper)
     ImGui::End();
 }
 
-MainApplication::MainApplication(const int argc, const char* const* argv) : testParamTree_(ui::testParameterTree())
+MainApplication::MainApplication(const int argc, const char* const* argv)
 {
     (void)argc;
     (void)argv;
@@ -204,8 +204,6 @@ void MainApplication::onFrame()
         ImGui::End();
     }
     if (showMixer_) mixerUi(looper_);
-
-    ui::parameterTreeUi(testParamTree_);
 }
 
 void MainApplication::processInput()

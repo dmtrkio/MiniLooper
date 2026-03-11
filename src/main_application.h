@@ -38,8 +38,6 @@ private:
     bool showVolumeMeter_ = false;
     bool showMixer_ = true;
 
-    dsp::parameter::ParameterTree testParamTree_;
-
     looper::Looper looper_;
     std::unique_ptr<midi::MidiEngine> midiEngine_;
 };
