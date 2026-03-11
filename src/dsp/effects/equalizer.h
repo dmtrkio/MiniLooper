@@ -68,10 +68,10 @@ namespace dsp::effects {
             applyParams();
 
             bands_[0](data, nFrames);
-            //bands_[1](data, nFrames);
+            bands_[1](data, nFrames);
             bands_[2](data, nFrames);
             bands_[3](data, nFrames);
-            //bands_[4](data, nFrames);
+            bands_[4](data, nFrames);
             bands_[5](data, nFrames);
 
             /* for (auto &band : bands_) {
@@ -105,7 +105,7 @@ namespace dsp::effects {
                 } else {
                     auto gainParam = subTree->getParameter("GainDb");
                     if (gainParam) {
-                        const float gainDb = gainParam->get().get<float>();
+                        const auto gainDb = gainParam->get().get<float>();
                         gainOpt = dBtoLinear(gainDb);
                     }
                 }

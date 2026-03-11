@@ -116,11 +116,11 @@ namespace dsp::filter {
 
     private:
         FilterType type_{};
-        T f_{};
-        T q_{};
-        T bw_{};
-        T slope_{};
-        T gain_{};
+        T f_{FilterDefaults::kDefaultFrequency};
+        T q_{FilterDefaults::kDefaultQ};
+        T bw_{FilterDefaults::kDefaultBw};
+        T slope_{FilterDefaults::kDefaultSlope};
+        T gain_{FilterDefaults::kDefaultGain};
 
         Coefficients coefficients_;
         std::array<BiquadState<DataType>, kChannelCount> state_{};

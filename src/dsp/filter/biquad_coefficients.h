@@ -99,6 +99,8 @@ namespace dsp::filter {
 
         static BiquadCoefficients lowShelf(T cf, T slope, T gain)
         {
+            gain = std::sqrt(gain);
+
             const T sine = std::sin(cf);
             const T cosine = std::cos(cf);
             const T alpha = (sine / T(2)) * std::sqrt((gain + (T(1) / gain)) * (T(1) / slope - 1) + 2);
@@ -112,13 +114,15 @@ namespace dsp::filter {
             x.b1 = 2 * gain * (am - ap * cosine);
             x.b2 = gain * (ap - am * cosine - tmp);
             x.a1 = -2 * (am + ap * cosine);
-            x.a2 = ap * am * cosine - tmp;
+            x.a2 = ap + am * cosine - tmp;
             const T a0 = ap + am * cosine + tmp;
             return normalize(x, a0);
         }
 
         static BiquadCoefficients highShelf(T cf, T slope, T gain)
         {
+            gain = std::sqrt(gain);
+
             const T sine = std::sin(cf);
             const T cosine = std::cos(cf);
             const T alpha = (sine / T(2)) * std::sqrt((gain + (T(1) / gain)) * (T(1) / slope - 1) + 2);
@@ -131,7 +135,7 @@ namespace dsp::filter {
             x.b0 = gain * (ap + am * cosine + tmp);
             x.b1 = -2 * gain * (am + ap * cosine);
             x.b2 = gain * (ap + am * cosine - tmp);
-            x.a1 = -2 * (am - ap * cosine);
+            x.a1 = 2 * (am - ap * cosine);
             x.a2 = ap - am * cosine - tmp;
             const T a0 = ap - am * cosine + tmp;
             return normalize(x, a0);
@@ -139,6 +143,8 @@ namespace dsp::filter {
 
         static BiquadCoefficients peaking(T cf, T q, T gain)
         {
+            gain = std::sqrt(gain);
+
             const T sine = std::sin(cf);
             const T cosine = std::cos(cf);
             const T alpha = sine / (2 * q);
