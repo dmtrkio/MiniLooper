@@ -52,7 +52,7 @@ namespace dsp::filter {
         {
             const T sine = std::sin(cf);
             const T cosine = std::cos(cf);
-            const T alpha = cf / (2 * q);
+            const T alpha = sine / (2 * q);
             const T opc = 1 + cosine;
 
             BiquadCoefficients x;

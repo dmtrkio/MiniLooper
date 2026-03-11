@@ -34,9 +34,9 @@ private:
 
     bool showAudioSettings_ = false;
     bool showMidiSettings_ = false;
-    bool showTracks_ = true;
-    bool showVolumeMeter_ = false;
-    bool showMixer_ = true;
+    bool showTracks_ = false;
+    bool showVolumeMeter_ = true;
+    bool showMixer_ = false;
 
     looper::Looper looper_;
     std::unique_ptr<midi::MidiEngine> midiEngine_;

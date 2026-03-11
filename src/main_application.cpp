@@ -130,7 +130,8 @@ void mixerUi(looper::Looper &looper)
             ImGui::SameLine();
         }
 
-        ui::parameterTreeUi(*params.eqParamTree, std::format("Track {}: ", i));
+        if (i == 0)
+            ui::parameterTreeUi(*params.eqParamTree, std::format("Track {}: ", i));
 
         ImGui::PopID();
     }

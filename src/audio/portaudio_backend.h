@@ -106,6 +106,14 @@ namespace audio {
 
                 if (err != paNoError) {
                     std::cerr << "PortAudio error opening stream: " << Pa_GetErrorText(err) << std::endl;
+
+                    if ((inputDevice != Pa_GetDefaultInputDevice()) && (outputDevice != Pa_GetDefaultOutputDevice())) {
+                        inputDeviceIndex = Pa_GetDefaultInputDevice();
+                        outputDeviceIndex = Pa_GetDefaultOutputDevice();
+                        std::cerr << "Failed to use given devices. Attempting to open stream with default devices" << std::endl;
+                        return startStream(inputDeviceIndex, outputDeviceIndex, params);
+                    }
+
                     return false;
                 }
             }
@@ -122,7 +130,7 @@ namespace audio {
         {
             if (!isStreamRunning()) {
                 std::cerr << "PortAudio stream is already not running" << std::endl;
-                return false;
+                return true;
             }
 
             if (const auto err = Pa_StopStream(stream_); err != paNoError) {
@@ -176,7 +184,7 @@ namespace audio {
                 if (const auto err = Pa_IsFormatSupported(ip, op, params.sampleRate); err == paFormatIsSupported) {
                     return true;
                 } else {
-                    std::cout << Pa_GetErrorText(err) << std::endl;
+                    std::cerr << Pa_GetErrorText(err) << std::endl;
                 }
             }
 

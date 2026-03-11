@@ -66,9 +66,12 @@ namespace dsp::effects {
         void operator()(float *const *data, const unsigned int nFrames) noexcept
         {
             applyParams();
-            for (auto &band : bands_) {
+
+            bands_[0](data, nFrames);
+
+            /* for (auto &band : bands_) {
                 band(data, nFrames);
-            }
+            } */
         }
 
         parameter::ParameterTree& getParameterTree() noexcept { return params_; }

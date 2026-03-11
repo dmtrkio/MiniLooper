@@ -93,7 +93,8 @@ namespace looper {
             applyParams();
 
             for (auto& channel : channels) {
-                //channel.eq(data, nFrames);
+                float *bufs[2] = { channel.bufferL.data(), channel.bufferR.data() };
+                //channel.eq(bufs, nFrames);
 
                 auto [leftGain, rightGain] = dsp::equalPowerPanGains(channel.pan());
                 const auto gain = channel.gain();
