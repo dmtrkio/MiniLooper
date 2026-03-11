@@ -80,7 +80,7 @@ namespace dsp::filter {
                     break;
                 }
                 case FilterType::BandPass: {
-                    coefficients_ = Coefficients::bandPass(f_, q_, bw_);
+                    coefficients_ = Coefficients::bandPass(f_, q_);
                     break;
                 }
                 case FilterType::Notch: {

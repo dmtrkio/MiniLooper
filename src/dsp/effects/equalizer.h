@@ -17,7 +17,7 @@ namespace dsp::effects {
             using namespace parameter;
             using namespace dsp::filter::FilterDefaults;
 
-            auto lowPass = ParameterTree("LowPass", {
+            auto highPass = ParameterTree("HighPass", {
                 Parameter::makeFloat("Frequency", kDefaultFrequencies[0], kBandRanges[0]),
                 Parameter::makeFloat("Q", kDefaultQ, {0.5f, 8.0f}),
             });
@@ -42,17 +42,17 @@ namespace dsp::effects {
                 Parameter::makeFloat("GainDb", 0.0f, {-12.0f, 12.0f}),
             });
 
-            auto highPass = ParameterTree("HighPass", {
+            auto lowPass = ParameterTree("LowPass", {
                 Parameter::makeFloat("Frequency", kDefaultFrequencies[5], kBandRanges[5]),
                 Parameter::makeFloat("Q", kDefaultQ, {0.5f, 8.0f}),
             });
 
-            params_.addSubTree(std::move(lowPass));
             params_.addSubTree(std::move(lowShelf));
             params_.addSubTree(std::move(peaking1));
             params_.addSubTree(std::move(peaking2));
             params_.addSubTree(std::move(highShelf));
             params_.addSubTree(std::move(highPass));
+            params_.addSubTree(std::move(lowPass));
         }
 
         void prepare(const float sampleRate)
@@ -68,6 +68,11 @@ namespace dsp::effects {
             applyParams();
 
             bands_[0](data, nFrames);
+            //bands_[1](data, nFrames);
+            bands_[2](data, nFrames);
+            bands_[3](data, nFrames);
+            //bands_[4](data, nFrames);
+            bands_[5](data, nFrames);
 
             /* for (auto &band : bands_) {
                 band(data, nFrames);
@@ -80,7 +85,7 @@ namespace dsp::effects {
         void applyParams()
         {
             static constexpr std::array<const char*, kBands> kBandNames = {
-                "LowPass", "LowShelf", "Peak1", "Peak2", "HighShelf", "HighPass"
+                "HighPass", "LowShelf", "Peak1", "Peak2", "HighShelf", "LowPass"
             };
 
             for (std::size_t i = 0; i < kBands; ++i) {
@@ -121,12 +126,12 @@ namespace dsp::effects {
         using Filter = filter::BiquadFilter<double, 2>;
 
         static constexpr std::array<filter::FilterType, kBands> kFilterTypes = {
-            filter::FilterType::LowPass,
+            filter::FilterType::HighPass,
             filter::FilterType::LowShelf,
             filter::FilterType::Peaking,
             filter::FilterType::Peaking,
             filter::FilterType::HighShelf,
-            filter::FilterType::HighPass,
+            filter::FilterType::LowPass,
         };
 
         static constexpr std::array<Range<float>, kBands> kBandRanges = {

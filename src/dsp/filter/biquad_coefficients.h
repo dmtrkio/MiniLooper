@@ -65,11 +65,11 @@ namespace dsp::filter {
             return normalize(x, a0);
         }
 
-        static BiquadCoefficients bandPass(T cf, T q, T bw)
+        static BiquadCoefficients bandPass(T cf, T q)
         {
             const T sine = std::sin(cf);
             const T cosine = std::cos(cf);
-            const T alpha = sine * std::sinh((std::log(2) / 2) * bw * (cf / sine));
+            const T alpha = sine / (2 * q);
 
             BiquadCoefficients x;
             x.b0 = alpha * q;
@@ -90,7 +90,7 @@ namespace dsp::filter {
             BiquadCoefficients x;
             x.b0 = 1;
             x.b1 = -2 * cosine;
-            x.b2 = -x.b0;
+            x.b2 = 1;
             x.a1 = x.b1;
             x.a2 = 1 - alpha;
             const T a0 = 1 + alpha;
@@ -101,7 +101,7 @@ namespace dsp::filter {
         {
             const T sine = std::sin(cf);
             const T cosine = std::cos(cf);
-            const T alpha = (sine / 2) * std::sqrt((gain + (1 / gain)) * (1 / slope - 1) + 2);
+            const T alpha = (sine / T(2)) * std::sqrt((gain + (T(1) / gain)) * (T(1) / slope - 1) + 2);
 
             const T ap = gain + 1;
             const T am = gain - 1;
@@ -121,7 +121,7 @@ namespace dsp::filter {
         {
             const T sine = std::sin(cf);
             const T cosine = std::cos(cf);
-            const T alpha = (sine / 2) * std::sqrt((gain + (1 / gain)) * (1 / slope - 1) + 2);
+            const T alpha = (sine / T(2)) * std::sqrt((gain + (T(1) / gain)) * (T(1) / slope - 1) + 2);
 
             const T ap = gain + 1;
             const T am = gain - 1;
@@ -141,7 +141,7 @@ namespace dsp::filter {
         {
             const T sine = std::sin(cf);
             const T cosine = std::cos(cf);
-            const T alpha = sine * std::sinh((std::log(2) / 2) * q * (cf / sine));
+            const T alpha = sine / (2 * q);
 
             BiquadCoefficients x;
             x.b0 = 1 + alpha * gain;
