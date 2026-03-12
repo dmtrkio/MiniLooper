@@ -80,34 +80,6 @@ namespace dsp {
         float state_{0.0f};
     };
 
-    class BallisticsFilter
-    {
-    public:
-        void prepare(float sampleRate, float attackMs, float releaseMs, float initial)
-        {
-            attack_  = std::exp(-1.0f / (attackMs  * sampleRate / 1000.0f));
-            release_ = std::exp(-1.0f / (releaseMs * sampleRate / 1000.0f));
-            state_ = initial;
-        }
-
-        [[nodiscard]] float getState() const noexcept
-        {
-            return state_;
-        }
-
-        float operator()(float x)
-        {
-            const auto coeff = (x > state_) ? attack_ : release_;
-            state_ = coeff * state_ + (1.0f - coeff) * x;
-            return state_;
-        }
-
-    private:
-        float attack_{0.0f};
-        float release_{0.0f};
-        float state_{0.0f};
-    };
-
     template<typename T>
     class Smoother {
     public:
@@ -122,12 +94,12 @@ namespace dsp {
 
         void setSmoothingFrames(T timeInFrames) noexcept
         {
-            coeff_ = std::exp(T(-1) / timeInFrames);
+            coefficient_ = std::exp(T(-1) / timeInFrames);
         }
 
         T operator()()
         {
-            current_ = current_ * coeff_ + target_ * (T(1) - coeff_);
+            current_ = current_ * coefficient_ + target_ * (T(1) - coefficient_);
             return current_;
         }
 
@@ -143,7 +115,7 @@ namespace dsp {
     private:
         T current_;
         T target_;
-        T coeff_;
+        T coefficient_;
     };
 
     using FloatSmoother = Smoother<float>;

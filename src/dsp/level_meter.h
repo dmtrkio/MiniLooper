@@ -1,6 +1,7 @@
 #pragma once
 
 #include "dsp/dsp.h"
+#include "dsp/filter/ballistics_filter.h"
 
 namespace dsp {
     class LevelMeter
@@ -31,8 +32,8 @@ namespace dsp {
 
         void operator()(const float left, const float right)
         {
-            ballisticsL(dsp::linearToDb(rmsL(left)));
-            ballisticsR(dsp::linearToDb(rmsR(right)));
+            ballisticsL(linearToDb(rmsL(left)));
+            ballisticsR(linearToDb(rmsR(right)));
         }
 
         [[nodiscard]] std::pair<float, float> getLevel() const noexcept
@@ -43,7 +44,7 @@ namespace dsp {
     private:
         Rms rmsL{};
         Rms rmsR{};
-        BallisticsFilter ballisticsL{};
-        BallisticsFilter ballisticsR{};
+        filter::BallisticsFilter ballisticsL{};
+        filter::BallisticsFilter ballisticsR{};
     };
 }
