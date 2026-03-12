@@ -66,11 +66,18 @@ namespace ui {
         }
     }
 
-    void parameterTreeUi(dsp::parameter::ParameterTree &paramTree, const std::string& prefix)
+    void parameterTreeUi(dsp::parameter::ParameterTree &paramTree, bool *opened, const std::string& prefix)
     {
+        if ((opened != nullptr) && (!(*opened))) return;
+
         ImGui::PushID(&paramTree);
         const std::string title = prefix + paramTree.getName();
-        ImGui::Begin(title.c_str());
+
+        if (opened == nullptr) {
+            ImGui::Begin(title.c_str());
+        } else {
+            ImGui::Begin(title.c_str(), opened);
+        }
 
         if (paramTree.isSubTree()) {
             paramTree.forEachChild(traverseParameterTree);

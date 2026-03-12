@@ -2,9 +2,9 @@
 
 #include <memory>
 
-#include "dsp/parameter/parameter_tree.h"
 #include "looper/looper.h"
 #include "midi/midi.h"
+#include "ui/mixer_ui.h"
 
 class MainApplication
 {
@@ -36,7 +36,8 @@ private:
     bool showMidiSettings_ = false;
     bool showTracks_ = false;
     bool showVolumeMeter_ = true;
-    bool showMixer_ = false;
+
+    ui::MixerUi mixerUi_;
 
     looper::Looper looper_;
     std::unique_ptr<midi::MidiEngine> midiEngine_;

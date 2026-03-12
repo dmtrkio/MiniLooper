@@ -5,6 +5,6 @@
 
 namespace ui {
     void parameterUi(dsp::parameter::Parameter &param);
-    void parameterTreeUi(dsp::parameter::ParameterTree &paramTree, const std::string &prefix = "");
+    void parameterTreeUi(dsp::parameter::ParameterTree &paramTree, bool *opened = nullptr, const std::string &prefix = "");
     dsp::parameter::ParameterTree testParameterTree();
 }

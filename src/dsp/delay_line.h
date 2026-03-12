@@ -32,7 +32,7 @@ namespace dsp {
             delayFrac_ = delaySamples - static_cast<float>(delayInt_);
         }
 
-        float process(const float input)
+        float operator()(const float input) noexcept
         {
             buffer_[writeIndex_] = input;
 
