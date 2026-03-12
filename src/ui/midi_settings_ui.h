@@ -2,22 +2,22 @@
 
 #include "imgui.h"
 
+#include "ui_window_base.h"
 #include "midi/midi.h"
 
 namespace ui {
-    struct MidiSettingsUi
+    struct MidiSettingsUi : public WindowBase
     {
-        bool opened = false;
-
-        MidiSettingsUi() = default;
         explicit MidiSettingsUi(midi::MidiEngine *midiEngine) : midiEngine_(midiEngine) {}
 
-        void draw()
+        [[nodiscard]] const char* getTitle() const override { return "Midi Settings"; }
+
+        void draw() override
         {
             if (!opened || !midiEngine_) return;
 
             ImGui::PushID(this);
-            ImGui::Begin("MIDI settings", &opened);
+            ImGui::Begin(getTitle(), &opened);
 
             using namespace midi;
             static constexpr auto kNoDeviceString = "No device";

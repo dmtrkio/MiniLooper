@@ -5,19 +5,20 @@
 
 #include "imgui.h"
 
+#include "ui_window_base.h"
 #include "audio/audio_engine.h"
 
 namespace ui {
-    struct AudioSettingsUi
+    struct AudioSettingsUi : public WindowBase
     {
-        bool opened = false;
+        [[nodiscard]] const char* getTitle() const override { return "Audio Settings"; }
 
-        void draw()
+        void draw() override
         {
             if (!opened) return;
 
             ImGui::PushID(this);
-            ImGui::Begin("Audio settings", &opened);
+            ImGui::Begin(getTitle(), &opened);
             ImGui::BeginGroup();
 
             using namespace audio;

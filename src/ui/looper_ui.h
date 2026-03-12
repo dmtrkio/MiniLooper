@@ -2,23 +2,24 @@
 
 #include "imgui.h"
 
+#include "ui_window_base.h"
 #include "looper/looper.h"
 
 namespace ui {
-    struct LooperUi
+    struct LooperUi : public WindowBase
     {
-        bool opened = false;
-
         explicit LooperUi(looper::Looper &looper) : looper_(&looper) {}
 
-        void draw()
+        [[nodiscard]] const char* getTitle() const override { return "Looper"; }
+
+        void draw() override
         {
             processInput();
 
             if (!opened) return;
 
             ImGui::PushID(this);
-            ImGui::Begin("Looper", &opened);
+            ImGui::Begin(getTitle(), &opened);
 
             const auto nTracks = looper_->getNumLooperTracks();
 

@@ -1,25 +1,26 @@
 #pragma once
 
+#include "ui_window_base.h"
 #include "looper/looper.h"
 #include "parameter_ui.h"
 #include "volume_meter.h"
 
 namespace ui {
-    struct MixerUi
+    struct MixerUi : public WindowBase
     {
-        bool opened = false;
-
         explicit MixerUi(looper::Looper &looper) : looper_(&looper)
         {
             eqOpened_.assign(looper_->getNumLooperTracks(), {});
         }
 
-        void draw()
+        [[nodiscard]] const char* getTitle() const override { return "Mixer"; }
+
+        void draw() override
         {
             if (!opened || !looper_) return;
 
             ImGui::PushID(this);
-            ImGui::Begin("Mixer", &opened);
+            ImGui::Begin(getTitle(), &opened);
 
             auto &mixer = looper_->getMixerParams();
 

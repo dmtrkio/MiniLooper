@@ -1,13 +1,11 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
 #include "looper/looper.h"
 #include "midi/midi.h"
-#include "ui/audio_settings_ui.h"
-#include "ui/looper_ui.h"
-#include "ui/midi_settings_ui.h"
-#include "ui/mixer_ui.h"
+#include "ui/ui_window_base.h"
 
 class MainApplication
 {
@@ -24,13 +22,10 @@ public:
     void onFrame();
 
 private:
+    void drawTopBarMenu();
+
     looper::Looper looper_;
     std::unique_ptr<midi::MidiEngine> midiEngine_;
 
-    ui::AudioSettingsUi audioSettingsUi_;
-    ui::MidiSettingsUi midiSettingsUi_;
-    ui::LooperUi looperUi_;
-    ui::MixerUi mixerUi_;
-
-    bool showVolumeMeter_ = true;
+    std::vector<std::unique_ptr<ui::WindowBase>> windowRegistry_;
 };
