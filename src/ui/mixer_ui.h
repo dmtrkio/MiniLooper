@@ -18,10 +18,10 @@ namespace ui {
         {
             if (!opened || !looper_) return;
 
-            auto &mixer = looper_->getMixerParams();
-
-            ImGui::PushID(&mixer);
+            ImGui::PushID(this);
             ImGui::Begin("Mixer", &opened);
+
+            auto &mixer = looper_->getMixerParams();
 
             for (auto i{0}; i < looper_->getNumLooperTracks(); ++i) {
                 constexpr float sliderWidth = 100.0f;
