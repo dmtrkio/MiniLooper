@@ -31,6 +31,7 @@ FetchContent_Declare(
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(portmidi)
 
+# SDL3 - cross-platform windowing, inputs and graphics
 find_package(SDL3 QUIET)
 if (NOT SDL3_FOUND)
     FetchContent_Declare(
@@ -40,6 +41,13 @@ if (NOT SDL3_FOUND)
     )
     FetchContent_MakeAvailable(SDL3)
 endif()
+
+FetchContent_Declare(
+    json
+    GIT_REPOSITORY https://github.com/nlohmann/json.git
+    GIT_TAG v3.12.0
+)
+FetchContent_MakeAvailable(json)
 
 # Setting up DearImGui, which is not a cmake project
 FetchContent_Declare(
@@ -102,6 +110,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     portaudio
     portmidi
     SDL3::SDL3-static
+    nlohmann_json::nlohmann_json
 )
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE SDL_MAIN_USE_CALLBACKS)

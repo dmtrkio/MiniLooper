@@ -107,5 +107,4 @@ namespace audio {
         PlanarAudioData inputData_;
         PlanarAudioData outputData_;
     };
-
 }
