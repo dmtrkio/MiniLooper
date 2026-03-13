@@ -170,6 +170,26 @@ void AudioEngine::setOutputDevice(int outputDeviceIndex)
     outputDeviceIndex_ = outputDeviceIndex;
 }
 
+const AudioDevice* AudioEngine::getInputAudioDeviceByIndex(const DeviceIndex inputDeviceIndex) const
+{
+    const auto it = std::ranges::find_if(inputDevices_, [inputDeviceIndex](const auto& device) {
+        return device.deviceIndex == inputDeviceIndex;
+    });
+
+    if (it == inputDevices_.end()) return nullptr;
+    return &(*it);
+}
+
+const AudioDevice* AudioEngine::getOutputAudioDeviceByIndex(const DeviceIndex outputDeviceIndex) const
+{
+    const auto it = std::ranges::find_if(outputDevices_, [outputDeviceIndex](const auto& device) {
+        return device.deviceIndex == outputDeviceIndex;
+    });
+
+    if (it == outputDevices_.end()) return nullptr;
+    return &(*it);
+}
+
 void AudioEngine::pickDevices()
 {
     const auto devices = backend_->getAvailableDevices();

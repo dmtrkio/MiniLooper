@@ -4,6 +4,7 @@
 #include <vector>
 #include <mutex>
 #include <memory>
+#include <optional>
 
 #include "audio_device.h"
 
@@ -59,8 +60,10 @@ namespace audio {
         // these won't take effect until starting a new stream with fresh settings
         void setSampleRate(unsigned int sampleRate);
         void setBufferSize(unsigned int bufferSize);
-        void setInputDevice(int inputDeviceIndex);
-        void setOutputDevice(int outputDeviceIndex);
+        void setInputDevice(DeviceIndex inputDeviceIndex);
+        void setOutputDevice(DeviceIndex outputDeviceIndex);
+        const AudioDevice* getInputAudioDeviceByIndex(DeviceIndex inputDeviceIndex) const;
+        const AudioDevice* getOutputAudioDeviceByIndex(DeviceIndex outputDeviceIndex) const;
         void pickDevices();
 
         void setAudioCallback(std::shared_ptr<AudioCallback> cb);

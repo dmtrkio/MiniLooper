@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <optional>
 
 #include "imgui.h"
 #include <nlohmann/json.hpp>
@@ -32,39 +33,30 @@ static std::unique_ptr<midi::MidiEngine> makeMidiEngine(looper::Looper &looper)
 
 static json audioSettingsToJson()
 {
+    const auto &audioEngine = audio::AudioEngine::getInstance();
+
+    auto audioDeviceToJson = [](const audio::AudioDevice &device) -> json {
+        return {
+            { "deviceIndex", device.deviceIndex },
+            { "deviceName", device.deviceName },
+            { "hostApi", device.hostApiName }
+        };
+    };
+
     json j;
 
-    const auto &audioEngine = audio::AudioEngine::getInstance();
-    const auto inputDevice = audioEngine.getCurrentInputDevice();
-    const auto outputDevice = audioEngine.getCurrentOutputDevice();
+    if (const auto *inputDevice = audioEngine.getInputAudioDeviceByIndex(audioEngine.getCurrentInputDevice())) {
+        j["inputDevice"] = audioDeviceToJson(*inputDevice);
+    }
 
-    j["inputDevice"] = {
-        { "deviceIndex", inputDevice },
-    };
-
-    j["outputDevice"] = {
-        { "deviceIndex", outputDevice },
-    };
+    if (const auto *outputDevice = audioEngine.getOutputAudioDeviceByIndex(audioEngine.getCurrentOutputDevice())) {
+        j["outputDevice"] = audioDeviceToJson(*outputDevice);
+    }
 
     j["sampleRate"] = audioEngine.getSampleRate();
     j["bufferSize"] = audioEngine.getBufferSize();
 
     return j;
-}
-
-static bool saveAudioSettingsToFile(const std::string& filename)
-{
-    try {
-        const json settings = audioSettingsToJson();
-        std::ofstream file(filename);
-        if (!file.is_open())
-            return false;
-        file << settings.dump(4);
-        return true;
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return false;
-    }
 }
 
 static void loadAudioSettingsFromJson(const json& j)
@@ -74,7 +66,7 @@ static void loadAudioSettingsFromJson(const json& j)
     if (j.contains("inputDevice") && j["inputDevice"].is_object()) {
         const auto& inputObj = j["inputDevice"];
         if (inputObj.contains("deviceIndex") && inputObj["deviceIndex"].is_number()) {
-            const auto index = inputObj["deviceIndex"].get<int>();
+            const auto index = inputObj["deviceIndex"].get<audio::DeviceIndex>();
             audioEngine.setInputDevice(index);
         }
     }
@@ -82,7 +74,7 @@ static void loadAudioSettingsFromJson(const json& j)
     if (j.contains("outputDevice") && j["outputDevice"].is_object()) {
         const auto& outputObj = j["outputDevice"];
         if (outputObj.contains("deviceIndex") && outputObj["deviceIndex"].is_number()) {
-            const auto index = outputObj["deviceIndex"].get<int>();
+            const auto index = outputObj["deviceIndex"].get<audio::DeviceIndex>();
             audioEngine.setOutputDevice(index);
         }
     }
@@ -98,18 +90,30 @@ static void loadAudioSettingsFromJson(const json& j)
     }
 }
 
-static bool loadAudioSettingsFromFile(const std::string& filename)
+bool saveJsonToFile(const std::string& filename, const json& j)
 {
     try {
-        std::ifstream file(filename);
+        std::ofstream file(filename);
         if (!file.is_open())
             return false;
-        const json settings = json::parse(file);
-        loadAudioSettingsFromJson(settings);
+        file << j.dump(4);
         return true;
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         return false;
+    }
+}
+
+std::optional<json> loadJsonFromFile(const std::string& filename)
+{
+    try {
+        std::ifstream file(filename);
+        if (!file.is_open())
+            return std::nullopt;
+        return json::parse(file);
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        return std::nullopt;
     }
 }
 
@@ -140,7 +144,9 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
     auto& audioEngine = audio::AudioEngine::getInstance();
     audioEngine.rescanDevices();
 
-    if (!loadAudioSettingsFromFile("audio_settings.json")) {
+    if (const auto j = loadJsonFromFile(kSettingsPath); j.has_value()) {
+        loadAudioSettingsFromJson(j.value()["audio"]);
+    } else {
         audioEngine.setSampleRate(48000);
         audioEngine.setBufferSize(64);
     }
@@ -170,7 +176,9 @@ MainApplication::~MainApplication()
     if (audio::AudioEngine::getInstance().stop())
         std::cout << "Audio engine stopped successfully.\n";
 
-    saveAudioSettingsToFile("audio_settings.json");
+    json j;
+    j["audio"] = audioSettingsToJson();
+    saveJsonToFile(kSettingsPath, j);
 }
 
 void MainApplication::onFrame()
