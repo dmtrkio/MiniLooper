@@ -63,17 +63,6 @@ set(imgui_SOURCES
     ${imgui_SOURCE_DIR}/backends/imgui_impl_sdlrenderer3.cpp
 )
 
-#[[# Raylib - windowing/inputs/graphics library
-FetchContent_Declare(
-    raylib
-    GIT_REPOSITORY https://github.com/raysan5/raylib.git
-    GIT_TAG master
-)
-set(SUPPORT_MODULE_RMODELS OFF CACHE INTERNAL "")
-set(USE_AUDIO OFF CACHE INTERNAL "")
-set(SUPPORT_MODULE_RAUDIO OFF CACHE INTERNAL "")
-FetchContent_MakeAvailable(raylib)]]
-
 # Faust Generated DSP
 add_subdirectory(faust)
 

@@ -11,7 +11,7 @@
 #include "ui/midi_settings_ui.h"
 #include "ui/mixer_ui.h"
 
-std::unique_ptr<midi::MidiEngine> makeMidiEngine(looper::Looper &looper)
+static std::unique_ptr<midi::MidiEngine> makeMidiEngine(looper::Looper &looper)
 {
     try {
         auto midiEngine = std::make_unique<midi::MidiEngine>([&looper](int, midi::MidiMessage msg) {
