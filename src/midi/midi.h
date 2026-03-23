@@ -130,6 +130,16 @@ namespace midi {
             return devices_;
         }
 
+        const MidiDevice* getMidiInputDeviceByIndex(DeviceIndex deviceIndex) const
+        {
+            const auto it = std::ranges::find_if(devices_, [deviceIndex](const auto& device) {
+                return device.deviceIndex == deviceIndex;
+            });
+
+            if (it == devices_.end()) return nullptr;
+            return &(*it);
+        }
+
         DeviceIndex getCurrentMidiInputDevice() const noexcept
         {
             return deviceId_;

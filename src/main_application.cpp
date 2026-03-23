@@ -90,6 +90,30 @@ static void loadAudioSettingsFromJson(const json& j)
     }
 }
 
+static json midiSettingsToJson(const midi::MidiEngine& midiEngine)
+{
+    json j;
+
+    if (const auto* inputDevice = midiEngine.getMidiInputDeviceByIndex(midiEngine.getCurrentMidiInputDevice())) {
+        j["inputDevice"]["deviceIndex"] = inputDevice->deviceIndex;
+        j["inputDevice"]["deviceName"] = inputDevice->deviceName;
+        j["inputDevice"]["apiName"] = inputDevice->apiName;
+    }
+
+    return j;
+}
+
+static void loadMidiSettingsFromJson(const json& j, midi::MidiEngine& midiEngine)
+{
+    if (j.contains("inputDevice")) {
+        const auto& inputDevice = j["inputDevice"];
+        if (inputDevice.contains("deviceIndex") && inputDevice["deviceIndex"].is_number()) {
+            const auto deviceIndex = inputDevice["deviceIndex"].get<midi::DeviceIndex>();
+            midiEngine.setMidiInputDevice(deviceIndex);
+        }
+    }
+}
+
 bool saveJsonToFile(const std::string& filename, const json& j)
 {
     try {
@@ -145,7 +169,13 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
     audioEngine.rescanDevices();
 
     if (const auto j = loadJsonFromFile(kSettingsPath); j.has_value()) {
-        loadAudioSettingsFromJson(j.value()["audio"]);
+        if (j.value().contains("midi") && midiEngine_) {
+            loadMidiSettingsFromJson(j.value()["midi"], *midiEngine_);
+        }
+
+        if (j.value().contains("audio")) {
+            loadAudioSettingsFromJson(j.value()["audio"]);
+        }
     } else {
         audioEngine.setSampleRate(48000);
         audioEngine.setBufferSize(64);
@@ -178,6 +208,11 @@ MainApplication::~MainApplication()
 
     json j;
     j["audio"] = audioSettingsToJson();
+
+    if (midiEngine_) {
+        j["midi"] = midiSettingsToJson(*midiEngine_);
+    }
+
     saveJsonToFile(kSettingsPath, j);
 }
 
