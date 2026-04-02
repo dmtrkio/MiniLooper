@@ -6,6 +6,7 @@
 #include <variant>
 #include <optional>
 #include <stdexcept>
+#include <cstdint>
 
 #include "dsp/dsp.h"
 

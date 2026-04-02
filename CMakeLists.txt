@@ -49,6 +49,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(json)
 
+FetchContent_Declare(
+    dr_wav
+    GIT_REPOSITORY https://github.com/mackron/dr_libs.git
+    GIT_TAG master
+)
+set(DR_LIBS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(dr_wav)
+
 # Setting up DearImGui, which is not a cmake project
 FetchContent_Declare(
     imgui
@@ -98,6 +106,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${portmidi_SOURCE_DIR}/porttime
     ${imgui_INCLUDES}
+    ${dr_wav_SOURCE_DIR}
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC

@@ -1,6 +1,7 @@
 #include "looper.h"
 
 #include <format>
+#include <cmath>
 
 #include "audio/audio_engine.h"
 #include "looper_processor.h"
@@ -56,7 +57,7 @@ namespace looper {
             const auto headroomScalar = dsp::dBtoLinear(-kHeadRoomDb);
             for (auto ch{0u}; ch < oChannels; ++ch) {
                 for (auto i{0u}; i < nFrames; ++i) {
-                    out[ch][i] = std::tanhf(out[ch][i] * headroomScalar);
+                    out[ch][i] = std::tanh(out[ch][i] * headroomScalar);
                 }
             }
 
