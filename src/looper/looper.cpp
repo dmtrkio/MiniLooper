@@ -2,8 +2,10 @@
 
 #include <format>
 #include <cmath>
+#include <thread>
 
 #include "audio/audio_engine.h"
+#include "audio/wav_writer.h"
 #include "looper_processor.h"
 #include "looper_commands.h"
 #include "midi/foot_switch.h"
@@ -220,6 +222,25 @@ namespace looper {
     {
         auto &looperMailbox = getCommandMailbox();
         looperMailbox.tryPush(LooperCommand::clearAllTracks());
+    }
+
+    void Looper::saveToDisk()
+    {
+        auto &looperMailbox = getCommandMailbox();
+
+        auto pauseCommand = LooperCommand::pauseAll();
+        LooperCommand::CompletionFlag completionFlag;
+        pauseCommand.addCompletionFlag(&completionFlag);
+
+        looperMailbox.waitPush(pauseCommand);
+
+        while (!completionFlag.complete) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+
+        // save to disk
+
+        looperMailbox.waitPush(LooperCommand::resumeAll());
     }
 
     bool Looper::sendMidiMessage(const midi::MidiMessage& message)

@@ -24,6 +24,16 @@ public:
         return queue_.try_enqueue(std::move(value));
     }
 
+    void waitPush(const T& value) noexcept
+    {
+        queue_.wait_enqueue(value);
+    }
+
+    void waitPush(T&& value) noexcept
+    {
+        queue_.wait_enqueue(std::move(value));
+    }
+
     // Consumer side (wait-free)
     template <typename Fn>
     void consumeAll(Fn&& fn) noexcept

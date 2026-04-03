@@ -1,10 +1,10 @@
 #pragma once
 
-#define DR_WAV_IMPLEMENTATION
-#include "dr_wav.h"
-
 #include <array>
 #include <stdexcept>
+
+#define DR_WAV_IMPLEMENTATION
+#include "dr_wav.h"
 
 namespace audio {
     class WavWriter final

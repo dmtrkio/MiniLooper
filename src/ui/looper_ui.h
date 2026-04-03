@@ -39,8 +39,12 @@ namespace ui {
                 ImGui::PopID();
             }
 
-            if (ImGui::Button("Clear All")) {
+            if (ImGui::Button("Clear all")) {
                 looper_->clearAll();
+            }
+
+            if (ImGui::Button("Save to disk")) {
+                looper_->saveToDisk();
             }
 
             ImGui::End();

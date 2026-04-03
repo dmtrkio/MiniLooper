@@ -4,7 +4,6 @@
 #include <vector>
 #include <tuple>
 
-#include "looper_commands.h"
 #include "looper_mixer.h"
 
 namespace looper {
