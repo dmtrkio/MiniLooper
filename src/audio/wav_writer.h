@@ -7,7 +7,7 @@
 #include <stdexcept>
 
 namespace audio {
-    class WavWriter
+    class WavWriter final
     {
     public:
         WavWriter(const char* fileName, const unsigned int sampleRate, const unsigned int nChannels)

@@ -3,8 +3,8 @@
 #include <atomic>
 #include <type_traits>
 
-template<typename T>
-class RelaxedAtomic
+template<typename T, std::memory_order kReadMemoryOrder, std::memory_order kWriteMemoryOrder>
+class AtomicWrapper
 {
     static_assert(std::is_trivially_copyable_v<T>,
                   "T is required to be trivially copyable");
@@ -13,58 +13,51 @@ class RelaxedAtomic
                   "atomic<T> is required to be lock-free");
 
 public:
-    RelaxedAtomic() noexcept = default;
+    AtomicWrapper() noexcept = default;
 
-    explicit RelaxedAtomic(T initial) noexcept
+    explicit AtomicWrapper(T initial) noexcept
     {
-        value.store(initial, std::memory_order_relaxed);
+        value.store(initial, kWriteMemoryOrder);
     }
 
-    RelaxedAtomic(const RelaxedAtomic& other) noexcept
+    AtomicWrapper(const AtomicWrapper& other) noexcept
     {
-        value.store(other.value.load(std::memory_order_relaxed),
-                    std::memory_order_relaxed);
+        value.store(other.value.load(kReadMemoryOrder), kWriteMemoryOrder);
     }
 
-    RelaxedAtomic& operator=(const RelaxedAtomic& other) noexcept
+    AtomicWrapper& operator=(const AtomicWrapper& other) noexcept
     {
-        value.store(other.value.load(std::memory_order_relaxed),
-                    std::memory_order_relaxed);
+        value.store(other.value.load(kReadMemoryOrder), kWriteMemoryOrder);
         return *this;
     }
 
-    RelaxedAtomic& operator=(T v) noexcept
+    AtomicWrapper& operator=(T v) noexcept
     {
-        value.store(v, std::memory_order_relaxed);
+        value.store(v, kWriteMemoryOrder);
         return *this;
     }
 
     operator T() const noexcept
     {
-        return value.load(std::memory_order_relaxed);
+        return load();
     }
 
     T load() const noexcept
     {
-        return value.load(std::memory_order_relaxed);
+        return value.load(kReadMemoryOrder);
     }
 
     void store(T v) noexcept
     {
-        value.store(v, std::memory_order_relaxed);
+        value.store(v, kWriteMemoryOrder);
     }
 
-    T exchange(T v) noexcept
-    {
-        return value.exchange(v, std::memory_order_relaxed);
-    }
-
-    bool operator==(const RelaxedAtomic& other) const noexcept
+    bool operator==(const AtomicWrapper& other) const noexcept
     {
         return load() == other.load();
     }
 
-    bool operator!=(const RelaxedAtomic& other) const noexcept
+    bool operator!=(const AtomicWrapper& other) const noexcept
     {
         return load() != other.load();
     }
@@ -82,3 +75,9 @@ public:
 private:
     std::atomic<T> value{T{}};
 };
+
+template <typename T>
+using RelaxedAtomic = AtomicWrapper<T, std::memory_order_relaxed, std::memory_order_relaxed>;
+
+template <typename T>
+using AcquireReleaseAtomic = AtomicWrapper<T, std::memory_order_acquire, std::memory_order_release>;
