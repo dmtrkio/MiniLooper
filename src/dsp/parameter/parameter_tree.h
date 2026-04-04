@@ -51,15 +51,6 @@ namespace dsp::parameter {
             return tree->asParameter();
         }
 
-        [[nodiscard]] ParameterTree* operator[](const std::string& key)
-        {
-            if (!isSubTree()) return nullptr;
-            auto& nested = std::get<Map>(data_);
-            const auto it = nested.find(key);
-            if (it == nested.end()) return nullptr;
-            return &it->second;
-        }
-
         [[nodiscard]] const ParameterTree* operator[](const std::string& key) const
         {
             if (!isSubTree()) return nullptr;
@@ -67,6 +58,13 @@ namespace dsp::parameter {
             const auto it = nested.find(key);
             if (it == nested.end()) return nullptr;
             return &it->second;
+        }
+
+        [[nodiscard]] ParameterTree* operator[](const std::string& key)
+        {
+            return const_cast<ParameterTree*>(
+                std::as_const(*this)[key]
+            );
         }
 
         template <typename Fn>
