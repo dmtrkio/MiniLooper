@@ -226,29 +226,52 @@ namespace looper {
 
     void Looper::saveToDisk()
     {
-        auto &looperMailbox = getCommandMailbox();
+        const auto sampleRate = audio::AudioEngine::getInstance().getSampleRate();
+        const auto maxFrames = sampleRate * kMaxLoopSecs;
 
-        auto pauseCommand = LooperCommand::pauseAll();
-        LooperCommand::CompletionFlag completionFlag;
-        pauseCommand.addCompletionFlag(&completionFlag);
+        using SampleBuffer = std::vector<float>;
+        std::array<std::pair<SampleBuffer, SampleBuffer>, kLooperTrackCount> buffers;
+        float *leftBuffers[kLooperTrackCount];
+        float *rightBuffers[kLooperTrackCount];
+        unsigned int framesWritten[kLooperTrackCount];
 
-        looperMailbox.waitPush(pauseCommand);
-
-        while (!completionFlag.complete) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        for (auto i{0u}; i < kLooperTrackCount; ++i) {
+            buffers[i].first.resize(maxFrames);
+            buffers[i].second.resize(maxFrames);
+            leftBuffers[i] = buffers[i].first.data();
+            rightBuffers[i] = buffers[i].second.data();
+            framesWritten[i] = 0;
         }
 
-        // save to disk
+        LooperCommand::CopyData copyData = {
+            .maxFrames = maxFrames,
+            .buffersL = leftBuffers,
+            .buffersR = rightBuffers,
+            .framesWritten = framesWritten,
+        };
 
-        looperMailbox.waitPush(LooperCommand::resumeAll());
+        LooperCommand::CompletionFlag completionFlag;
+        getCommandMailbox().waitPush(LooperCommand::copyLoops(&copyData, &completionFlag));
+        while (!completionFlag.complete) {
+            //std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+
+        for (int i = 0; i < getNumLooperTracks(); ++i) {
+            float *data[2] = { leftBuffers[i], rightBuffers[i] };
+            if (const auto framesToWrite = copyData.framesWritten[i]; framesToWrite > 0) {
+                const auto fileName = std::format("looper_track_{}.wav", i);
+                audio::WavWriter wavWriter(fileName.c_str(), sampleRate, 2);
+                wavWriter.writeFrames(data, framesToWrite);
+            }
+        }
     }
 
-    bool Looper::sendMidiMessage(const midi::MidiMessage& message)
+    bool Looper::sendMidiMessage(const midi::MidiMessage& message) const
     {
         return cb_->midiQueue.tryPush(message);
     }
 
-    LooperMailbox& Looper::getCommandMailbox() noexcept
+    LooperMailbox& Looper::getCommandMailbox() const noexcept
     {
         return cb_->sharedData.commandMailbox;
     }

@@ -53,10 +53,10 @@ namespace looper {
         void clearAll();
         void saveToDisk();
 
-        bool sendMidiMessage(const midi::MidiMessage& message);
+        [[nodiscard]] bool sendMidiMessage(const midi::MidiMessage& message) const;
 
     private:
-        LooperMailbox& getCommandMailbox() noexcept;
+        [[nodiscard]] LooperMailbox& getCommandMailbox() const noexcept;
 
         class LooperCallback;
         std::shared_ptr<LooperCallback> cb_;

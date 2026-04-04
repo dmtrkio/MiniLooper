@@ -202,6 +202,16 @@ namespace looper {
             clear(i);
     }
 
+    unsigned int LooperProcessor::copyLoop(int trackIndex, float* const* data, const unsigned int capacity) const noexcept
+    {
+        if (!isTrackIndexValid(trackIndex)) return 0u;
+        auto &track = tracks_[trackIndex];
+        const auto toCopy = std::min(capacity, track.length);
+        std::ranges::copy_n(track.buffers[0].begin(), toCopy, data[0]);
+        std::ranges::copy_n(track.buffers[1].begin(), toCopy, data[1]);
+        return toCopy;
+    }
+
     unsigned int LooperProcessor::getNextGridDivision(int frameIndex) const noexcept
     {
         int target = static_cast<int>(transport_.largestPossibleLoopLength);

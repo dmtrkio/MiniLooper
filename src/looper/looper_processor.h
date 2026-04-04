@@ -47,6 +47,7 @@ namespace looper {
         void pause(int trackIndex) noexcept;
         void resume(int trackIndex) noexcept;
         void clearAll() noexcept;
+        [[nodiscard]] unsigned int copyLoop(int trackIndex, float *const *data, unsigned int capacity) const noexcept;
 
     private:
         [[nodiscard]] unsigned int getNextGridDivision(int frameIndex) const noexcept;

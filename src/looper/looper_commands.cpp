@@ -42,6 +42,15 @@ namespace looper {
         return LooperCommand{ ClearAllTracks{} };
     }
 
+    // unlike other commands this one should always be awaited for completion
+    LooperCommand LooperCommand::copyLoops(CopyData* copyData, CompletionFlag* completionFlag) noexcept
+    {
+        assert(copyData && completionFlag);
+        auto cmd = LooperCommand{ CopyLoops{ copyData } };
+        cmd.addCompletionFlag(completionFlag);
+        return cmd;
+    }
+
     void LooperCommand::addCompletionFlag(CompletionFlag* flag) noexcept
     {
         completionFlag_ = flag;
@@ -95,5 +104,14 @@ namespace looper {
     void LooperCommand::ClearAllTracks::apply(LooperProcessor& looper) const
     {
         looper.clearAll();
+    }
+
+    void LooperCommand::CopyLoops::apply(LooperProcessor& looper) const
+    {
+        if (!copyData) return;
+        for (int i = 0; i < static_cast<int>(kLooperTrackCount); ++i) {
+            float *data[2] = { copyData->buffersL[i], copyData->buffersR[i] };
+            copyData->framesWritten[i] = looper.copyLoop(i, data, copyData->maxFrames);
+        }
     }
 }

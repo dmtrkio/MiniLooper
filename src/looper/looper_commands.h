@@ -4,6 +4,7 @@
 
 #include "spsc_mailbox.h"
 #include "atomic_wrapper.h"
+#include "looper_processor.h"
 
 namespace looper {
 
@@ -19,6 +20,17 @@ namespace looper {
             AcquireReleaseAtomic<bool> complete{false};
         };
 
+        struct CopyData
+        {
+            // capacity of pre-allocated buffers
+            unsigned int maxFrames;
+            // pre-allocated buffers, buffer count should be same as kLooperTrackCount
+            float **buffersL;
+            float **buffersR;
+            // return value
+            unsigned int *framesWritten;
+        };
+
         static LooperCommand startRecording(int trackIndex) noexcept;
         static LooperCommand stopRecording(int trackIndex) noexcept;
         static LooperCommand clear(int trackIndex) noexcept;
@@ -27,6 +39,7 @@ namespace looper {
         static LooperCommand resume(int trackIndex) noexcept;
         static LooperCommand resumeAll() noexcept;
         static LooperCommand clearAllTracks() noexcept;
+        static LooperCommand copyLoops(CopyData* copyData, CompletionFlag* completionFlag) noexcept;
 
         void addCompletionFlag(CompletionFlag* flag) noexcept;
         void apply(LooperProcessor& looper) const;
@@ -74,6 +87,12 @@ namespace looper {
             void apply(LooperProcessor& looper) const;
         };
 
+        struct CopyLoops
+        {
+            CopyData* copyData;
+            void apply(LooperProcessor& looper) const;
+        };
+
         using Variant = std::variant<
             Dummy,
             StartRecording,
@@ -81,7 +100,8 @@ namespace looper {
             Clear,
             Pause,
             Resume,
-            ClearAllTracks
+            ClearAllTracks,
+            CopyLoops
         >;
 
         explicit LooperCommand(Variant cmd) noexcept : cmd_(cmd) {}
