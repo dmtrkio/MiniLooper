@@ -1,11 +1,11 @@
 #pragma once
 
-#include <map>
 #include <variant>
 #include <vector>
 #include <optional>
 #include <ranges>
 #include <concepts>
+#include <string_view>
 
 #include "audio_parameter.h"
 
@@ -13,17 +13,21 @@ namespace dsp::parameter {
     class ParameterTree
     {
     public:
-        explicit ParameterTree(std::string name) : name_(std::move(name)), data_(Map{}) {}
-        explicit ParameterTree(Parameter param) : name_(param.getName()), data_(param) {}
+        explicit ParameterTree(std::string name)
+            : name_(std::move(name)), data_(Vec{}) {}
 
-        ParameterTree(std::string name, std::vector<Parameter> parameters) : ParameterTree(std::move(name))
+        explicit ParameterTree(Parameter param)
+            : name_(param.getName()), data_(std::move(param)) {}
+
+        ParameterTree(std::string name, std::vector<Parameter> parameters)
+            : ParameterTree(std::move(name))
         {
             addParameters(std::move(parameters));
         }
 
         [[nodiscard]] const std::string& getName() const { return name_; }
 
-        [[nodiscard]] bool isSubTree() const { return std::holds_alternative<Map>(data_); }
+        [[nodiscard]] bool isSubTree() const { return std::holds_alternative<Vec>(data_); }
         [[nodiscard]] bool isParameter() const { return std::holds_alternative<Parameter>(data_); }
 
         [[nodiscard]] Parameter& asParameterUnsafe()
@@ -44,23 +48,27 @@ namespace dsp::parameter {
             return std::get<Parameter>(data_);
         }
 
-        [[nodiscard]] std::optional<std::reference_wrapper<Parameter>> getParameter(const std::string& name)
+        [[nodiscard]] std::optional<std::reference_wrapper<Parameter>>
+        getParameter(const std::string& name)
         {
-            auto *tree = this->operator[](name);
+            auto* tree = (*this)[name];
             if (!tree) return std::nullopt;
             return tree->asParameter();
         }
 
-        [[nodiscard]] const ParameterTree* operator[](const std::string& key) const
+        [[nodiscard]] const ParameterTree* operator[](const std::string_view key) const
         {
             if (!isSubTree()) return nullptr;
-            const auto& nested = std::get<Map>(data_);
-            const auto it = nested.find(key);
-            if (it == nested.end()) return nullptr;
-            return &it->second;
+
+            const auto& children = std::get<Vec>(data_);
+            const auto it = std::ranges::find_if(children, [&](const ParameterTree& node) {
+                return node.getName() == key;
+            });
+
+            return (it != children.end()) ? &(*it) : nullptr;
         }
 
-        [[nodiscard]] ParameterTree* operator[](const std::string& key)
+        [[nodiscard]] ParameterTree* operator[](const std::string_view key)
         {
             return const_cast<ParameterTree*>(
                 std::as_const(*this)[key]
@@ -73,8 +81,8 @@ namespace dsp::parameter {
         {
             if (!isSubTree()) return;
 
-            for (auto& value : std::get<Map>(data_) | std::views::values) {
-                fn(value);
+            for (auto& child : std::get<Vec>(data_)) {
+                fn(child);
             }
         }
 
@@ -87,36 +95,55 @@ namespace dsp::parameter {
                 return;
             }
 
-            for (auto& value : std::get<Map>(data_) | std::views::values) {
-                value.forEachParameter(std::forward<Fn>(fn));
+            for (auto& child : std::get<Vec>(data_)) {
+                child.forEachParameter(std::forward<Fn>(fn));
             }
         }
 
         ParameterTree* addSubTree(ParameterTree&& subtree)
         {
             if (!isSubTree()) return nullptr;
-            auto [it, inserted] = std::get<Map>(data_).try_emplace(subtree.getName(), std::move(subtree));
-            return inserted ? &it->second : nullptr;
+
+            auto& children = std::get<Vec>(data_);
+
+            const auto it = std::ranges::find_if(children, [&](const ParameterTree& node) {
+                return node.getName() == subtree.getName();
+            });
+
+            if (it != children.end()) return nullptr;
+
+            children.emplace_back(std::move(subtree));
+            return &children.back();
         }
 
         Parameter* addParameter(Parameter&& parameter)
         {
             if (!isSubTree()) return nullptr;
-            auto [it, inserted] = std::get<Map>(data_).try_emplace(parameter.getName(), std::move(parameter));
-            return inserted ? &it->second.asParameterUnsafe() : nullptr;
+
+            auto& children = std::get<Vec>(data_);
+
+            const auto it = std::ranges::find_if(children, [&](const ParameterTree& node) {
+                return node.getName() == parameter.getName();
+            });
+
+            if (it != children.end()) return nullptr;
+
+            children.emplace_back(std::move(parameter));
+            return &children.back().asParameterUnsafe();
         }
 
         void addParameters(std::vector<Parameter> parameters)
         {
             if (!isSubTree()) return;
+
             for (auto& parameter : parameters) {
                 addParameter(std::move(parameter));
             }
         }
 
     private:
-        using Map = std::map<std::string, ParameterTree>;
-        using Variant = std::variant<Map, Parameter>;
+        using Vec = std::vector<ParameterTree>;
+        using Variant = std::variant<Vec, Parameter>;
 
         std::string name_;
         Variant data_;

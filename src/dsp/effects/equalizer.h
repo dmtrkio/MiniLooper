@@ -47,18 +47,18 @@ namespace dsp::effects {
                 Parameter::makeFloat("Q", kDefaultQ, {0.5f, 8.0f}),
             });
 
+            params_.addSubTree(std::move(highPass));
             params_.addSubTree(std::move(lowShelf));
             params_.addSubTree(std::move(peaking1));
             params_.addSubTree(std::move(peaking2));
             params_.addSubTree(std::move(highShelf));
-            params_.addSubTree(std::move(highPass));
             params_.addSubTree(std::move(lowPass));
         }
 
         void prepare(const float sampleRate)
         {
             sampleRate_ = sampleRate;
-            for (int i = 0; i < bands_.size(); ++i) {
+            for (auto i{0u}; i < bands_.size(); ++i) {
                 bands_[i].setParameters(kFilterTypes[i], kDefaultFrequencies[i], sampleRate);
             }
         }
@@ -67,16 +67,16 @@ namespace dsp::effects {
         {
             applyParams();
 
-            bands_[0](data, nFrames);
+            /*bands_[0](data, nFrames);
             bands_[1](data, nFrames);
             bands_[2](data, nFrames);
             bands_[3](data, nFrames);
             bands_[4](data, nFrames);
-            bands_[5](data, nFrames);
+            bands_[5](data, nFrames);*/
 
-            /* for (auto &band : bands_) {
+            for (auto &band : bands_) {
                 band(data, nFrames);
-            } */
+            }
         }
 
         parameter::ParameterTree& getParameterTree() noexcept { return params_; }
