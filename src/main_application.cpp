@@ -6,7 +6,6 @@
 
 #include "imgui.h"
 #include <nlohmann/json.hpp>
-using json = nlohmann::json;
 
 #include "audio/audio_engine.h"
 #include "ui/volume_meter.h"
@@ -15,11 +14,13 @@ using json = nlohmann::json;
 #include "ui/midi_settings_ui.h"
 #include "ui/mixer_ui.h"
 
+using json = nlohmann::ordered_json;
+
 static std::unique_ptr<midi::MidiEngine> makeMidiEngine(looper::Looper &looper)
 {
     try {
         auto midiEngine = std::make_unique<midi::MidiEngine>([&looper](int, midi::MidiMessage msg) {
-            looper.sendMidiMessage(msg);
+            (void)looper.sendMidiMessage(msg);
         });
 
         std::cout << "Midi engine started" << std::endl;
