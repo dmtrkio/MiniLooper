@@ -6,7 +6,7 @@
 #include "config.h"
 
 namespace filepaths {
-    inline std::filesystem::path prefPath()
+    inline std::filesystem::path prefDirPath()
     {
         void* raw = SDL_GetPrefPath(build::kOrganization, build::kProjectName);
         if (!raw) {
@@ -18,16 +18,16 @@ namespace filepaths {
         return path;
     }
 
-    inline std::filesystem::path configPath()
+    inline std::filesystem::path configDirPath()
     {
-        const auto path = prefPath() / "config";
+        const auto path = prefDirPath() / "config";
         std::filesystem::create_directories(path);
         return path;
     }
 
-    inline std::filesystem::path savePath()
+    inline std::filesystem::path saveDirPath()
     {
-        const auto path = prefPath() / "save";
+        const auto path = prefDirPath() / "save";
         std::filesystem::create_directories(path);
         return path;
     }
@@ -35,12 +35,12 @@ namespace filepaths {
     inline std::string settingsPath()
     {
         static constexpr auto kSettingsFileName = "settings.json";
-        return (configPath() / kSettingsFileName).string();
+        return (configDirPath() / kSettingsFileName).string();
     }
 
     inline const char* imguiIniPath()
     {
-        static std::string path = (configPath() / "imgui.ini").string();
+        static std::string path = (configDirPath() / "imgui.ini").string();
         return path.c_str();
     }
 }
