@@ -22,7 +22,7 @@ public:
     void onFrame();
 
 private:
-    void drawTopBarMenu();
+    void drawTopBarMenu() const;
 
     looper::Looper looper_;
     std::unique_ptr<midi::MidiEngine> midiEngine_;

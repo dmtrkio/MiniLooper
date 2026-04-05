@@ -23,6 +23,12 @@ static std::string settingsPath()
     return (filepaths::configPath() / kSettingsFileName).string();
 }
 
+static const char* imguiIniPath()
+{
+    static std::string path = (filepaths::configPath() / "imgui.ini").string();
+    return path.c_str();
+}
+
 static std::unique_ptr<midi::MidiEngine> makeMidiEngine(looper::Looper &looper)
 {
     try {
@@ -176,6 +182,8 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
     (void)argc;
     (void)argv;
 
+    ImGui::GetIO().IniFilename = imguiIniPath();
+
     auto& audioEngine = audio::AudioEngine::getInstance();
     audioEngine.rescanDevices();
 
@@ -242,7 +250,7 @@ void MainApplication::onFrame()
     }
 }
 
-void MainApplication::drawTopBarMenu()
+void MainApplication::drawTopBarMenu() const
 {
     ImGui::BeginMainMenuBar();
 
