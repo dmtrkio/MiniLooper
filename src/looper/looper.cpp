@@ -183,48 +183,48 @@ namespace looper {
         return snapshot_;
     }
 
-    MixerParams& Looper::getMixerParams() noexcept
+    MixerParams& Looper::getMixerParams() const noexcept
     {
         return cb_->looper.getMixer().params;
     }
 
-    void Looper::startRecording(int trackIndex)
+    void Looper::startRecording(int trackIndex) const
     {
         auto &looperMailbox = getCommandMailbox();
         looperMailbox.tryPush(looper::LooperCommand::startRecording(trackIndex));
     }
 
-    void Looper::stopRecording(int trackIndex)
+    void Looper::stopRecording(int trackIndex) const
     {
         auto &looperMailbox = getCommandMailbox();
         looperMailbox.tryPush(looper::LooperCommand::stopRecording(trackIndex));
     }
 
-    void Looper::clear(int trackIndex)
+    void Looper::clear(int trackIndex) const
     {
         auto &looperMailbox = getCommandMailbox();
         looperMailbox.tryPush(looper::LooperCommand::clear(trackIndex));
     }
 
-    void Looper::pause(int trackIndex)
+    void Looper::pause(int trackIndex) const
     {
         auto &looperMailbox = getCommandMailbox();
         looperMailbox.tryPush(looper::LooperCommand::pause(trackIndex));
     }
 
-    void Looper::resume(int trackIndex)
+    void Looper::resume(int trackIndex) const
     {
         auto &looperMailbox = getCommandMailbox();
         looperMailbox.tryPush(looper::LooperCommand::resume(trackIndex));
     }
 
-    void Looper::clearAll()
+    void Looper::clearAll() const
     {
         auto &looperMailbox = getCommandMailbox();
         looperMailbox.tryPush(LooperCommand::clearAllTracks());
     }
 
-    void Looper::saveToDisk()
+    void Looper::saveToDisk() const
     {
         const auto sampleRate = audio::AudioEngine::getInstance().getSampleRate();
         const auto maxFrames = sampleRate * kMaxLoopSecs;

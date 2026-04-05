@@ -48,8 +48,7 @@ namespace dsp::parameter {
             return std::get<Parameter>(data_);
         }
 
-        [[nodiscard]] std::optional<std::reference_wrapper<Parameter>>
-        getParameter(const std::string& name)
+        [[nodiscard]] std::optional<std::reference_wrapper<Parameter>> getParameter(const std::string& name)
         {
             auto* tree = (*this)[name];
             if (!tree) return std::nullopt;

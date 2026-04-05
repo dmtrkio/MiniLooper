@@ -43,15 +43,15 @@ namespace looper {
         void updateSnapshot() noexcept;
         [[nodiscard]] const TrackStateSnapshot& getTrackState(int trackIndex) const noexcept;
         [[nodiscard]] const LooperStateSnapshot& getLooperState() const noexcept;
-        [[nodiscard]] MixerParams& getMixerParams() noexcept;
+        [[nodiscard]] MixerParams& getMixerParams() const noexcept;
 
-        void startRecording(int trackIndex);
-        void stopRecording(int trackIndex);
-        void clear(int trackIndex);
-        void pause(int trackIndex);
-        void resume(int trackIndex);
-        void clearAll();
-        void saveToDisk();
+        void startRecording(int trackIndex) const;
+        void stopRecording(int trackIndex) const;
+        void clear(int trackIndex) const;
+        void pause(int trackIndex) const;
+        void resume(int trackIndex) const;
+        void clearAll() const;
+        void saveToDisk() const;
 
         [[nodiscard]] bool sendMidiMessage(const midi::MidiMessage& message) const;
 
