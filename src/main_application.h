@@ -24,8 +24,6 @@ public:
 private:
     void drawTopBarMenu();
 
-    static constexpr auto kSettingsPath = "settings.json";
-
     looper::Looper looper_;
     std::unique_ptr<midi::MidiEngine> midiEngine_;
 

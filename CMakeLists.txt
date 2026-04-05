@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 
 # Project Settings
 project(MiniLooper VERSION 0.0.1)
+set(APP_ORGANIZATION "MiniLooper")
 
 # Dependencies
 include(FetchContent)
@@ -102,8 +103,14 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/generated/config.h
+)
+
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}/generated
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${portmidi_SOURCE_DIR}/porttime
     ${imgui_INCLUDES}

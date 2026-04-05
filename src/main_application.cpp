@@ -13,8 +13,15 @@
 #include "ui/looper_ui.h"
 #include "ui/midi_settings_ui.h"
 #include "ui/mixer_ui.h"
+#include "filepaths.h"
 
 using json = nlohmann::ordered_json;
+
+static std::string settingsPath()
+{
+    static constexpr auto kSettingsFileName = "settings.json";
+    return (filepaths::configPath() / kSettingsFileName).string();
+}
 
 static std::unique_ptr<midi::MidiEngine> makeMidiEngine(looper::Looper &looper)
 {
@@ -119,8 +126,11 @@ bool saveJsonToFile(const std::string& filename, const json& j)
 {
     try {
         std::ofstream file(filename);
-        if (!file.is_open())
+        if (!file.is_open()) {
+            std::cerr << "Cound not open " << filename << std::endl;
             return false;
+        }
+
         file << j.dump(4);
         return true;
     } catch (const std::exception& e) {
@@ -169,7 +179,7 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
     auto& audioEngine = audio::AudioEngine::getInstance();
     audioEngine.rescanDevices();
 
-    if (const auto j = loadJsonFromFile(kSettingsPath); j.has_value()) {
+    if (const auto j = loadJsonFromFile(settingsPath()); j.has_value()) {
         if (j.value().contains("midi") && midiEngine_) {
             loadMidiSettingsFromJson(j.value()["midi"], *midiEngine_);
         }
@@ -177,6 +187,8 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
         if (j.value().contains("audio")) {
             loadAudioSettingsFromJson(j.value()["audio"]);
         }
+
+        std::cout << "Settings loaded from " << settingsPath() << std::endl;
     } else {
         audioEngine.setSampleRate(48000);
         audioEngine.setBufferSize(64);
@@ -214,7 +226,9 @@ MainApplication::~MainApplication()
         j["midi"] = midiSettingsToJson(*midiEngine_);
     }
 
-    saveJsonToFile(kSettingsPath, j);
+    if (saveJsonToFile(settingsPath(), j)) {
+        std::cout << "Settings save to " << settingsPath() << std::endl;
+    }
 }
 
 void MainApplication::onFrame()

@@ -1,0 +1,14 @@
+#pragma once
+
+namespace build {
+    inline constexpr const char* kProjectName = "@PROJECT_NAME@";
+    inline constexpr const char* kProjectVersion = "@PROJECT_VERSION@";
+    inline constexpr const char* kOrganization = "@APP_ORGANIZATION@";
+
+    inline constexpr const char* kBuildType =
+    #ifdef NDEBUG
+        "Release";
+    #else
+        "Debug";
+    #endif
+}

@@ -6,6 +6,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
+#include "config.h"
 #include "main_application.h"
 
 auto clearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
@@ -26,7 +27,7 @@ SDL_AppResult initializeSDL()
 
     mainScale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
     constexpr SDL_WindowFlags windowFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
-    window = SDL_CreateWindow("MiniLooper", static_cast<int>(1280 * mainScale), static_cast<int>(800 * mainScale), windowFlags);
+    window = SDL_CreateWindow(build::kProjectName, static_cast<int>(1280 * mainScale), static_cast<int>(800 * mainScale), windowFlags);
     if (window == nullptr) {
         std::cerr << "Error in SDL_CreateWindow: " << SDL_GetError() << std::endl;
         return SDL_APP_FAILURE;
@@ -69,7 +70,7 @@ void initializeImgui()
     gImguiInitialized = true;
 }
 
-SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
+SDL_AppResult SDL_AppInit(void **, int argc, char **argv)
 {
     std::cout << "SDL_AppInit" << std::endl;
 
@@ -89,7 +90,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
     return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult SDL_AppIterate(void *appstate)
+SDL_AppResult SDL_AppIterate(void *)
 {
     if (SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) {
         SDL_Delay(10);
@@ -112,7 +113,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         ImGuiWindowFlags_NoSavedSettings |
         ImGuiWindowFlags_NoBringToFrontOnFocus;
 
-    ImGui::Begin("MiniLooper", nullptr, flags);
+    ImGui::Begin(build::kProjectName, nullptr, flags);
 
     {
         if (!app) {
@@ -140,7 +141,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
+SDL_AppResult SDL_AppEvent(void *, SDL_Event *event)
 {
     ImGui_ImplSDL3_ProcessEvent(event);
 
@@ -169,7 +170,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
     return SDL_APP_CONTINUE;
 }
 
-void SDL_AppQuit(void *appstate, SDL_AppResult result)
+void SDL_AppQuit(void *, SDL_AppResult result)
 {
     if (gImguiInitialized) {
         ImGui_ImplSDLRenderer3_Shutdown();
