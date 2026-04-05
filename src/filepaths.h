@@ -31,4 +31,16 @@ namespace filepaths {
         std::filesystem::create_directories(path);
         return path;
     }
+
+    inline std::string settingsPath()
+    {
+        static constexpr auto kSettingsFileName = "settings.json";
+        return (configPath() / kSettingsFileName).string();
+    }
+
+    inline const char* imguiIniPath()
+    {
+        static std::string path = (configPath() / "imgui.ini").string();
+        return path.c_str();
+    }
 }

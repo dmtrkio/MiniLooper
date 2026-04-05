@@ -17,18 +17,6 @@
 
 using json = nlohmann::ordered_json;
 
-static std::string settingsPath()
-{
-    static constexpr auto kSettingsFileName = "settings.json";
-    return (filepaths::configPath() / kSettingsFileName).string();
-}
-
-static const char* imguiIniPath()
-{
-    static std::string path = (filepaths::configPath() / "imgui.ini").string();
-    return path.c_str();
-}
-
 static std::unique_ptr<midi::MidiEngine> makeMidiEngine(looper::Looper &looper)
 {
     try {
@@ -182,12 +170,12 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
     (void)argc;
     (void)argv;
 
-    ImGui::GetIO().IniFilename = imguiIniPath();
+    ImGui::GetIO().IniFilename = filepaths::imguiIniPath();
 
     auto& audioEngine = audio::AudioEngine::getInstance();
     audioEngine.rescanDevices();
 
-    if (const auto j = loadJsonFromFile(settingsPath()); j.has_value()) {
+    if (const auto j = loadJsonFromFile(filepaths::settingsPath()); j.has_value()) {
         if (j.value().contains("midi") && midiEngine_) {
             loadMidiSettingsFromJson(j.value()["midi"], *midiEngine_);
         }
@@ -196,7 +184,7 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
             loadAudioSettingsFromJson(j.value()["audio"]);
         }
 
-        std::cout << "Settings loaded from " << settingsPath() << std::endl;
+        std::cout << "Settings loaded from " << filepaths::settingsPath() << std::endl;
     } else {
         audioEngine.setSampleRate(48000);
         audioEngine.setBufferSize(64);
@@ -234,8 +222,8 @@ MainApplication::~MainApplication()
         j["midi"] = midiSettingsToJson(*midiEngine_);
     }
 
-    if (saveJsonToFile(settingsPath(), j)) {
-        std::cout << "Settings save to " << settingsPath() << std::endl;
+    if (saveJsonToFile(filepaths::settingsPath(), j)) {
+        std::cout << "Settings save to " << filepaths::settingsPath() << std::endl;
     }
 }
 
