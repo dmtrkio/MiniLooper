@@ -146,24 +146,6 @@ std::optional<json> loadJsonFromFile(const std::string& filename)
     }
 }
 
-struct VolumeMeterWindow : public ui::WindowBase
-{
-    explicit VolumeMeterWindow(looper::Looper &looper) : looper_(&looper) {}
-    [[nodiscard]] const char* getTitle() const override { return "Volume Meter"; }
-    void draw() override
-    {
-        if (!opened) return;
-        ImGui::PushID(this);
-        ImGui::Begin(getTitle(), &opened);
-        const auto [leftDb, rightDb] = looper_->getLooperState().level;
-        ui::volumeMeter(leftDb, rightDb);
-        ImGui::End();
-        ImGui::PopID();
-    }
-private:
-    looper::Looper *looper_;
-};
-
 MainApplication::MainApplication(const int argc, const char* const* argv)
     : midiEngine_(makeMidiEngine(looper_))
 {
@@ -207,7 +189,7 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
     windowRegistry_.emplace_back(std::make_unique<ui::MidiSettingsUi>(midiEngine_.get()));
     windowRegistry_.emplace_back(std::make_unique<ui::LooperUi>(looper_));
     windowRegistry_.emplace_back(std::make_unique<ui::MixerUi>(looper_));
-    windowRegistry_.emplace_back(std::make_unique<VolumeMeterWindow>(looper_))->opened = true;
+    windowRegistry_.emplace_back(std::make_unique<ui::VolumeMeterWindow>(looper_))->opened = true;
 }
 
 MainApplication::~MainApplication()
@@ -223,7 +205,7 @@ MainApplication::~MainApplication()
     }
 
     if (saveJsonToFile(filepaths::settingsPath(), j)) {
-        std::cout << "Settings save to " << filepaths::settingsPath() << std::endl;
+        std::cout << "Settings saved to " << filepaths::settingsPath() << std::endl;
     }
 }
 

@@ -3,6 +3,8 @@
 #include <algorithm>
 
 #include "imgui.h"
+#include "ui_window_base.h"
+#include "looper/looper.h"
 
 namespace ui {
     inline void volumeMeter(const float leftDb, const float rightDb)
@@ -87,4 +89,25 @@ namespace ui {
             );
         }
     }
+
+    struct VolumeMeterWindow : public WindowBase
+    {
+        explicit VolumeMeterWindow(looper::Looper &looper) : looper_(&looper) {}
+
+        [[nodiscard]] const char* getTitle() const override { return "Volume Meter"; }
+
+        void draw() override
+        {
+            if (!opened) return;
+            ImGui::PushID(this);
+            ImGui::Begin(getTitle(), &opened);
+            const auto [leftDb, rightDb] = looper_->getLooperState().level;
+            volumeMeter(leftDb, rightDb);
+            ImGui::End();
+            ImGui::PopID();
+        }
+
+    private:
+        looper::Looper *looper_;
+    };
 }

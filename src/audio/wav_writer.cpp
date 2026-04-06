@@ -1,6 +1,8 @@
 #include "wav_writer.h"
 
 #define DR_WAV_IMPLEMENTATION
+#include <iostream>
+
 #include "dr_wav.h"
 
 #include <stdexcept>
@@ -18,13 +20,15 @@ namespace audio {
         };
 
         if (!drwav_init_file_write(&wav_, fileName, &format, nullptr)) {
-            throw std::runtime_error("Failed to open wav file for writing");
+            throw std::runtime_error("drwav_init_file_write failed");
         }
     }
 
     WavWriter::~WavWriter()
     {
-        drwav_uninit(&wav_);
+        if (drwav_uninit(&wav_) != DRWAV_SUCCESS) {
+            std::cerr << "drwav_uninit failed" << std::endl;
+        }
         tempBuffer_.fill(0);
     }
 
@@ -42,10 +46,9 @@ namespace audio {
                 }
             }
 
-            drwav_write_pcm_frames(&wav_, toWriteNow, tempBuffer_.data());
-
-            toWrite -= toWriteNow;
-            offset += toWriteNow;
+            const auto framesWritten = drwav_write_pcm_frames(&wav_, toWriteNow, tempBuffer_.data());
+            toWrite -= framesWritten;
+            offset += framesWritten;
         }
     }
 }
