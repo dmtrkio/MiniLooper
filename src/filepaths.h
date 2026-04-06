@@ -19,13 +19,13 @@ namespace filepaths {
 
     inline std::filesystem::path prefDirPath()
     {
-        const char* raw = SDL_GetPrefPath(build::kOrganization, build::kProjectName);
+        char* raw = SDL_GetPrefPath(build::kOrganization, build::kProjectName);
         if (!raw) {
             throw std::runtime_error("SDL_GetPrefPath failed");
         }
 
         std::filesystem::path path(raw);
-        SDL_free(const_cast<char*>(raw));
+        SDL_free(raw);
         return path;
     }
 
@@ -36,10 +36,10 @@ namespace filepaths {
         return path;
     }
 
-    inline std::string settingsPath()
+    inline std::filesystem::path settingsPath()
     {
         static constexpr auto kSettingsFileName = "settings.json";
-        return (configDirPath() / kSettingsFileName).string();
+        return configDirPath() / kSettingsFileName;
     }
 
     inline const char* imguiIniPath()

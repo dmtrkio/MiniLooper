@@ -25,6 +25,17 @@ namespace looper {
         return std::format("nFrames: {}, position: {}, state: {}", nFrames, position, stateToStr(state));
     }
 
+    LooperSessionData::LooperSessionData(const unsigned int maxFrames)
+    {
+        for (auto i{0u}; i < kLooperTrackCount; ++i) {
+            buffers_[i].first.resize(maxFrames);
+            buffers_[i].second.resize(maxFrames);
+            leftBuffers[i] = buffers_[i].first.data();
+            rightBuffers[i] = buffers_[i].second.data();
+            frameCounts[i] = 0;
+        }
+    }
+
     class Looper::LooperCallback : public audio::AudioCallback
     {
     public:
@@ -224,30 +235,18 @@ namespace looper {
         looperMailbox.tryPush(LooperCommand::clearAllTracks());
     }
 
-    void Looper::saveToDisk() const
+    std::unique_ptr<LooperSessionData> Looper::getSessionData() const
     {
         const auto sampleRate = audio::AudioEngine::getInstance().getSampleRate();
         const auto maxFrames = sampleRate * kMaxLoopSecs;
 
-        using SampleBuffer = std::vector<float>;
-        std::array<std::pair<SampleBuffer, SampleBuffer>, kLooperTrackCount> buffers;
-        float *leftBuffers[kLooperTrackCount];
-        float *rightBuffers[kLooperTrackCount];
-        unsigned int framesWritten[kLooperTrackCount];
-
-        for (auto i{0u}; i < kLooperTrackCount; ++i) {
-            buffers[i].first.resize(maxFrames);
-            buffers[i].second.resize(maxFrames);
-            leftBuffers[i] = buffers[i].first.data();
-            rightBuffers[i] = buffers[i].second.data();
-            framesWritten[i] = 0;
-        }
+        auto session = std::make_unique<LooperSessionData>(maxFrames);
 
         LooperCommand::CopyData copyData = {
             .maxFrames = maxFrames,
-            .buffersL = leftBuffers,
-            .buffersR = rightBuffers,
-            .framesWritten = framesWritten,
+            .buffersL = session->leftBuffers,
+            .buffersR = session->rightBuffers,
+            .framesWritten = session->frameCounts,
         };
 
         LooperCommand::CompletionFlag completionFlag;
@@ -256,14 +255,7 @@ namespace looper {
             //std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
-        for (int i = 0; i < getNumLooperTracks(); ++i) {
-            float *data[2] = { leftBuffers[i], rightBuffers[i] };
-            if (const auto framesToWrite = copyData.framesWritten[i]; framesToWrite > 0) {
-                const auto fileName = std::format("looper_track_{}.wav", i);
-                audio::WavWriter wavWriter(fileName.c_str(), sampleRate, 2);
-                wavWriter.writeFrames(data, framesToWrite);
-            }
-        }
+        return session;
     }
 
     bool Looper::sendMidiMessage(const midi::MidiMessage& message) const

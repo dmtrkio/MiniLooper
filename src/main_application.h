@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 
+#include "session_manager.h"
 #include "looper/looper.h"
 #include "midi/midi.h"
 #include "ui/ui_window_base.h"
@@ -24,6 +25,7 @@ public:
 private:
     void drawTopBarMenu() const;
 
+    SessionManager sessionManager_;
     looper::Looper looper_;
     std::unique_ptr<midi::MidiEngine> midiEngine_;
 

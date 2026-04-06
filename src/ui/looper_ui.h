@@ -4,11 +4,12 @@
 
 #include "ui_window_base.h"
 #include "looper/looper.h"
+#include "session_manager.h"
 
 namespace ui {
     struct LooperUi : public WindowBase
     {
-        explicit LooperUi(looper::Looper &looper) : looper_(&looper) {}
+        explicit LooperUi(looper::Looper &looper, SessionManager& sessionManager) : looper_(&looper), sessionManager_(&sessionManager) {}
 
         [[nodiscard]] const char* getTitle() const override { return "Looper"; }
 
@@ -44,7 +45,7 @@ namespace ui {
             }
 
             if (ImGui::Button("Save to disk")) {
-                looper_->saveToDisk();
+                sessionManager_->saveSessionToDisk(*looper_);
             }
 
             ImGui::End();
@@ -117,5 +118,6 @@ namespace ui {
         }
 
         looper::Looper *looper_;
+        SessionManager *sessionManager_;
     };
 }

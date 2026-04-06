@@ -152,18 +152,26 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
     (void)argc;
     (void)argv;
 
-    ImGui::GetIO().IniFilename = filepaths::imguiIniPath();
-
     auto& audioEngine = audio::AudioEngine::getInstance();
     audioEngine.rescanDevices();
 
-    if (const auto j = loadJsonFromFile(filepaths::settingsPath()); j.has_value()) {
-        if (j.value().contains("midi") && midiEngine_) {
-            loadMidiSettingsFromJson(j.value()["midi"], *midiEngine_);
+    if (const auto j = loadJsonFromFile(filepaths::settingsPath().string()); j.has_value()) {
+        const auto& settings = j.value();
+
+        if (settings.contains("midi") && midiEngine_) {
+            loadMidiSettingsFromJson(settings["midi"], *midiEngine_);
         }
 
-        if (j.value().contains("audio")) {
-            loadAudioSettingsFromJson(j.value()["audio"]);
+        if (settings.contains("audio")) {
+            loadAudioSettingsFromJson(settings["audio"]);
+        }
+
+        if (settings.contains("sessions path") && settings["sessionsPath"].is_string()) {
+            const std::filesystem::path sessionsPath = settings["sessionsPath"];
+            if (std::filesystem::exists(sessionsPath)) {
+                sessionManager_.setSessionsPath(sessionsPath);
+                std::cout << "sessions path = " << sessionsPath << std::endl;
+            }
         }
 
         std::cout << "Settings loaded from " << filepaths::settingsPath() << std::endl;
@@ -185,9 +193,11 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
     style.ChildRounding = rounding;
     style.PopupRounding = rounding;
 
+    ImGui::GetIO().IniFilename = filepaths::imguiIniPath();
+
     windowRegistry_.emplace_back(std::make_unique<ui::AudioSettingsUi>());
     windowRegistry_.emplace_back(std::make_unique<ui::MidiSettingsUi>(midiEngine_.get()));
-    windowRegistry_.emplace_back(std::make_unique<ui::LooperUi>(looper_));
+    windowRegistry_.emplace_back(std::make_unique<ui::LooperUi>(looper_, sessionManager_));
     windowRegistry_.emplace_back(std::make_unique<ui::MixerUi>(looper_));
     windowRegistry_.emplace_back(std::make_unique<ui::VolumeMeterWindow>(looper_))->opened = true;
 }
@@ -204,7 +214,7 @@ MainApplication::~MainApplication()
         j["midi"] = midiSettingsToJson(*midiEngine_);
     }
 
-    if (saveJsonToFile(filepaths::settingsPath(), j)) {
+    if (saveJsonToFile(filepaths::settingsPath().string(), j)) {
         std::cout << "Settings saved to " << filepaths::settingsPath() << std::endl;
     }
 }

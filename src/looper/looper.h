@@ -26,6 +26,20 @@ namespace looper {
         std::pair<float, float> level;
     };
 
+    struct LooperSessionData
+    {
+        static constexpr auto kCount = kLooperTrackCount;
+        float *leftBuffers[kLooperTrackCount]{};
+        float *rightBuffers[kLooperTrackCount]{};
+        unsigned int frameCounts[kLooperTrackCount]{};
+
+        explicit LooperSessionData(unsigned int maxFrames);
+
+    private:
+        using SampleBuffer = std::vector<float>;
+        std::array<std::pair<SampleBuffer, SampleBuffer>, kLooperTrackCount> buffers_;
+    };
+
     class Looper
     {
     public:
@@ -51,7 +65,8 @@ namespace looper {
         void pause(int trackIndex) const;
         void resume(int trackIndex) const;
         void clearAll() const;
-        void saveToDisk() const;
+
+        [[nodiscard]] std::unique_ptr<LooperSessionData> getSessionData() const;
 
         [[nodiscard]] bool sendMidiMessage(const midi::MidiMessage& message) const;
 

@@ -8,7 +8,7 @@
 #include <stdexcept>
 
 namespace audio {
-    WavWriter::WavWriter(const char* fileName, const unsigned int sampleRate, const unsigned int nChannels)
+    WavWriter::WavWriter(const std::filesystem::path& filePath, const unsigned int sampleRate, const unsigned int nChannels)
             : nChannels_(nChannels)
     {
         const drwav_data_format format = {
@@ -19,7 +19,9 @@ namespace audio {
             .bitsPerSample = 32,
         };
 
-        if (!drwav_init_file_write(&wav_, fileName, &format, nullptr)) {
+        std::cout << filePath.string().c_str() << std::endl;
+
+        if (!drwav_init_file_write(&wav_, filePath.string().c_str(), &format, nullptr)) {
             throw std::runtime_error("drwav_init_file_write failed");
         }
     }

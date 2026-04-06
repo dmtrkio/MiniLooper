@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <filesystem>
 
 #include "dr_wav.h"
 
@@ -8,7 +9,7 @@ namespace audio {
     class WavWriter
     {
     public:
-        WavWriter(const char* fileName, unsigned int sampleRate, unsigned int nChannels);
+        WavWriter(const std::filesystem::path& filePath, unsigned int sampleRate, unsigned int nChannels);
         ~WavWriter();
 
         WavWriter(const WavWriter&) = delete;

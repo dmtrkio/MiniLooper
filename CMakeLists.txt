@@ -89,6 +89,7 @@ set(SOURCE_FILES
     src/audio/wav_writer.cpp
     src/main_application.cpp
     src/main_callbacks.cpp
+    src/session_manager.cpp
     src/looper/looper_processor.cpp
     src/looper/looper_commands.cpp
     src/looper/looper.cpp
