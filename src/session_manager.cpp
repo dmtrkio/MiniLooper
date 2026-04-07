@@ -1,21 +1,32 @@
 #include "session_manager.h"
 
 #include <algorithm>
-#include <chrono>
 
 #include "SDL3/SDL.h"
 
 #include "audio/wav_writer.h"
 #include "filepaths.h"
 
-static std::string makeTimestamp()
+static std::filesystem::path generateUniqueFileName(const std::filesystem::path& baseDir, const std::string& baseName = "Untitled")
 {
-    using namespace std::chrono;
+    namespace fs = std::filesystem;
+    fs::path candidate = baseDir / baseName;
 
-    const auto now = system_clock::now();
-    auto z = current_zone();
-    std::cout << z->name() << std::endl;
-    return std::format("{:%Y-%m-%d_%H-%M-%S}", current_zone()->to_local(now));
+    if (!fs::exists(candidate)) {
+        return candidate.filename().string();
+    }
+
+    int counter = 1;
+    while (true) {
+        std::string newName = baseName + " " + std::to_string(counter);
+        candidate = baseDir / newName;
+
+        if (!fs::exists(candidate)) {
+            return candidate.filename().string();
+        }
+
+        ++counter;
+    }
 }
 
 SessionManager::SessionManager()
@@ -30,7 +41,7 @@ void SessionManager::saveSessionToDisk(const looper::Looper& looper) const
 {
     const auto session = looper.getSessionData();
 
-    const auto currentSessionPath = sessionsPath_ / ("session_" + makeTimestamp());
+    const auto currentSessionPath = sessionsPath_ / generateUniqueFileName(sessionsPath_);
 
     if (std::ranges::all_of(session->frameCounts,
                         session->frameCounts + looper.getNumLooperTracks(),
