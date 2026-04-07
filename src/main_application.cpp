@@ -166,12 +166,14 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
             loadAudioSettingsFromJson(settings["audio"]);
         }
 
-        if (settings.contains("sessions path") && settings["sessionsPath"].is_string()) {
-            const std::filesystem::path sessionsPath = settings["sessionsPath"];
-            if (std::filesystem::exists(sessionsPath)) {
-                sessionManager_.setSessionsPath(sessionsPath);
-                std::cout << "sessions path = " << sessionsPath << std::endl;
+        if (const auto it = settings.find("sessionsPath"); it != settings.end() && it->is_string()) {
+            if (const std::filesystem::path p = *it; std::filesystem::exists(p)) {
+                sessionManager_.setSessionsPath(p);
+            } else {
+                sessionManager_.openSessionPathDialog();
             }
+        } else {
+            sessionManager_.openSessionPathDialog();
         }
 
         std::cout << "Settings loaded from " << filepaths::settingsPath() << std::endl;
@@ -213,6 +215,8 @@ MainApplication::~MainApplication()
     if (midiEngine_) {
         j["midi"] = midiSettingsToJson(*midiEngine_);
     }
+
+    j["sessionsPath"] = sessionManager_.getSessionsPath();
 
     if (saveJsonToFile(filepaths::settingsPath().string(), j)) {
         std::cout << "Settings saved to " << filepaths::settingsPath() << std::endl;

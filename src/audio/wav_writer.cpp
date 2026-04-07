@@ -1,11 +1,10 @@
 #include "wav_writer.h"
 
-#define DR_WAV_IMPLEMENTATION
 #include <iostream>
-
-#include "dr_wav.h"
-
 #include <stdexcept>
+
+#define DR_WAV_IMPLEMENTATION
+#include "dr_wav.h"
 
 namespace audio {
     WavWriter::WavWriter(const std::filesystem::path& filePath, const unsigned int sampleRate, const unsigned int nChannels)
@@ -18,8 +17,6 @@ namespace audio {
             .sampleRate = sampleRate,
             .bitsPerSample = 32,
         };
-
-        std::cout << filePath.string().c_str() << std::endl;
 
         if (!drwav_init_file_write(&wav_, filePath.string().c_str(), &format, nullptr)) {
             throw std::runtime_error("drwav_init_file_write failed");

@@ -45,7 +45,7 @@ namespace ui {
             }
 
             if (ImGui::Button("Save to disk")) {
-                sessionManager_->saveSessionToDisk(*looper_);
+                sessionManager_->saveCurrentSessionToDisk(*looper_);
             }
 
             ImGui::End();
