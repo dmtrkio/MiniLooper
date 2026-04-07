@@ -83,7 +83,7 @@ void SessionManager::saveCurrentSessionToDisk(const looper::Looper& looper) cons
     for (int i = 0; i < looper.getNumLooperTracks(); ++i) {
         const float *data[2] = { session->leftBuffers[i], session->rightBuffers[i] };
         if (const auto framesToWrite = session->frameCounts[i]; framesToWrite > 0) {
-            const auto filePath = currentSessionPath / std::format("looper_track_{}.wav", i);
+            const auto filePath = currentSessionPath / std::format("loop_{}.wav", i);
             audio::WavWriter wavWriter(filePath, audio::AudioEngine::getInstance().getSampleRate(), 2);
             wavWriter.writeFrames(data, framesToWrite);
         }
