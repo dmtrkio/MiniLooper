@@ -1,5 +1,6 @@
 #include "session_manager.h"
 
+#include <algorithm>
 #include <chrono>
 
 #include "SDL3/SDL.h"
@@ -30,6 +31,11 @@ void SessionManager::saveSessionToDisk(const looper::Looper& looper) const
     const auto session = looper.getSessionData();
 
     const auto currentSessionPath = sessionsPath_ / ("session_" + makeTimestamp());
+
+    if (std::ranges::all_of(session->frameCounts,
+                        session->frameCounts + looper.getNumLooperTracks(),
+                        [](const unsigned frameCount) { return frameCount == 0; })) return;
+
     std::filesystem::create_directories(currentSessionPath);
 
     for (int i = 0; i < looper.getNumLooperTracks(); ++i) {
