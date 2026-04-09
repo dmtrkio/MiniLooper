@@ -250,9 +250,15 @@ namespace looper {
         };
 
         LooperCommand::CompletionFlag completionFlag;
-        getCommandMailbox().waitPush(LooperCommand::copyLoops(&copyData, &completionFlag));
-        while (!completionFlag.complete) {
-            //std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        const auto cmd = LooperCommand::copyLoops(&copyData, &completionFlag);
+
+        if (audio::AudioEngine::getInstance().isRunning()) {
+            getCommandMailbox().waitPush(cmd);
+            while (!completionFlag.complete) {
+                //std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+        } else {
+            cmd.apply(cb_->looper);
         }
 
         return session;

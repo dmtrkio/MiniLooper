@@ -216,6 +216,7 @@ MainApplication::~MainApplication()
         j["midi"] = midiSettingsToJson(*midiEngine_);
     }
 
+    sessionManager_.saveCurrentSessionToDisk(looper_);
     j["sessionsPath"] = sessionManager_.getSessionsPath();
 
     if (saveJsonToFile(filepaths::settingsPath().string(), j)) {

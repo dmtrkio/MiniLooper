@@ -102,7 +102,11 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_executable(${PROJECT_NAME} ${SOURCE_FILES})
+if (WIN32)
+    add_executable(${PROJECT_NAME} WIN32 ${SOURCE_FILES})
+else()
+    add_executable(${PROJECT_NAME} ${SOURCE_FILES})
+endif()
 
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.h.in

@@ -51,7 +51,7 @@ namespace looper {
 
     void LooperProcessor::onStop()
     {
-        clearAll();
+        //clearAll();
     }
 
     Mixer& LooperProcessor::getMixer() noexcept
