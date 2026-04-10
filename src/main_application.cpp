@@ -13,6 +13,7 @@
 #include "ui/looper_ui.h"
 #include "ui/midi_settings_ui.h"
 #include "ui/mixer_ui.h"
+#include "ui/session_manager_ui.h"
 #include "filepaths.h"
 
 using json = nlohmann::ordered_json;
@@ -170,10 +171,10 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
             if (const std::filesystem::path p = *it; std::filesystem::exists(p)) {
                 sessionManager_.setSessionsPath(p);
             } else {
-                sessionManager_.openSessionPathDialog();
+                sessionManager_.openSessionsPathDialog();
             }
         } else {
-            sessionManager_.openSessionPathDialog();
+            sessionManager_.openSessionsPathDialog();
         }
 
         std::cout << "Settings loaded from " << filepaths::settingsPath() << std::endl;
@@ -197,6 +198,7 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
 
     ImGui::GetIO().IniFilename = filepaths::imguiIniPath();
 
+    windowRegistry_.emplace_back(std::make_unique<ui::SessionManagerUi>(sessionManager_, looper_));
     windowRegistry_.emplace_back(std::make_unique<ui::AudioSettingsUi>());
     windowRegistry_.emplace_back(std::make_unique<ui::MidiSettingsUi>(midiEngine_.get()));
     windowRegistry_.emplace_back(std::make_unique<ui::LooperUi>(looper_, sessionManager_));

@@ -12,7 +12,7 @@ public:
 
     std::filesystem::path getSessionsPath() const;
     void setSessionsPath(const std::filesystem::path& sessionPath);
-    void openSessionPathDialog();
+    void openSessionsPathDialog();
     void saveCurrentSessionToDisk(const looper::Looper& looper) const;
 
 private:

@@ -45,7 +45,7 @@ void SessionManager::setSessionsPath(const std::filesystem::path& sessionPath)
     sessionsPath_ = sessionPath;
 }
 
-void SessionManager::openSessionPathDialog()
+void SessionManager::openSessionsPathDialog()
 {
     const SDL_DialogFileCallback cb = [](void *userdata, const char * const *filelist, int) {
         if (!filelist || !userdata) {
