@@ -6,6 +6,7 @@ FetchContent_Declare(
     readerwriterqueue
     GIT_REPOSITORY https://github.com/cameron314/readerwriterqueue.git
     GIT_TAG master
+    EXCLUDE_FROM_ALL
 )
 FetchContent_MakeAvailable(readerwriterqueue)
 
@@ -14,6 +15,7 @@ FetchContent_Declare(
     portaudio
     GIT_REPOSITORY https://github.com/PortAudio/portaudio.git
     GIT_TAG master
+    EXCLUDE_FROM_ALL
 )
 set(PA_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(portaudio)
@@ -22,6 +24,7 @@ FetchContent_Declare(
     portmidi
     GIT_REPOSITORY https://github.com/PortMidi/portmidi.git
     GIT_TAG master
+    EXCLUDE_FROM_ALL
 )
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(portmidi)
@@ -33,7 +36,9 @@ if (NOT SDL3_FOUND)
         SDL3
         GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
         GIT_TAG release-3.4.2
+        EXCLUDE_FROM_ALL
     )
+    set(SDL_TEST_LIBRARY OFF CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(SDL3)
 endif()
 
@@ -41,6 +46,7 @@ FetchContent_Declare(
     json
     GIT_REPOSITORY https://github.com/nlohmann/json.git
     GIT_TAG v3.12.0
+    EXCLUDE_FROM_ALL
 )
 FetchContent_MakeAvailable(json)
 
@@ -48,6 +54,7 @@ FetchContent_Declare(
     dr_wav
     GIT_REPOSITORY https://github.com/mackron/dr_libs.git
     GIT_TAG master
+    EXCLUDE_FROM_ALL
 )
 set(DR_LIBS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(dr_wav)
@@ -57,6 +64,7 @@ FetchContent_Declare(
     imgui
     GIT_REPOSITORY https://github.com/ocornut/imgui.git
     GIT_TAG docking
+    EXCLUDE_FROM_ALL
 )
 FetchContent_MakeAvailable(imgui)
 
