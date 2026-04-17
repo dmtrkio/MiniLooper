@@ -5,9 +5,10 @@
 
 #include "../filter/biquad_filter.h"
 #include "../parameter/parameter_tree.h"
+#include "effect_base.h"
 
 namespace dsp::effects {
-    class Equalizer
+    class Equalizer : public EffectBase
     {
     public:
         static constexpr std::size_t kBands = 6;
@@ -55,7 +56,7 @@ namespace dsp::effects {
             params_.addSubTree(std::move(lowPass));
         }
 
-        void prepare(const float sampleRate)
+        void prepare(const float sampleRate) override
         {
             sampleRate_ = sampleRate;
             for (auto i{0u}; i < bands_.size(); ++i) {
@@ -63,7 +64,7 @@ namespace dsp::effects {
             }
         }
 
-        void operator()(float *const *data, const unsigned int nFrames) noexcept
+        void process(float *const *data, const unsigned int nFrames) noexcept override
         {
             applyParams();
 
@@ -79,7 +80,7 @@ namespace dsp::effects {
             }
         }
 
-        parameter::ParameterTree& getParameterTree() noexcept { return params_; }
+        parameter::ParameterTree& getParameterTree() noexcept override { return params_; }
 
     private:
         void applyParams()
