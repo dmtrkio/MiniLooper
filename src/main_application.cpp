@@ -15,6 +15,7 @@
 #include "ui/mixer_ui.h"
 #include "ui/session_manager_ui.h"
 #include "filepaths.h"
+#include "fonts/Inter-Regular.h"
 
 using json = nlohmann::ordered_json;
 
@@ -197,6 +198,14 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
     style.PopupRounding = rounding;
 
     ImGui::GetIO().IniFilename = filepaths::imguiIniPath();
+
+    ImFontConfig fontConfig;
+    fontConfig.FontDataOwnedByAtlas = false;
+    ImGui::GetIO().Fonts->AddFontFromMemoryTTF(
+        res_Inter_18pt_Regular_ttf,
+        static_cast<int>(res_Inter_18pt_Regular_ttf_len),
+        15.0f,
+        &fontConfig);
 
     windowRegistry_.emplace_back(std::make_unique<ui::SessionManagerUi>(sessionManager_, looper_));
     windowRegistry_.emplace_back(std::make_unique<ui::AudioSettingsUi>());

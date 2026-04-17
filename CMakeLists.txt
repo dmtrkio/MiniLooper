@@ -43,6 +43,7 @@ configure_file(
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/generated
     ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/res
     ${portmidi_SOURCE_DIR}/porttime
     ${imgui_INCLUDES}
     ${dr_wav_SOURCE_DIR}
