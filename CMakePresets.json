@@ -14,8 +14,7 @@
       "name": "debug",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "SDL_X11": "ON"
+        "CMAKE_BUILD_TYPE": "Debug"
       }
     },
 
@@ -32,6 +31,17 @@
       "inherits": "base",
       "cacheVariables": {
         "SDL_X11": "OFF"
+      }
+    },
+
+    {
+      "name": "msvc-release",
+      "displayName": "MSVC Release (Visual Studio)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_BUILD_TYPE": "Release"
       }
     }
   ]
