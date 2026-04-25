@@ -2,10 +2,8 @@
 
 #include <format>
 #include <cmath>
-#include <thread>
 
 #include "audio/audio_engine.h"
-#include "audio/wav_writer.h"
 #include "looper_processor.h"
 #include "looper_commands.h"
 #include "midi/foot_switch.h"
