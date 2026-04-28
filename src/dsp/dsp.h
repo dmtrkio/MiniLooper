@@ -21,7 +21,7 @@ namespace dsp {
         return std::pow<float>(10.0f, value * scale);
     }
 
-    inline std::tuple<float, float> equalPowerPanGains(float pan)
+    inline std::pair<float, float> equalPowerPanGains(float pan)
     {
         pan = std::clamp(pan, -1.0f, 1.0f);
         const auto angle = (pan + 1.0f) * 0.25f * std::numbers::pi_v<float>;

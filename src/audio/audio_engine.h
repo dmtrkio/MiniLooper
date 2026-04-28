@@ -4,7 +4,6 @@
 #include <vector>
 #include <mutex>
 #include <memory>
-#include <optional>
 
 #include "audio_device.h"
 

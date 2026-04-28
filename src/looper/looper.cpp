@@ -33,7 +33,7 @@ namespace looper {
         }
     }
 
-    class Looper::LooperCallback : public audio::AudioCallback
+    class Looper::LooperCallback final : public audio::AudioCallback
     {
     public:
         void onProcess(const float *const *in, float *const *out, const unsigned int nFrames) override
@@ -60,7 +60,7 @@ namespace looper {
             drainMidiQueue();
             consumeCommands();
 
-            looper.process(out, nFrames);
+            looperProcessor.process(out, nFrames);
 
             levelMeter_(out[0], out[1], nFrames);
 
@@ -89,28 +89,28 @@ namespace looper {
 
         void onStart() override
         {
-            looper.onStart();
+            looperProcessor.onStart();
             // ensure mailbox is clear from stale messages
             consumeCommands();
-            looper.clearAll();
+            looperProcessor.clearAll();
             updateSnapshot();
 
             constexpr int trackIndex = 0;
 
             footSwitch.setOnSinglePressed([&] {
-                if (looper.getState(trackIndex) != looper::State::Recording) {
-                    looper.startRecording(trackIndex);
+                if (looperProcessor.getState(trackIndex) != looper::State::Recording) {
+                    looperProcessor.startRecording(trackIndex);
                 } else {
-                    looper.stopRecording(trackIndex);
+                    looperProcessor.stopRecording(trackIndex);
                 }
             });
 
             footSwitch.setOnDoublePressed([&] {
-                looper.clear(trackIndex);
+                looperProcessor.clear(trackIndex);
             });
 
             footSwitch.setOnHold([&] {
-                looper.clearAll();
+                looperProcessor.clearAll();
             });
 
             const auto sampleRate = static_cast<float>(audio::AudioEngine::getInstance().getSampleRate());
@@ -119,7 +119,7 @@ namespace looper {
 
         void onStop() override
         {
-            looper.onStop();
+            looperProcessor.onStop();
         }
 
         void drainMidiQueue()
@@ -132,7 +132,7 @@ namespace looper {
         void consumeCommands() noexcept
         {
             sharedData.commandMailbox.consumeAll([&](const LooperCommand& cmd) {
-                cmd.apply(looper);
+                cmd.apply(looperProcessor);
             });
         }
 
@@ -143,16 +143,16 @@ namespace looper {
 
             for (auto i{0}; i < LooperProcessor::getNumLooperTracks(); ++i) {
                 auto& [nFrames, position, state, level] = snapshot.tracks[i];
-                nFrames = looper.getCurrentNumFrames(i);
-                position = looper.getCurrentPosition(i);
-                state = looper.getState(i);
-                level = looper.getMixer().channels[i].meter.getLevel();
+                nFrames = looperProcessor.getCurrentNumFrames(i);
+                position = looperProcessor.getCurrentPosition(i);
+                state = looperProcessor.getState(i);
+                level = looperProcessor.getMixer().channels[i].meter.getLevel();
             }
 
             snapshot.level = levelMeter_.getLevel();
         }
 
-        LooperProcessor looper;
+        LooperProcessor looperProcessor;
         LooperSharedData sharedData;
 
         midi::MidiQueue midiQueue{64};
@@ -193,7 +193,7 @@ namespace looper {
 
     MixerParams& Looper::getMixerParams() const noexcept
     {
-        return cb_->looper.getMixer().params;
+        return cb_->looperProcessor.getMixer().params;
     }
 
     void Looper::startRecording(int trackIndex) const
@@ -255,7 +255,7 @@ namespace looper {
                 //std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
         } else {
-            cmd.apply(cb_->looper);
+            cmd.apply(cb_->looperProcessor);
         }
 
         return session;
