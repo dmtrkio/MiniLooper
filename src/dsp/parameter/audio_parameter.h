@@ -1,13 +1,12 @@
 #pragma once
 
-#include <algorithm>
-#include <atomic_wrapper.h>
 #include <string>
 #include <variant>
 #include <optional>
 #include <stdexcept>
 #include <cstdint>
 
+#include "threading/atomic_wrapper.h"
 #include "dsp/dsp.h"
 
 namespace dsp::parameter {

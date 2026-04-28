@@ -1,10 +1,8 @@
 #pragma once
 
-#include <algorithm>
 #include <cassert>
 #include <vector>
 
-#include "audio/audio_backend.h"
 #include "audio/audio_engine.h"
 #include "dsp/dsp.h"
 #include "dsp/level_meter.h"

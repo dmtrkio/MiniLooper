@@ -2,8 +2,8 @@
 
 #include <variant>
 
-#include "spsc_mailbox.h"
-#include "atomic_wrapper.h"
+#include "threading/spsc_mailbox.h"
+#include "threading/atomic_wrapper.h"
 #include "looper_processor.h"
 
 namespace looper {

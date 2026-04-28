@@ -6,7 +6,7 @@
 
 #include "portmidi.h"
 
-#include "spsc_mailbox.h"
+#include "threading/spsc_mailbox.h"
 
 namespace midi {
     class MidiMessage

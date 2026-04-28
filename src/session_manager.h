@@ -1,7 +1,7 @@
 #pragma once
 
 #include <filesystem>
-#include <thread>
+#include <mutex>
 
 #include "looper/looper.h"
 
