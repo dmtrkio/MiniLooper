@@ -8,7 +8,7 @@
 #include "effect_base.h"
 
 namespace dsp::effects {
-    class Equalizer : public EffectBase
+    class Equalizer final : public EffectBase
     {
     public:
         static constexpr std::size_t kBands = 6;
@@ -80,7 +80,7 @@ namespace dsp::effects {
             }
         }
 
-        parameter::ParameterTree& getParameterTree() noexcept override { return params_; }
+        parameter::ParameterTree getParameterTree() noexcept override { return params_; }
 
     private:
         void applyParams()

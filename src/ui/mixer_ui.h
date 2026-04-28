@@ -56,7 +56,7 @@ namespace ui {
                     ImGui::SameLine();
                 }
 
-                parameterTreeUi(*params.eqParamTree, &(eqOpened_[i].value), std::format("Track {}: ", i));
+                parameterTreeUi(params.eqParamTree, &(eqOpened_[i].value), std::format("Track {}: ", i));
 
                 ImGui::PopID();
             }

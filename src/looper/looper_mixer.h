@@ -18,7 +18,7 @@ namespace looper {
         {
             Param gainDb;
             Param pan;
-            dsp::parameter::ParameterTree *eqParamTree;
+            dsp::parameter::ParameterTree eqParamTree;
         };
 
         std::vector<ChannelParams> channels;
@@ -30,7 +30,7 @@ namespace looper {
                 channels.emplace_back(ChannelParams{
                     .gainDb = Param::makeFloat("GainDb", 0.0f, dsp::Range{-60.0f, 12.0f}),
                     .pan = Param::makeFloat("Pan", 0.0f, dsp::Range{-1.0f, 1.0f}),
-                    .eqParamTree = nullptr,
+                    .eqParamTree = dsp::parameter::ParameterTree{"placeholder"},
                 });
             }
         }
@@ -48,7 +48,8 @@ namespace looper {
             static constexpr float kSmoothingMs = 1.0f;
             const auto smoothFrames = kSmoothingMs * sampleRate * 0.001f;
 
-            channels.assign(nChannels, {});
+            channels.clear();
+            channels.resize(nChannels);
             for (auto i{0u}; i < nChannels; ++i) {
                 auto &channel = channels[i];
                 const auto &chParams = params.channels[i];
@@ -62,7 +63,7 @@ namespace looper {
                 channel.bufferR.assign(audio::kMaxFramesInBuffer, 0.0f);
 
                 channel.eq.prepare(sampleRate);
-                params.channels[i].eqParamTree = &channel.eq.getParameterTree();
+                params.channels[i].eqParamTree = channel.eq.getParameterTree();
             }
         }
 

@@ -49,7 +49,7 @@ namespace ui {
         ImGui::PopID();
     }
 
-    static void traverseParameterTree(dsp::parameter::ParameterTree &paramTree)
+    static void traverseParameterTree(dsp::parameter::ParameterTree paramTree)
     {
         if (paramTree.isParameter()) {
             parameterUi(paramTree.asParameterUnsafe());
@@ -66,7 +66,7 @@ namespace ui {
         }
     }
 
-    void parameterTreeUi(dsp::parameter::ParameterTree &paramTree, bool *opened, const std::string& prefix)
+    void parameterTreeUi(dsp::parameter::ParameterTree paramTree, bool *opened, const std::string& prefix)
     {
         if ((opened != nullptr) && (!(*opened))) return;
 
