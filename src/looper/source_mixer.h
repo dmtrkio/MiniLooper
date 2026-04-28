@@ -6,6 +6,8 @@
 #include <cassert>
 #include <ranges>
 
+#include "dsp/parameter/parameter_tree.h"
+
 namespace looper {
     static constexpr int kNoInput = -1;
 
@@ -20,6 +22,8 @@ namespace looper {
                 buf.assign(maxFramesInBuffer, 0.0f);
             }
 
+            applyParams();
+
             for (auto& input : inputs_) {
                 if (input < 0 || input >= nInputBuffers_) {
                     input = kNoInput;
@@ -29,6 +33,8 @@ namespace looper {
 
         void process(float *const *in, float *const *out, unsigned int nFrames) noexcept
         {
+            applyParams();
+
             assert(nFrames <= buffers_[0].size());
 
             if (stereo_) {
@@ -75,7 +81,49 @@ namespace looper {
             }
         }
 
+        using Param = dsp::parameter::Parameter;
+        using ParamTree = dsp::parameter::ParameterTree;
+
+        ParamTree paramTree{"SourceChannel", {
+            ParamTree{"Input 1", {
+                Param::makeInteger("Source", kNoInput, {kNoInput, 64}),
+                Param::makeFloat("Gain", 0.0f, {-60.0f, 12.0f}),
+            }},
+            ParamTree{"Input 2", {
+                Param::makeInteger("Source", kNoInput, {kNoInput, 64}),
+                Param::makeFloat("Gain", 0.0f, {-60.0f, 12.0f}),
+            }},
+            ParamTree{Param::makeBoolean("Stereo", false)},
+        }};
+
     private:
+        void applyParams()
+        {
+            const auto inputSubTree = paramTree["Input"];
+
+            assert(inputs_.size() == 2);
+
+            const auto getInputParams = [&](std::size_t key) -> std::pair<int, float> {
+                const std::string_view inputName = (key == 0) ? "Input 1" : "Input 2";
+                const auto subtree = inputSubTree[inputName];
+                const auto inputParam = subtree["Source"];
+                const auto gainParam = subtree["Gain"];
+
+                const auto input = inputParam.asParameterUnsafe().get<int>();
+                const auto gainDb = gainParam.asParameterUnsafe().get<float>();
+
+                return {input, dsp::dBtoLinear(gainDb)};
+            };
+
+            for (std::size_t i = 0; i < inputs_.size(); ++i) {
+                const auto [input, gain] = getInputParams(i);
+                inputs_[i] = input;
+                inputGains_[i] = gain;
+            }
+
+            stereo_ = paramTree["Stereo"].asParameterUnsafe().get<bool>();
+        }
+
         void processInternal()
         {
 
@@ -105,7 +153,14 @@ namespace looper {
             }
         }
 
+        dsp::parameter::ParameterTree& getParameterTree() noexcept { return paramTree_; }
+
     private:
+        dsp::parameter::ParameterTree paramTree_{"SourceMixer", {
+            channels_[0].paramTree,
+            channels_[1].paramTree,
+        }};
+
         std::array<SourceChannel, 2> channels_{};
     };
 }

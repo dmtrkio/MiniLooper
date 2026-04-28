@@ -40,13 +40,13 @@ namespace looper {
     {
         explicit Mixer(const unsigned int nChannels) : params(nChannels) {}
 
-        void prepare()
+        void prepare(unsigned int sampleRate)
         {
             const auto nChannels = params.channels.size();
-            const auto sampleRate = static_cast<float>(audio::AudioEngine::getInstance().getSampleRate());
+            const auto sr = static_cast<float>(sampleRate);
 
             static constexpr float kSmoothingMs = 1.0f;
-            const auto smoothFrames = kSmoothingMs * sampleRate * 0.001f;
+            const auto smoothFrames = kSmoothingMs * sr * 0.001f;
 
             channels.clear();
             channels.resize(nChannels);
@@ -58,11 +58,11 @@ namespace looper {
                 channel.gain.setSmoothingFrames(smoothFrames);
                 channel.pan.setSmoothingFrames(smoothFrames);
 
-                channel.meter.prepare(sampleRate);
+                channel.meter.prepare(sr);
                 channel.bufferL.assign(audio::kMaxFramesInBuffer, 0.0f);
                 channel.bufferR.assign(audio::kMaxFramesInBuffer, 0.0f);
 
-                channel.eq.prepare(sampleRate);
+                channel.eq.prepare(sr);
                 params.channels[i].eqParamTree = channel.eq.getParameterTree();
             }
         }

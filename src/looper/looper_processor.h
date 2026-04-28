@@ -2,7 +2,7 @@
 
 #include <array>
 #include <vector>
-#include <tuple>
+#include <utility>
 
 #include "looper_mixer.h"
 
@@ -83,7 +83,7 @@ namespace looper {
             void scheduleTransition(State next, unsigned int when);
             void transitionState(State newState, unsigned int transportFrame) noexcept;
             [[nodiscard]] unsigned int phase(unsigned int transportFrame) const noexcept;
-            [[nodiscard]] std::tuple<float, float> getFadeScalars(unsigned int pos) const noexcept;
+            [[nodiscard]] std::pair<float, float> getFadeScalars(unsigned int pos) const noexcept;
 
             int trackIndex{-1};
             State state{State::Cleared};

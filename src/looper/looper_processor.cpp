@@ -28,9 +28,10 @@ namespace looper {
     void LooperProcessor::onStart()
     {
         const auto& engine = audio::AudioEngine::getInstance();
+        const auto sampleRate = engine.getSampleRate();
         const auto nChannels = engine.getNumOutputChannels();
         assert(nChannels == 2);
-        const auto mFrames = engine.getSampleRate() * kMaxLoopSecs;
+        const auto mFrames = sampleRate * kMaxLoopSecs;
 
         numChannels_ = nChannels;
         maxFrames_ = mFrames;
@@ -39,7 +40,7 @@ namespace looper {
             tracks_[i].init(i, nChannels, mFrames);
         }
 
-        mixer_.prepare();
+        mixer_.prepare(sampleRate);
 
         sumBuffers_.resize(nChannels);
         for (auto& buffer : sumBuffers_) {
@@ -411,7 +412,7 @@ namespace looper {
         return (transportFrame - start) % length;
     }
 
-    std::tuple<float, float> LooperProcessor::Track::getFadeScalars(const unsigned int pos) const noexcept
+    std::pair<float, float> LooperProcessor::Track::getFadeScalars(const unsigned int pos) const noexcept
     {
         float fadeIn = 1.0f;
         float fadeOut = 1.0f;
@@ -424,6 +425,6 @@ namespace looper {
             fadeOut = static_cast<float>(length - pos) / static_cast<float>(fadeLength + 1);
         }
 
-        return std::make_tuple(fadeIn, fadeOut);
+        return std::make_pair(fadeIn, fadeOut);
     }
 }
