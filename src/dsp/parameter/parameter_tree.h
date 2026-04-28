@@ -13,10 +13,10 @@ namespace dsp::parameter {
     {
     public:
         explicit ParameterTree(std::string name)
-            : name_(std::move(name)), data_(Vec{}) {}
+            : name_(std::move(name)) {}
 
         explicit ParameterTree(Parameter param)
-            : name_(param.getName()), data_(std::move(param)) {}
+            : data_(std::move(param)) {}
 
         ParameterTree(std::string name, std::vector<Parameter> parameters)
             : ParameterTree(std::move(name))
@@ -24,7 +24,12 @@ namespace dsp::parameter {
             addParameters(std::move(parameters));
         }
 
-        [[nodiscard]] const std::string& getName() const { return name_; }
+        [[nodiscard]] const std::string& getName() const
+        {
+            if (isParameter())
+                return std::get<Parameter>(data_).getName();
+            return name_;
+        }
 
         [[nodiscard]] bool isSubTree() const { return std::holds_alternative<Vec>(data_); }
         [[nodiscard]] bool isParameter() const { return std::holds_alternative<Parameter>(data_); }
@@ -143,7 +148,7 @@ namespace dsp::parameter {
         using Vec = std::vector<ParameterTree>;
         using Variant = std::variant<Vec, Parameter>;
 
-        std::string name_;
-        Variant data_;
+        std::string name_{};
+        Variant data_{Vec{}};
     };
 }
