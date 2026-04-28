@@ -85,13 +85,13 @@ namespace looper {
         using ParamTree = dsp::parameter::ParameterTree;
 
         ParamTree paramTree{"SourceChannel", {
-            ParamTree{"Input 1", {
+            ParamTree{"Input1", {
                 Param::makeInteger("Source", kNoInput, {kNoInput, 64}),
-                Param::makeFloat("Gain", 0.0f, {-60.0f, 12.0f}),
+                Param::makeFloat("GainDb", 0.0f, {-60.0f, 12.0f}),
             }},
-            ParamTree{"Input 2", {
+            ParamTree{"Input2", {
                 Param::makeInteger("Source", kNoInput, {kNoInput, 64}),
-                Param::makeFloat("Gain", 0.0f, {-60.0f, 12.0f}),
+                Param::makeFloat("GainDb", 0.0f, {-60.0f, 12.0f}),
             }},
             ParamTree{Param::makeBoolean("Stereo", false)},
         }};
@@ -103,11 +103,11 @@ namespace looper {
 
             assert(inputs_.size() == 2);
 
-            const auto getInputParams = [&](std::size_t key) -> std::pair<int, float> {
-                const std::string_view inputName = (key == 0) ? "Input 1" : "Input 2";
+            const auto getInputParams = [&](std::size_t inputIndex) -> std::pair<int, float> {
+                const std::string_view inputName = (inputIndex == 0) ? "Input1" : "Input2";
                 const auto subtree = inputSubTree[inputName];
                 const auto inputParam = subtree["Source"];
-                const auto gainParam = subtree["Gain"];
+                const auto gainParam = subtree["GainDb"];
 
                 const auto input = inputParam.asParameterUnsafe().get<int>();
                 const auto gainDb = gainParam.asParameterUnsafe().get<float>();
@@ -116,9 +116,7 @@ namespace looper {
             };
 
             for (std::size_t i = 0; i < inputs_.size(); ++i) {
-                const auto [input, gain] = getInputParams(i);
-                inputs_[i] = input;
-                inputGains_[i] = gain;
+                std::tie(inputs_[i], inputGains_[i]) = getInputParams(i);
             }
 
             stereo_ = paramTree["Stereo"].asParameterUnsafe().get<bool>();
