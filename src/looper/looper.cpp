@@ -7,7 +7,6 @@
 #include "looper_processor.h"
 #include "looper_commands.h"
 #include "midi/foot_switch.h"
-#include "threading/spsc_mailbox.h"
 #include "threading/triple_buffer.h"
 #include "dsp/level_meter.h"
 

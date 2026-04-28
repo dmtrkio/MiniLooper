@@ -6,8 +6,9 @@
 #include "volume_meter.h"
 
 namespace ui {
-    struct MixerUi : public WindowBase
+    class MixerUi : public WindowBase
     {
+    public:
         explicit MixerUi(looper::Looper &looper) : looper_(&looper)
         {
             eqOpened_.assign(looper_->getNumLooperTracks(), {});
@@ -15,13 +16,9 @@ namespace ui {
 
         [[nodiscard]] const char* getTitle() const override { return "Mixer"; }
 
-        void draw() override
+    protected:
+        void drawContent() override
         {
-            if (!opened || !looper_) return;
-
-            ImGui::PushID(this);
-            ImGui::Begin(getTitle(), &opened);
-
             auto &mixer = looper_->getMixerParams();
 
             for (auto i{0}; i < looper_->getNumLooperTracks(); ++i) {
@@ -63,9 +60,6 @@ namespace ui {
 
                 ImGui::PopID();
             }
-
-            ImGui::End();
-            ImGui::PopID();
         }
 
     private:

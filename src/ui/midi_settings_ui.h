@@ -6,18 +6,17 @@
 #include "midi/midi.h"
 
 namespace ui {
-    struct MidiSettingsUi : public WindowBase
+    class MidiSettingsUi : public WindowBase
     {
+    public:
         explicit MidiSettingsUi(midi::MidiEngine *midiEngine) : midiEngine_(midiEngine) {}
 
         [[nodiscard]] const char* getTitle() const override { return "Midi Settings"; }
 
-        void draw() override
+    protected:
+        void drawContent() override
         {
-            if (!opened || !midiEngine_) return;
-
-            ImGui::PushID(this);
-            ImGui::Begin(getTitle(), &opened);
+            if (!midiEngine_) return;
 
             using namespace midi;
             static constexpr auto kNoDeviceString = "No device";
@@ -26,8 +25,9 @@ namespace ui {
             const auto devices = engine.getMidiInputDevices();
             const auto index = engine.getCurrentMidiInputDevice();
 
-            const auto pred = [index](const MidiDevice& device) { return device.deviceIndex == index; };
-            const auto it = std::ranges::find_if(devices, pred);
+            const auto it = std::ranges::find_if(devices, [index](const MidiDevice& device) {
+                return device.deviceIndex == index;
+            });
 
             std::string previewLabel = kNoDeviceString;
             if (it != devices.end() && it->deviceIndex != kNoDevice) {
@@ -74,9 +74,6 @@ namespace ui {
             if (ImGui::Button("Rescan midi input devices")) {
                 engine.rescanDevices();
             }
-
-            ImGui::End();
-            ImGui::PopID();
         }
 
     private:

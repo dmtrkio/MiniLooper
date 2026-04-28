@@ -90,21 +90,18 @@ namespace ui {
         }
     }
 
-    struct VolumeMeterWindow : public WindowBase
+    class VolumeMeterWindow : public WindowBase
     {
+    public:
         explicit VolumeMeterWindow(looper::Looper &looper) : looper_(&looper) {}
 
         [[nodiscard]] const char* getTitle() const override { return "Volume Meter"; }
 
-        void draw() override
+    protected:
+        void drawContent() override
         {
-            if (!opened) return;
-            ImGui::PushID(this);
-            ImGui::Begin(getTitle(), &opened);
             const auto [leftDb, rightDb] = looper_->getLooperState().level;
             volumeMeter(leftDb, rightDb);
-            ImGui::End();
-            ImGui::PopID();
         }
 
     private:

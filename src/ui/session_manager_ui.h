@@ -15,13 +15,9 @@ namespace ui {
 
         [[nodiscard]] const char* getTitle() const override { return "Session Manager"; }
 
-        void draw() override
+    protected:
+        void drawContent() override
         {
-            if (!opened) return;
-
-            ImGui::PushID(this);
-            ImGui::Begin(getTitle(), &opened);
-
             {
                 const auto pathStr = sessionManager_.getSessionsPath().string();
 
@@ -40,9 +36,6 @@ namespace ui {
                     sessionManager_.saveCurrentSessionToDisk(looper_);
                 }
             }
-
-            ImGui::End();
-            ImGui::PopID();
         }
 
     private:

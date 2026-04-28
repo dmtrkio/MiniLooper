@@ -9,17 +9,15 @@
 #include "audio/audio_engine.h"
 
 namespace ui {
-    struct AudioSettingsUi : public WindowBase
+    class AudioSettingsUi : public WindowBase
     {
+    public:
         [[nodiscard]] const char* getTitle() const override { return "Audio Settings"; }
 
-        void draw() override
+    protected:
+        void drawContent() override
         {
-            if (!opened) return;
-
-            ImGui::PushID(this);
-            ImGui::Begin(getTitle(), &opened);
-            ImGui::BeginGroup();
+            //ImGui::BeginGroup();
 
             using namespace audio;
             static constexpr auto kNoDeviceString = "No device";
@@ -127,10 +125,7 @@ namespace ui {
                 audioEngine.rescanDevices();
             }
 
-            ImGui::EndGroup();
-            ImGui::End();
-            ImGui::PopID();
+            //ImGui::EndGroup();
         }
     };
-
 }

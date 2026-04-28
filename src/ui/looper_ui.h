@@ -7,21 +7,22 @@
 #include "session_manager.h"
 
 namespace ui {
-    struct LooperUi : public WindowBase
+    class LooperUi : public WindowBase
     {
+    public:
         explicit LooperUi(looper::Looper &looper, SessionManager& sessionManager) : looper_(&looper), sessionManager_(&sessionManager) {}
 
         [[nodiscard]] const char* getTitle() const override { return "Looper"; }
 
-        void draw() override
+    protected:
+        void onFrame() override
         {
+            // to make input processing work even when the window is closed
             processInput();
+        }
 
-            if (!opened) return;
-
-            ImGui::PushID(this);
-            ImGui::Begin(getTitle(), &opened);
-
+        void drawContent() override
+        {
             const auto nTracks = looper_->getNumLooperTracks();
 
             for (auto i{0}; i < nTracks; ++i) {
@@ -47,9 +48,6 @@ namespace ui {
             if (ImGui::Button("Save to disk")) {
                 sessionManager_->saveCurrentSessionToDisk(*looper_);
             }
-
-            ImGui::End();
-            ImGui::PopID();
         }
 
     private:
