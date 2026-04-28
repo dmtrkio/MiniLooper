@@ -98,9 +98,9 @@ namespace ui {
         ParameterTree group1{"Group 1"};
         group1.addParameter(Parameter::makeFloat("Gain", 50.0f, dsp::Range{0.0f, 100.0f}));
         group1.addParameter(Parameter::makeFloat("Mix", 50.0f, dsp::Range{0.0f, 100.0f}));
-        auto *g1 = paramTree.addSubTree(std::move(group1));
+        auto g1 = paramTree.addSubTree(std::move(group1));
 
-        g1->addSubTree(ParameterTree{"Nested", {
+        g1.addSubTree(ParameterTree{"Nested", {
             Parameter::makeInteger("Count", 0, dsp::Range{0, 10}),
             Parameter::makeFloat("Pan", 0.0f, dsp::Range{-1.0f, 1.0f}),
         }});

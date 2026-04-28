@@ -85,15 +85,15 @@ namespace dsp::effects {
     private:
         void applyParams()
         {
-            static constexpr std::array<const char*, kBands> kBandNames = {
+            static constexpr std::array<std::string_view, kBands> kBandNames = {
                 "HighPass", "LowShelf", "Peak1", "Peak2", "HighShelf", "LowPass"
             };
 
             for (std::size_t i = 0; i < kBands; ++i) {
-                auto* subTree = params_[kBandNames[i]];
-                assert(subTree);
+                auto subTree = params_[kBandNames[i]];
+                assert(subTree.isValid());
 
-                const auto freqHz = subTree->getParameter("Frequency")->get().get<float>();
+                const auto freqHz = subTree.getParameter("Frequency")->get().get<float>();
 
                 const auto type = kFilterTypes[i];
 
@@ -101,10 +101,10 @@ namespace dsp::effects {
                 std::optional<float> gainOpt = std::nullopt;
 
                 if (type == filter::FilterType::LowPass || type == filter::FilterType::HighPass) {
-                    auto qParam = subTree->getParameter("Q");
+                    auto qParam = subTree.getParameter("Q");
                     if (qParam) qOpt = qParam->get().get<float>();
                 } else {
-                    auto gainParam = subTree->getParameter("GainDb");
+                    auto gainParam = subTree.getParameter("GainDb");
                     if (gainParam) {
                         const auto gainDb = gainParam->get().get<float>();
                         gainOpt = dBtoLinear(gainDb);
