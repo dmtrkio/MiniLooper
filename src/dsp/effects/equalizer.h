@@ -80,7 +80,7 @@ namespace dsp::effects {
             }
         }
 
-        parameter::ParameterTree getParameterTree() noexcept override { return params_; }
+        parameter::ParameterTree getParameterTree() const noexcept override { return params_; }
 
     private:
         void applyParams()

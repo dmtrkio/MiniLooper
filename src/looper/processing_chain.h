@@ -1,34 +1,38 @@
 #pragma once
 
 #include "dsp/dsp.h"
+#include "dsp/parameter/parameter_tree.h"
 #include "dsp/level_meter.h"
 #include "dsp/effects/equalizer.h"
+#include "dsp/effects/effect_base.h"
 
 namespace looper {
-    struct ProcessingChain
+    class ProcessingChain final : public dsp::effects::EffectBase
     {
-        dsp::FloatSmoother linearGain;
-        dsp::FloatSmoother pan;
-        dsp::LevelMeter meter;
-        dsp::effects::Equalizer eq;
+    public:
+        ProcessingChain() : paramTree_(buildParameterTree())
+        {
 
-        void prepare(unsigned int sampleRate)
+        }
+
+        void prepare(float sampleRate) override
         {
             static constexpr float kSmoothingMs = 1.0f;
             const auto smoothFrames = kSmoothingMs * sampleRate * 0.001f;
 
-            linearGain.init(1.0f);
-            pan.init(0.0f);
+            linearGain.init(paramTree_["GainDb"].asParameterUnsafe().get<float>());
+            pan.init(paramTree_["Pan"].asParameterUnsafe().get<float>());
             linearGain.setSmoothingFrames(smoothFrames);
             pan.setSmoothingFrames(smoothFrames);
 
             meter.prepare(sampleRate);
-
             eq.prepare(sampleRate);
         }
 
-        void process(float *const *data, const unsigned int nFrames)
+        void process(float *const *data, const unsigned int nFrames) override
         {
+            applyParams();
+
             eq.process(data, nFrames);
 
             auto [leftGain, rightGain] = dsp::equalPowerPanGains(pan());
@@ -44,5 +48,33 @@ namespace looper {
                 data[1][i] = rightSample;
             }
         }
+
+        dsp::parameter::ParameterTree getParameterTree() const noexcept override { return paramTree_; }
+
+    private:
+        using Param = dsp::parameter::Parameter;
+        using ParamTree = dsp::parameter::ParameterTree;
+
+        void applyParams()
+        {
+            linearGain.setTarget(dsp::dBtoLinear(paramTree_["GainDb"].asParameterUnsafe().get<float>()));
+            pan.setTarget(paramTree_["Pan"].asParameterUnsafe().get<float>());
+        }
+
+        ParamTree buildParameterTree() const
+        {
+            return {"ProcessingChain", {
+                ParamTree{Param::makeFloat("GainDb", 0.0f, dsp::Range{-60.0f, 12.0f})},
+                ParamTree{Param::makeFloat("Pan", 0.0f, dsp::Range{-1.0f, 1.0f})},
+                eq.getParameterTree()
+            }};
+        }
+
+        dsp::FloatSmoother linearGain;
+        dsp::FloatSmoother pan;
+        dsp::LevelMeter meter;
+        dsp::effects::Equalizer eq;
+
+        ParamTree paramTree_;
     };
 }

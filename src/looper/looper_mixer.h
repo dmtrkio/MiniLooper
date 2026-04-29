@@ -82,7 +82,7 @@ namespace looper {
 
         std::pair<float*, float*> getChannelBuffers(const int index)
         {
-            assert((index >= 0) && (index < channels.size()));
+            assert((index >= 0) && (index < static_cast<int>(channels.size())));
             auto &channel = channels[index];
             return {channel.bufferL.data(), channel.bufferR.data()};
         }

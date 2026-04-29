@@ -7,6 +7,7 @@
 #include <ranges>
 
 #include "dsp/parameter/parameter_tree.h"
+#include "processing_chain.h"
 
 namespace looper {
     static constexpr int kNoInput = -1;
@@ -31,6 +32,8 @@ namespace looper {
                     input = kNoInput;
                 }
             }
+
+            processingChain_.prepare(static_cast<float>(sampleRate));
         }
 
         void processAdding(const float *const *in, float *const *out, unsigned int nFrames) noexcept
@@ -89,7 +92,7 @@ namespace looper {
         ParamTree paramTree;
 
     private:
-        static ParamTree buildParamTree(const std::string& name)
+        ParamTree buildParamTree(const std::string& name) const
         {
             return {name, {
                 ParamTree{"Input1", {
@@ -101,6 +104,7 @@ namespace looper {
                     Param::makeFloat("GainDb", 0.0f, {-60.0f, 12.0f}),
                 }},
                 ParamTree{Param::makeBoolean("Stereo", false)},
+                processingChain_.getParameterTree(),
             }};
         }
 
@@ -129,7 +133,8 @@ namespace looper {
 
         void processInternal()
         {
-            // TODO
+            float *const channelData[] = {buffers_[0].data(), buffers_[1].data()};
+            processingChain_.process(channelData, static_cast<unsigned int>(buffers_[0].size()));
         }
 
         int nInputBuffers_{0};
@@ -137,6 +142,7 @@ namespace looper {
         std::array<int, 2> inputs_{kNoInput, kNoInput};
         std::array<float, 2> inputGains_{1.0f, 1.0f};
         std::array<std::vector<float>, 2> buffers_{};
+        ProcessingChain processingChain_;
     };
 
     class SourceMixer
