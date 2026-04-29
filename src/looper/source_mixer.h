@@ -14,9 +14,11 @@ namespace looper {
     class SourceChannel
     {
     public:
+        SourceChannel(const std::string name) : paramTree(buildParamTree(name)) {}
+
         void prepare(unsigned int nInputBuffers, unsigned int maxFramesInBuffer, unsigned int sampleRate)
         {
-            nInputBuffers_ = nInputBuffers;
+            nInputBuffers_ = static_cast<int>(nInputBuffers);
 
             for (auto& buf : buffers_) {
                 buf.assign(maxFramesInBuffer, 0.0f);
@@ -31,7 +33,7 @@ namespace looper {
             }
         }
 
-        void process(float *const *in, float *const *out, unsigned int nFrames) noexcept
+        void processAdding(const float *const *in, float *const *out, unsigned int nFrames) noexcept
         {
             applyParams();
 
@@ -76,7 +78,7 @@ namespace looper {
 
             for (auto ch{0u}; ch < 2; ++ch) {
                 for (auto frame{0u}; frame < nFrames; ++frame) {
-                    out[ch][frame] = buffers_[ch][frame];
+                    out[ch][frame] += buffers_[ch][frame];
                 }
             }
         }
@@ -84,28 +86,31 @@ namespace looper {
         using Param = dsp::parameter::Parameter;
         using ParamTree = dsp::parameter::ParameterTree;
 
-        ParamTree paramTree{"SourceChannel", {
-            ParamTree{"Input1", {
-                Param::makeInteger("Source", kNoInput, {kNoInput, 64}),
-                Param::makeFloat("GainDb", 0.0f, {-60.0f, 12.0f}),
-            }},
-            ParamTree{"Input2", {
-                Param::makeInteger("Source", kNoInput, {kNoInput, 64}),
-                Param::makeFloat("GainDb", 0.0f, {-60.0f, 12.0f}),
-            }},
-            ParamTree{Param::makeBoolean("Stereo", false)},
-        }};
+        ParamTree paramTree;
 
     private:
+        static ParamTree buildParamTree(const std::string& name)
+        {
+            return {name, {
+                ParamTree{"Input1", {
+                    Param::makeInteger("Source", kNoInput, {kNoInput, 64}),
+                    Param::makeFloat("GainDb", 0.0f, {-60.0f, 12.0f}),
+                }},
+                ParamTree{"Input2", {
+                    Param::makeInteger("Source", kNoInput, {kNoInput, 64}),
+                    Param::makeFloat("GainDb", 0.0f, {-60.0f, 12.0f}),
+                }},
+                ParamTree{Param::makeBoolean("Stereo", false)},
+            }};
+        }
+
         void applyParams()
         {
-            const auto inputSubTree = paramTree["Input"];
-
             assert(inputs_.size() == 2);
 
             const auto getInputParams = [&](std::size_t inputIndex) -> std::pair<int, float> {
-                const std::string_view inputName = (inputIndex == 0) ? "Input1" : "Input2";
-                const auto subtree = inputSubTree[inputName];
+                const auto inputName = (inputIndex == 0) ? "Input1" : "Input2";
+                const auto subtree = paramTree[inputName];
                 const auto inputParam = subtree["Source"];
                 const auto gainParam = subtree["GainDb"];
 
@@ -124,10 +129,10 @@ namespace looper {
 
         void processInternal()
         {
-
+            // TODO
         }
 
-        unsigned int nInputBuffers_{0};
+        int nInputBuffers_{0};
         bool stereo_{false};
         std::array<int, 2> inputs_{kNoInput, kNoInput};
         std::array<float, 2> inputGains_{1.0f, 1.0f};
@@ -144,21 +149,32 @@ namespace looper {
             }
         }
 
-        void process(float *const *in, float *const *out, unsigned int nFrames) noexcept
+        void process(const float *const *in, float *const *out, unsigned int nFrames) noexcept
         {
+            for (auto ch{0u}; ch < 2; ++ch) {
+                std::fill_n(out[ch], nFrames, 0.0f);
+            }
+
             for (auto& ch : channels_) {
-                ch.process(in, out, nFrames);
+                ch.processAdding(in, out, nFrames);
             }
         }
 
-        dsp::parameter::ParameterTree& getParameterTree() noexcept { return paramTree_; }
+        dsp::parameter::ParameterTree getParameterTree() const noexcept
+        {
+            return paramTree_;
+        }
 
     private:
+        static constexpr std::size_t kNumChannels = 2;
+        std::array<SourceChannel, kNumChannels> channels_{
+            SourceChannel("SourceChannel1"),
+            SourceChannel("SourceChannel2"),
+        };
+
         dsp::parameter::ParameterTree paramTree_{"SourceMixer", {
             channels_[0].paramTree,
             channels_[1].paramTree,
         }};
-
-        std::array<SourceChannel, 2> channels_{};
     };
 }

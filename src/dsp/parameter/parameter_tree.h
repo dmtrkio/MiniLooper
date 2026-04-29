@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdexcept>
 #include <variant>
 #include <vector>
 #include <optional>
@@ -54,13 +55,13 @@ namespace dsp::parameter {
 
         [[nodiscard]] Parameter& asParameterUnsafe()
         {
-            if (!isParameter()) throw std::bad_variant_access{};
+            if (!isParameter()) throw std::runtime_error{"Not a parameter node"};
             return std::get<Parameter>(node_->data);
         }
 
         [[nodiscard]] const Parameter& asParameterUnsafe() const
         {
-            if (!isParameter()) throw std::bad_variant_access{};
+            if (!isParameter()) throw std::runtime_error{"Not a parameter node"};
             return std::get<Parameter>(node_->data);
         }
 
@@ -124,7 +125,7 @@ namespace dsp::parameter {
                 return node.getName() == subtree.getName();
             });
 
-            if (it != children.end()) return ParameterTree{};
+            if (it != children.end()) throwDuplicateNameException();
 
             children.push_back(std::move(subtree));
             return children.back();
@@ -140,7 +141,7 @@ namespace dsp::parameter {
                 return node.getName() == parameter.getName();
             });
 
-            if (it != children.end()) return ParameterTree{};
+            if (it != children.end()) throwDuplicateNameException();
 
             children.emplace_back(std::move(parameter));
             return children.back();
@@ -166,6 +167,11 @@ namespace dsp::parameter {
         }
 
     private:
+        void throwDuplicateNameException()
+        {
+            throw std::runtime_error{"Duplicate key: a parameter or subtree with the same name already exists in the current tree"};
+        }
+
         using Vec = std::vector<ParameterTree>;
         using Variant = std::variant<Vec, Parameter>;
 

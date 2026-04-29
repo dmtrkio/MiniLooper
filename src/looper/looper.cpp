@@ -9,6 +9,7 @@
 #include "midi/foot_switch.h"
 #include "threading/triple_buffer.h"
 #include "dsp/level_meter.h"
+#include "source_mixer.h"
 
 namespace looper {
     struct LooperSharedData
@@ -38,21 +39,6 @@ namespace looper {
     public:
         void onProcess(const float *const *in, float *const *out, const unsigned int nFrames) override
         {
-            const auto& engine = audio::AudioEngine::getInstance();
-            const auto iChannels = engine.getNumInputChannels();
-            const auto oChannels = engine.getNumOutputChannels();
-            assert(oChannels >= 2);
-
-            for (auto i{0u}; i < nFrames; ++i) {
-                float inputSample = 0.0f;
-                for (auto c{0u}; c < iChannels; ++c) {
-                    inputSample += in[c][i];
-                }
-                for (auto c{0u}; c < oChannels; ++c) {
-                    out[c][i] = inputSample;
-                }
-            }
-
             for (auto i{0u}; i < nFrames; ++i) {
                 footSwitch.tick();
             }
@@ -60,12 +46,18 @@ namespace looper {
             drainMidiQueue();
             consumeCommands();
 
+            //for (auto i {0u}; i < nFrames; ++i) {
+            //    out[0][i] = in[0][i];
+            //    out[1][i] = in[1][i];
+            //}
+
+            sourceMixer.process(in, out, nFrames);
             looperProcessor.process(out, nFrames);
 
             levelMeter_(out[0], out[1], nFrames);
 
             const auto headroomScalar = dsp::dBtoLinear(-kHeadRoomDb);
-            for (auto ch{0u}; ch < oChannels; ++ch) {
+            for (auto ch{0u}; ch < 2; ++ch) {
                 for (auto i{0u}; i < nFrames; ++i) {
                     out[ch][i] = std::tanh(out[ch][i] * headroomScalar);
                 }
@@ -81,7 +73,7 @@ namespace looper {
                 osc += phaseIncr;
                 if (osc >= twoPi) osc -= twoPi;
                 const float sine = std::sin(osc) * 0.03f;
-                for (auto c{0u}; c < oChannels; ++c) {
+                for (auto c{0u}; c < 2; ++c) {
                     out[c][i] = sine;
                 }
             }*/
@@ -113,8 +105,16 @@ namespace looper {
                 looperProcessor.clearAll();
             });
 
-            const auto sampleRate = static_cast<float>(audio::AudioEngine::getInstance().getSampleRate());
-            levelMeter_.prepare(sampleRate);
+            assert(audio::AudioEngine::getInstance().getNumOutputChannels() >= 2);
+
+            const auto sampleRate = audio::AudioEngine::getInstance().getSampleRate();
+            const auto nInputs = audio::AudioEngine::getInstance().getNumInputChannels();
+
+            sourceMixer.prepare(nInputs, audio::kMaxFramesInBuffer, sampleRate);
+            sourceMixer.getParameterTree()["SourceChannel1"]["Input1"]["Source"].asParameterUnsafe().set<int>(0);
+            sourceMixer.getParameterTree()["SourceChannel1"]["Stereo"].asParameterUnsafe().set<bool>(false);
+
+            levelMeter_.prepare(static_cast<float>(sampleRate));
         }
 
         void onStop() override
@@ -157,6 +157,7 @@ namespace looper {
 
         midi::MidiQueue midiQueue{64};
         midi::FootSwitch footSwitch;
+        SourceMixer sourceMixer;
 
         dsp::LevelMeter levelMeter_;
     };
