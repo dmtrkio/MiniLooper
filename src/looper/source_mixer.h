@@ -38,6 +38,12 @@ namespace looper {
 
         void processAdding(const float *const *in, float *const *out, unsigned int nFrames) noexcept
         {
+            // for (auto frame{0u}; frame < nFrames; ++frame) {
+            //     out[0][frame] += in[0][frame];
+            //     out[1][frame] += in[0][frame];
+            // }
+            // return;
+
             applyParams();
 
             assert(nFrames <= buffers_[0].size());
@@ -77,7 +83,7 @@ namespace looper {
                 }
             }
             
-            processInternal();
+            processInternal(nFrames);
 
             for (auto ch{0u}; ch < 2; ++ch) {
                 for (auto frame{0u}; frame < nFrames; ++frame) {
@@ -131,10 +137,10 @@ namespace looper {
             stereo_ = paramTree_["Stereo"].asParameterUnsafe().get<bool>();
         }
 
-        void processInternal()
+        void processInternal(unsigned int nFrames)
         {
-            float *const channelData[] = {buffers_[0].data(), buffers_[1].data()};
-            processingChain_.process(channelData, static_cast<unsigned int>(buffers_[0].size()));
+            float *channelData[2] = {buffers_[0].data(), buffers_[1].data()};
+            processingChain_.process(channelData, nFrames);
         }
 
         int nInputBuffers_{0};
