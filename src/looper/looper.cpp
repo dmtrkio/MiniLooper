@@ -46,11 +46,6 @@ namespace looper {
             drainMidiQueue();
             consumeCommands();
 
-            //for (auto i {0u}; i < nFrames; ++i) {
-            //    out[0][i] = in[0][i];
-            //    out[1][i] = in[1][i];
-            //}
-
             sourceMixer.process(in, out, nFrames);
             looperProcessor.process(out, nFrames);
 
@@ -113,6 +108,8 @@ namespace looper {
             sourceMixer.prepare(nInputs, audio::kMaxFramesInBuffer, sampleRate);
             sourceMixer.getParameterTree()["SourceChannel1"]["Input1"]["Source"].asParameterUnsafe().set<int>(0);
             sourceMixer.getParameterTree()["SourceChannel1"]["Stereo"].asParameterUnsafe().set<bool>(false);
+
+            std::cout << sourceMixer.getParameterTree().toJson().dump(4) << std::endl;
 
             levelMeter_.prepare(static_cast<float>(sampleRate));
         }

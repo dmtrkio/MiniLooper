@@ -6,6 +6,8 @@
 #include <stdexcept>
 #include <cstdint>
 
+#include <nlohmann/json.hpp>
+
 #include "threading/atomic_wrapper.h"
 #include "dsp/dsp.h"
 
@@ -106,6 +108,25 @@ namespace dsp::parameter {
         }
 
         void reset() noexcept { setToDefault(); }
+
+        [[nodiscard]] nlohmann::ordered_json toJson() const
+        {
+            return std::visit([&](const auto& p) -> nlohmann::ordered_json {
+                using T = std::decay_t<decltype(p)>;
+
+                nlohmann::ordered_json j;
+                j["name"] = name_;
+                j["type"] = typeToString(p.type);
+                j["value"] = p.value.load();
+                j["defaultValue"] = p.defaultValue;
+
+                if constexpr (isRangedParameter<T>()) {
+                    j["range"] = { {"min", p.range.min}, {"max", p.range.max} };
+                }
+
+                return j;
+            }, data_);
+        }
 
     private:
         template<typename T>

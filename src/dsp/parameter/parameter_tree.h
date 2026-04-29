@@ -92,7 +92,7 @@ namespace dsp::parameter {
 
         template <typename Fn>
         requires std::invocable<Fn, ParameterTree&>
-        void forEachChild(Fn&& fn)
+        void forEachChild(Fn&& fn) const
         {
             if (!isSubTree()) return;
 
@@ -103,7 +103,7 @@ namespace dsp::parameter {
 
         template <typename Fn>
         requires std::invocable<Fn, Parameter&>
-        void forEachParameter(Fn&& fn)
+        void forEachParameter(Fn&& fn) const
         {
             if (isParameter()) {
                 fn(asParameterUnsafe());
@@ -164,6 +164,21 @@ namespace dsp::parameter {
         [[nodiscard]] bool operator!=(const ParameterTree& other) const noexcept
         {
             return node_ != other.node_;
+        }
+
+        [[nodiscard]] nlohmann::ordered_json toJson() const
+        {
+            if (!isValid()) return nullptr;
+
+            if (isParameter()) {
+                return asParameterUnsafe().toJson();
+            }
+
+            nlohmann::ordered_json j = nlohmann::ordered_json::object();
+            forEachChild([&](const ParameterTree& child) {
+                j[child.getName()] = child.toJson();
+            });
+            return j;
         }
 
     private:
