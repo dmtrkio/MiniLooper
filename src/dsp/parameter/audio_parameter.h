@@ -120,7 +120,7 @@ namespace dsp::parameter {
                 j["value"] = p.value.load();
                 j["defaultValue"] = p.defaultValue;
 
-                if constexpr (isRangedParameter<T>()) {
+                if constexpr (std::is_same_v<T, FloatData> || std::is_same_v<T, IntegerData>) {
                     j["range"] = { {"min", p.range.min}, {"max", p.range.max} };
                 }
 

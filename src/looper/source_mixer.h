@@ -15,7 +15,7 @@ namespace looper {
     class SourceChannel
     {
     public:
-        SourceChannel(const std::string name) : paramTree(buildParamTree(name)) {}
+        SourceChannel(const std::string name) : paramTree_(buildParamTree(name)) {}
 
         void prepare(unsigned int nInputBuffers, unsigned int maxFramesInBuffer, unsigned int sampleRate)
         {
@@ -89,7 +89,7 @@ namespace looper {
         using Param = dsp::parameter::Parameter;
         using ParamTree = dsp::parameter::ParameterTree;
 
-        ParamTree paramTree;
+        dsp::parameter::ParameterTree getParameterTree() const noexcept { return paramTree_; }
 
     private:
         ParamTree buildParamTree(const std::string& name) const
@@ -114,7 +114,7 @@ namespace looper {
 
             const auto getInputParams = [&](std::size_t inputIndex) -> std::pair<int, float> {
                 const auto inputName = (inputIndex == 0) ? "Input1" : "Input2";
-                const auto subtree = paramTree[inputName];
+                const auto subtree = paramTree_[inputName];
                 const auto inputParam = subtree["Source"];
                 const auto gainParam = subtree["GainDb"];
 
@@ -128,7 +128,7 @@ namespace looper {
                 std::tie(inputs_[i], inputGains_[i]) = getInputParams(i);
             }
 
-            stereo_ = paramTree["Stereo"].asParameterUnsafe().get<bool>();
+            stereo_ = paramTree_["Stereo"].asParameterUnsafe().get<bool>();
         }
 
         void processInternal()
@@ -143,6 +143,7 @@ namespace looper {
         std::array<float, 2> inputGains_{1.0f, 1.0f};
         std::array<std::vector<float>, 2> buffers_{};
         ProcessingChain processingChain_;
+        ParamTree paramTree_;
     };
 
     class SourceMixer
@@ -179,8 +180,8 @@ namespace looper {
         };
 
         dsp::parameter::ParameterTree paramTree_{"SourceMixer", {
-            channels_[0].paramTree,
-            channels_[1].paramTree,
+            channels_[0].getParameterTree(),
+            channels_[1].getParameterTree(),
         }};
     };
 }
