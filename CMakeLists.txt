@@ -30,6 +30,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 if (WIN32)
     add_executable(${PROJECT_NAME} WIN32 ${SOURCE_FILES})
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE"
+        LINK_FLAGS_RELWITHDEBINFO "/SUBSYSTEM:CONSOLE"
+    )
 else()
     add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 endif()

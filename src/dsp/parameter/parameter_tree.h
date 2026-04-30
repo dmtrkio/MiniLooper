@@ -26,10 +26,10 @@ namespace dsp::parameter {
             addParameters(std::move(parameters));
         }
 
-        ParameterTree(std::string name, std::vector<ParameterTree> parameters)
+        ParameterTree(std::string name, std::vector<ParameterTree> children)
             : ParameterTree(std::move(name))
         {
-            for (auto& subtree : parameters) {
+            for (auto& subtree : children) {
                 addSubTree(std::move(subtree));
             }
         }
@@ -207,4 +207,28 @@ namespace dsp::parameter {
         // Private default invalid tree constructor
         ParameterTree() : node_(nullptr) {}
     };
+
+    inline ParameterTree testParameterTree()
+    {
+        using namespace dsp::parameter;
+        ParameterTree paramTree{"Test Parameter Tree"};
+        paramTree.addParameters({Parameter::makeBoolean("On", false)});
+
+        ParameterTree group1{"Group 1"};
+        group1.addParameter(Parameter::makeFloat("Gain", 50.0f, dsp::Range{0.0f, 100.0f}));
+        group1.addParameter(Parameter::makeFloat("Mix", 50.0f, dsp::Range{0.0f, 100.0f}));
+        auto g1 = paramTree.addSubTree(std::move(group1));
+
+        g1.addSubTree(ParameterTree{"Nested", {
+            Parameter::makeInteger("Count", 0, dsp::Range{0, 10}),
+            Parameter::makeFloat("Pan", 0.0f, dsp::Range{-1.0f, 1.0f}),
+        }});
+
+        ParameterTree group2{"Group 2"};
+        group2.addParameter(Parameter::makeFloat("Cutoff", 50.0f, dsp::Range{0.0f, 100.0f}));
+        group2.addParameter(Parameter::makeFloat("Q", 50.0f, dsp::Range{0.0f, 100.0f}));
+        paramTree.addSubTree(std::move(group2));
+
+        return paramTree;
+    }
 } // namespace dsp::parameter

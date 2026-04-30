@@ -1,5 +1,6 @@
 #include "parameter_ui.h"
 
+#include "dsp/parameter/parameter_tree.h"
 #include "imgui.h"
 
 namespace ui {
@@ -66,7 +67,18 @@ namespace ui {
         }
     }
 
-    void parameterTreeUi(dsp::parameter::ParameterTree paramTree, bool *opened, const std::string& prefix)
+    void parameterTreeUi(dsp::parameter::ParameterTree paramTree)
+    {
+        if (paramTree.isSubTree()) {
+            ImGui::PushID(&paramTree);
+            paramTree.forEachChild(traverseParameterTree);
+            ImGui::PopID();
+        } else {
+            parameterUi(paramTree.asParameterUnsafe());
+        }
+    }
+
+    void parameterTreeUiWindowed(dsp::parameter::ParameterTree paramTree, bool *opened, const std::string& prefix)
     {
         if ((opened != nullptr) && (!(*opened))) return;
 
@@ -79,38 +91,9 @@ namespace ui {
             ImGui::Begin(title.c_str(), opened);
         }
 
-        if (paramTree.isSubTree()) {
-            paramTree.forEachChild(traverseParameterTree);
-        } else {
-            parameterUi(paramTree.asParameterUnsafe());
-        }
+        parameterTreeUi(paramTree);
 
         ImGui::End();
         ImGui::PopID();
     }
-
-    dsp::parameter::ParameterTree testParameterTree()
-    {
-        using namespace dsp::parameter;
-        ParameterTree paramTree{"Test Parameter Tree"};
-        paramTree.addParameters({Parameter::makeBoolean("On", false)});
-
-        ParameterTree group1{"Group 1"};
-        group1.addParameter(Parameter::makeFloat("Gain", 50.0f, dsp::Range{0.0f, 100.0f}));
-        group1.addParameter(Parameter::makeFloat("Mix", 50.0f, dsp::Range{0.0f, 100.0f}));
-        auto g1 = paramTree.addSubTree(std::move(group1));
-
-        g1.addSubTree(ParameterTree{"Nested", {
-            Parameter::makeInteger("Count", 0, dsp::Range{0, 10}),
-            Parameter::makeFloat("Pan", 0.0f, dsp::Range{-1.0f, 1.0f}),
-        }});
-
-        ParameterTree group2{"Group 2"};
-        group2.addParameter(Parameter::makeFloat("Cutoff", 50.0f, dsp::Range{0.0f, 100.0f}));
-        group2.addParameter(Parameter::makeFloat("Q", 50.0f, dsp::Range{0.0f, 100.0f}));
-        paramTree.addSubTree(std::move(group2));
-
-        return paramTree;
-    }
-
 }

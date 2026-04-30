@@ -13,6 +13,7 @@
 #include "ui/looper_ui.h"
 #include "ui/midi_settings_ui.h"
 #include "ui/mixer_ui.h"
+#include "ui/source_mixer_ui.h"
 #include "ui/session_manager_ui.h"
 #include "filepaths.h"
 #include "fonts/Inter-Regular.h"
@@ -205,13 +206,15 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
         res_Inter_18pt_Regular_ttf,
         static_cast<int>(res_Inter_18pt_Regular_ttf_len),
         15.0f,
-        &fontConfig);
+        &fontConfig
+    );
 
     windowRegistry_.emplace_back(std::make_unique<ui::SessionManagerUi>(sessionManager_, looper_));
     windowRegistry_.emplace_back(std::make_unique<ui::AudioSettingsUi>());
     windowRegistry_.emplace_back(std::make_unique<ui::MidiSettingsUi>(midiEngine_.get()));
     windowRegistry_.emplace_back(std::make_unique<ui::LooperUi>(looper_, sessionManager_));
     windowRegistry_.emplace_back(std::make_unique<ui::MixerUi>(looper_));
+    windowRegistry_.emplace_back(std::make_unique<ui::SourceMixerUi>(looper_));
     windowRegistry_.emplace_back(std::make_unique<ui::VolumeMeterWindow>(looper_))->opened = true;
 }
 

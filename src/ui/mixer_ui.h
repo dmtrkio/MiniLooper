@@ -6,7 +6,7 @@
 #include "volume_meter.h"
 
 namespace ui {
-    class MixerUi : public WindowBase
+    class MixerUi final : public WindowBase
     {
     public:
         explicit MixerUi(looper::Looper &looper) : looper_(&looper)
@@ -56,7 +56,7 @@ namespace ui {
                     ImGui::SameLine();
                 }
 
-                parameterTreeUi(params.eqParamTree, &(eqOpened_[i].value), std::format("Track {}: ", i));
+                parameterTreeUiWindowed(params.eqParamTree, &(eqOpened_[i].value), std::format("Track {}: ", i));
 
                 ImGui::PopID();
             }

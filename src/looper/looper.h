@@ -54,10 +54,13 @@ namespace looper {
 
         [[nodiscard]] int getNumLooperTracks() const noexcept;
 
+        // Call once per ui frame
         void updateSnapshot() noexcept;
+
         [[nodiscard]] const TrackStateSnapshot& getTrackState(int trackIndex) const noexcept;
         [[nodiscard]] const LooperStateSnapshot& getLooperState() const noexcept;
         [[nodiscard]] MixerParams& getMixerParams() const noexcept;
+        [[nodiscard]] dsp::parameter::ParameterTree getParameterTree() const noexcept;
 
         void startRecording(int trackIndex) const;
         void stopRecording(int trackIndex) const;

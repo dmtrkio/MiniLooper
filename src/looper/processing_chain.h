@@ -10,10 +10,7 @@ namespace looper {
     class ProcessingChain final : public dsp::effects::EffectBase
     {
     public:
-        ProcessingChain() : paramTree_(buildParameterTree())
-        {
-
-        }
+        ProcessingChain() : paramTree_(buildParameterTree()) {}
 
         void prepare(float sampleRate) override
         {
@@ -25,7 +22,6 @@ namespace looper {
             linearGain.setSmoothingFrames(smoothFrames);
             pan.setSmoothingFrames(smoothFrames);
 
-            meter.prepare(sampleRate);
             eq.prepare(sampleRate);
         }
 
@@ -43,7 +39,6 @@ namespace looper {
             for (auto i{0u}; i < nFrames; ++i) {
                 const auto leftSample = data[0][i] * leftGain;;
                 const auto rightSample = data[1][i] * rightGain;
-                meter(leftSample, rightSample);
                 data[0][i] = leftSample;
                 data[1][i] = rightSample;
             }
@@ -72,7 +67,6 @@ namespace looper {
 
         dsp::FloatSmoother linearGain;
         dsp::FloatSmoother pan;
-        dsp::LevelMeter meter;
         dsp::effects::Equalizer eq;
 
         ParamTree paramTree_;

@@ -109,7 +109,7 @@ namespace looper {
             sourceMixer.getParameterTree()["SourceChannel1"]["Input1"]["Source"].asParameterUnsafe().set<int>(0);
             sourceMixer.getParameterTree()["SourceChannel1"]["Stereo"].asParameterUnsafe().set<bool>(false);
 
-            std::cout << sourceMixer.getParameterTree().toJson().dump(4) << std::endl;
+            //std::cout << sourceMixer.getParameterTree().toJson().dump(4) << std::endl;
 
             levelMeter_.prepare(static_cast<float>(sampleRate));
         }
@@ -192,6 +192,13 @@ namespace looper {
     MixerParams& Looper::getMixerParams() const noexcept
     {
         return cb_->looperProcessor.getMixer().params;
+    }
+
+    dsp::parameter::ParameterTree Looper::getParameterTree() const noexcept
+    {
+        return { "Looper", {
+            cb_->sourceMixer.getParameterTree(),
+        }};
     }
 
     void Looper::startRecording(int trackIndex) const

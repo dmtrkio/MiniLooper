@@ -9,7 +9,7 @@
 #include "audio/audio_engine.h"
 
 namespace ui {
-    class AudioSettingsUi : public WindowBase
+    class AudioSettingsUi final : public WindowBase
     {
     public:
         [[nodiscard]] const char* getTitle() const override { return "Audio Settings"; }

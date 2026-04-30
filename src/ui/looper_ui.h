@@ -7,7 +7,7 @@
 #include "session_manager.h"
 
 namespace ui {
-    class LooperUi : public WindowBase
+    class LooperUi final : public WindowBase
     {
     public:
         explicit LooperUi(looper::Looper &looper, SessionManager& sessionManager) : looper_(&looper), sessionManager_(&sessionManager) {}

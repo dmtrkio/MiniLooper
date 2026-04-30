@@ -6,7 +6,7 @@
 #include "midi/midi.h"
 
 namespace ui {
-    class MidiSettingsUi : public WindowBase
+    class MidiSettingsUi final : public WindowBase
     {
     public:
         explicit MidiSettingsUi(midi::MidiEngine *midiEngine) : midiEngine_(midiEngine) {}

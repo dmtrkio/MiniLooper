@@ -6,7 +6,9 @@
 #include <cassert>
 #include <ranges>
 
+#include "dsp/dsp.h"
 #include "dsp/parameter/parameter_tree.h"
+#include "dsp/level_meter.h"
 #include "processing_chain.h"
 
 namespace looper {
@@ -34,6 +36,7 @@ namespace looper {
             }
 
             processingChain_.prepare(static_cast<float>(sampleRate));
+            levelMeter_.prepare(static_cast<float>(sampleRate));
         }
 
         void processAdding(const float *const *in, float *const *out, unsigned int nFrames) noexcept
@@ -95,10 +98,11 @@ namespace looper {
         using Param = dsp::parameter::Parameter;
         using ParamTree = dsp::parameter::ParameterTree;
 
-        dsp::parameter::ParameterTree getParameterTree() const noexcept { return paramTree_; }
+        [[nodiscard]] dsp::parameter::ParameterTree getParameterTree() const noexcept { return paramTree_; }
+        [[nodiscard]] std::pair<float, float> getLevel() const noexcept { return levelMeter_.getLevel(); }
 
     private:
-        ParamTree buildParamTree(const std::string& name) const
+        [[nodiscard]] ParamTree buildParamTree(const std::string& name) const
         {
             return {name, {
                 ParamTree{"Input1", {
@@ -127,7 +131,10 @@ namespace looper {
                 const auto input = inputParam.asParameterUnsafe().get<int>();
                 const auto gainDb = gainParam.asParameterUnsafe().get<float>();
 
-                return {input, dsp::dBtoLinear(gainDb)};
+                return {
+                    (input >= 0 && input < nInputBuffers_) ? input : kNoInput,
+                    dsp::dBtoLinear(gainDb)
+                };
             };
 
             for (std::size_t i = 0; i < inputs_.size(); ++i) {
@@ -141,6 +148,7 @@ namespace looper {
         {
             float *channelData[2] = {buffers_[0].data(), buffers_[1].data()};
             processingChain_.process(channelData, nFrames);
+            levelMeter_(channelData[0], channelData[1], nFrames);
         }
 
         int nInputBuffers_{0};
@@ -150,11 +158,14 @@ namespace looper {
         std::array<std::vector<float>, 2> buffers_{};
         ProcessingChain processingChain_;
         ParamTree paramTree_;
+        dsp::LevelMeter levelMeter_;
     };
 
     class SourceMixer
     {
     public:
+        static constexpr std::size_t kNumChannels = 2;
+
         void prepare(unsigned int nInputs, unsigned int maxFramesInBuffer, unsigned int sampleRate)
         {
             for (auto& ch : channels_) {
@@ -164,7 +175,7 @@ namespace looper {
 
         void process(const float *const *in, float *const *out, unsigned int nFrames) noexcept
         {
-            for (auto ch{0u}; ch < 2; ++ch) {
+            for (auto ch{0u}; ch < kNumChannels; ++ch) {
                 std::fill_n(out[ch], nFrames, 0.0f);
             }
 
@@ -173,13 +184,21 @@ namespace looper {
             }
         }
 
-        dsp::parameter::ParameterTree getParameterTree() const noexcept
+        [[nodiscard]] dsp::parameter::ParameterTree getParameterTree() const noexcept
         {
             return paramTree_;
         }
 
+        [[nodiscard]] std::array<std::pair<float, float>, kNumChannels> getLevels() const noexcept
+        {
+            std::array<std::pair<float, float>, kNumChannels> levels{};
+            for (std::size_t i = 0; i < kNumChannels; ++i) {
+                levels[i] = channels_[i].getLevel();
+            }
+            return levels;
+        }
+
     private:
-        static constexpr std::size_t kNumChannels = 2;
         std::array<SourceChannel, kNumChannels> channels_{
             SourceChannel("SourceChannel1"),
             SourceChannel("SourceChannel2"),

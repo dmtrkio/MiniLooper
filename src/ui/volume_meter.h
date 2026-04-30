@@ -90,7 +90,7 @@ namespace ui {
         }
     }
 
-    class VolumeMeterWindow : public WindowBase
+    class VolumeMeterWindow final : public WindowBase
     {
     public:
         explicit VolumeMeterWindow(looper::Looper &looper) : looper_(&looper) {}
