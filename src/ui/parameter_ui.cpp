@@ -55,7 +55,7 @@ namespace ui {
         if (paramTree.isParameter()) {
             parameterUi(paramTree.asParameterUnsafe());
         } else {
-            ImGui::PushID(&paramTree);
+            ImGui::PushID(paramTree.getName().c_str());
 
             if (ImGui::CollapsingHeader(paramTree.getName().c_str())) {
                 ImGui::Indent();
@@ -70,7 +70,7 @@ namespace ui {
     void parameterTreeUi(dsp::parameter::ParameterTree paramTree)
     {
         if (paramTree.isSubTree()) {
-            ImGui::PushID(&paramTree);
+            ImGui::PushID(paramTree.getName().c_str());
             paramTree.forEachChild(traverseParameterTree);
             ImGui::PopID();
         } else {
