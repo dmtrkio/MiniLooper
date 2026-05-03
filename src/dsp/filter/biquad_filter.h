@@ -43,10 +43,12 @@ namespace dsp::filter {
         constexpr double kDefaultGain = 1.0;
     };
 
-    template <typename T, std::size_t N>
+    template<typename T, std::size_t N>
     class BiquadFilter
     {
     public:
+        static_assert(N > 0, "Channel count must be greater than 0");
+
         using DataType = T;
         using Coefficients = BiquadCoefficients<T>;
         static constexpr auto kChannelCount = N;
@@ -102,8 +104,8 @@ namespace dsp::filter {
             }
         }
 
-        template <typename V>
-        void operator()(V *const *data, const std::size_t nFrames) noexcept
+        template<typename V>
+        void processBlock(V *const *data, const std::size_t nFrames) noexcept
         {
             for (auto channel{0u}; channel < kChannelCount; ++channel) {
                 auto &channelState = state_[channel];
@@ -112,6 +114,13 @@ namespace dsp::filter {
                     buffer[i] = compute(buffer[i], channelState, coefficients_);
                 }
             }
+        }
+
+        template<std::size_t Index = 0, typename V>
+        V processSample(const V sample)
+        {
+            static_assert(Index < N, "Index out of bounds");
+            return compute(sample, state_[Index], coefficients_);
         }
 
     private:
@@ -125,4 +134,6 @@ namespace dsp::filter {
         Coefficients coefficients_;
         std::array<BiquadState<DataType>, kChannelCount> state_{};
     };
+
+    using StereoBiquadFilter = BiquadFilter<float, 2>;
 }

@@ -68,15 +68,8 @@ namespace dsp::effects {
         {
             applyParams();
 
-            /*bands_[0](data, nFrames);
-            bands_[1](data, nFrames);
-            bands_[2](data, nFrames);
-            bands_[3](data, nFrames);
-            bands_[4](data, nFrames);
-            bands_[5](data, nFrames);*/
-
             for (auto &band : bands_) {
-                band(data, nFrames);
+                band.processBlock(data, nFrames);
             }
         }
 
@@ -124,7 +117,7 @@ namespace dsp::effects {
             }
         }
 
-        using Filter = filter::BiquadFilter<double, 2>;
+        using Filter = filter::BiquadFilter<float, 2>;
 
         static constexpr std::array<filter::FilterType, kBands> kFilterTypes = {
             filter::FilterType::HighPass,

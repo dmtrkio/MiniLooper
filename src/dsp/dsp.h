@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <utility>
 #include <numbers>
@@ -30,6 +31,18 @@ namespace dsp {
         return {leftGain, rightGain};
     }
 
+    template<std::size_t N, typename F, std::size_t... Is>
+    void staticFor(F&& f, std::index_sequence<Is...>)
+    {
+        (f(std::integral_constant<std::size_t, Is>{}), ...);
+    }
+
+    template<std::size_t N, typename F>
+    void staticFor(F&& f)
+    {
+        staticFor<N>(std::forward<F>(f), std::make_index_sequence<N>{});
+    }
+
     template<typename T>
     struct Range
     {
@@ -39,6 +52,9 @@ namespace dsp {
         [[nodiscard]] T clamp(T value) const { return std::clamp(value, min, max); }
         [[nodiscard]] bool contains(T value) const { return value >= min && value <= max; }
     };
+
+    using FloatRange = Range<float>;
+    using IntRange = Range<int>;
 
     class Rms
     {
@@ -81,7 +97,8 @@ namespace dsp {
     };
 
     template<typename T>
-    class Smoother {
+    class Smoother
+    {
     public:
         void setTarget(T newTarget) noexcept { target_ = newTarget; }
         void init(T initial) noexcept { setTarget(initial); snap(); }
@@ -118,5 +135,61 @@ namespace dsp {
         T coefficient_;
     };
 
+    template <typename T, std::size_t N>
+    class MultiSmoother
+    {
+    public:
+        using kChannelCount = std::integral_constant<std::size_t, N>;
+
+        void setTarget(T newTarget) noexcept {
+            target_ = newTarget;
+        }
+
+        void init(T initial) noexcept {
+            setTarget(initial);
+            snap();
+        }
+
+        void snap() noexcept {
+            current_.fill(target_);
+        }
+
+        void setSmoothingTime(T sampleRate, T timeInSeconds) noexcept {
+            setSmoothingFrames(sampleRate * timeInSeconds);
+        }
+
+        void setSmoothingFrames(T timeInFrames) noexcept {
+            coefficient_ = std::exp(T(-1) / timeInFrames);
+        }
+
+        template <std::size_t I>
+        T get() {
+            static_assert(I < N, "Index out of bounds");
+            current_[I] = current_[I] * coefficient_ + target_ * (T(1) - coefficient_);
+            return current_[I];
+        }
+
+        MultiSmoother& operator=(T newTarget) noexcept {
+            setTarget(newTarget);
+            return *this;
+        }
+
+        template <std::size_t I>
+        T getCurrent() const noexcept {
+            static_assert(I < N, "Index out of bounds");
+            return current_[I];
+        }
+
+        T getTarget() const noexcept {
+            return target_;
+        }
+
+    private:
+        std::array<T, N> current_;
+        T target_;
+        T coefficient_;
+    };
+
     using FloatSmoother = Smoother<float>;
+    using StereoFloatSmoother = MultiSmoother<float, 2>;
 }

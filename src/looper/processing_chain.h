@@ -2,9 +2,8 @@
 
 #include "dsp/dsp.h"
 #include "dsp/parameter/parameter_tree.h"
-#include "dsp/level_meter.h"
+#include "dsp/effects/guitar_amp.h"
 #include "dsp/effects/equalizer.h"
-#include "dsp/effects/effect_base.h"
 
 namespace looper {
     class ProcessingChain final : public dsp::effects::EffectBase
@@ -22,6 +21,7 @@ namespace looper {
             linearGain.setSmoothingFrames(smoothFrames);
             pan.setSmoothingFrames(smoothFrames);
 
+            guitarAmp.prepare(sampleRate);
             eq.prepare(sampleRate);
         }
 
@@ -29,6 +29,7 @@ namespace looper {
         {
             applyParams();
 
+            guitarAmp.process(data, nFrames);
             eq.process(data, nFrames);
 
             auto [leftGain, rightGain] = dsp::equalPowerPanGains(pan());
@@ -61,12 +62,14 @@ namespace looper {
             return {"ProcessingChain", {
                 ParamTree{Param::makeFloat("GainDb", 0.0f, dsp::Range{-60.0f, 12.0f})},
                 ParamTree{Param::makeFloat("Pan", 0.0f, dsp::Range{-1.0f, 1.0f})},
-                eq.getParameterTree()
+                guitarAmp.getParameterTree(),
+                eq.getParameterTree(),
             }};
         }
 
         dsp::FloatSmoother linearGain;
         dsp::FloatSmoother pan;
+        dsp::effects::GuitarAmp guitarAmp;
         dsp::effects::Equalizer eq;
 
         ParamTree paramTree_;
