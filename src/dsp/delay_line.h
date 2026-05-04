@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <cmath>
 #include <vector>
 #include <algorithm>
 
@@ -8,16 +9,17 @@ namespace dsp {
     class FractionalDelayLine
     {
     public:
-        FractionalDelayLine() = default;
-        explicit FractionalDelayLine(const int maxDelaySamples = 16000)
+        explicit FractionalDelayLine()
         {
-            prepare(maxDelaySamples);
+            const auto defaultMaxDelaySamples = 16000.0f;
+            prepare(defaultMaxDelaySamples);
         }
 
-        void prepare(const int maxDelaySamples)
+        void prepare(const float maxDelaySamples)
         {
-            assert(maxDelaySamples > 0);
-            buffer_.assign(static_cast<std::size_t>(maxDelaySamples) + 1, 0.0f);
+            const std::size_t maxDelaySamplesInt = static_cast<int>(std::ceil(maxDelaySamples));
+            assert(maxDelaySamplesInt > 0);
+            buffer_.assign(maxDelaySamplesInt + 1, 0.0f);
             writeIndex_ = 0;
             delayInt_ = 0;
             delayFrac_ = 0.0f;
@@ -32,7 +34,7 @@ namespace dsp {
             delayFrac_ = delaySamples - static_cast<float>(delayInt_);
         }
 
-        float operator()(const float input) noexcept
+        float process(const float input) noexcept
         {
             buffer_[writeIndex_] = input;
 

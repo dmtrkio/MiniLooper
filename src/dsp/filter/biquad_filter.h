@@ -37,7 +37,7 @@ namespace dsp::filter {
 
     namespace FilterDefaults {
         constexpr double kDefaultFrequency = 440.0;
-        constexpr double kDefaultQ = 0.707;
+        constexpr double kDefaultQ = 0.7071;
         constexpr double kDefaultBw = 1.0;
         constexpr double kDefaultSlope = 1.0;
         constexpr double kDefaultGain = 1.0;

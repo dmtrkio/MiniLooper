@@ -9,15 +9,18 @@ namespace dsp::effects {
     class GuitarAmp final : public EffectBase
     {
     public:
-        void prepare(float sampleRate) override
+        GuitarAmp()
         {
-            static constexpr float kSmoothingMs = 1.0f;
-            const auto smoothFrames = kSmoothingMs * sampleRate * 0.001f;
-
             drive.init(paramTree_["Drive"].asParameterUnsafe().get<float>());
             tone.init(paramTree_["Tone"].asParameterUnsafe().get<float>());
             level.init(paramTree_["Level"].asParameterUnsafe().get<float>());
             dryWet.init(paramTree_["DryWet"].asParameterUnsafe().get<float>());
+        }
+
+        void prepare(float sampleRate) override
+        {
+            static constexpr float kSmoothingMs = 1.0f;
+            const auto smoothFrames = kSmoothingMs * sampleRate * 0.001f;
 
             drive.setSmoothingFrames(smoothFrames);
             tone.setSmoothingFrames(smoothFrames);
@@ -48,7 +51,7 @@ namespace dsp::effects {
             });
         }
 
-        dsp::parameter::ParameterTree getParameterTree() const noexcept override
+        dsp::parameter::ParameterTree getParameterTree() const override
         {
             return paramTree_;
         }

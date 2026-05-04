@@ -66,17 +66,13 @@ namespace dsp {
         void tick()
         {
             phase_ += phaseIncr_;
-            if (phase_ >= kTwoPi) {
-                phase_ -= kTwoPi;
-            }
+            phase_ -= (phase_ >= kTwoPi) * kTwoPi;
         }
 
         void phaseOffset(float offset)
         {
             phase_ += offset;
-            if (phase_ >= kTwoPi) {
-                phase_ -= kTwoPi;
-            }
+            phase_ -= (phase_ >= kTwoPi) * kTwoPi;
         }
 
         void reset()
