@@ -15,6 +15,7 @@ namespace dsp::effects {
         {
             rate_.init(paramTree_["Rate"].asParameterUnsafe().get<float>());
             depth_.init(paramTree_["Depth"].asParameterUnsafe().get<float>());
+            feedback_.init(paramTree_["Feedback"].asParameterUnsafe().get<float>());
             mix_.init(paramTree_["Mix"].asParameterUnsafe().get<float>());
         }
 
@@ -27,6 +28,7 @@ namespace dsp::effects {
 
             rate_.setSmoothingFrames(smoothFrames);
             depth_.setSmoothingFrames(smoothFrames);
+            feedback_.setSmoothingFrames(smoothFrames);
             mix_.setSmoothingFrames(smoothFrames);
 
             float lfoPhaseOffset = 0.0f;
@@ -75,6 +77,7 @@ namespace dsp::effects {
         {
             rate_.setTarget(paramTree_["Rate"].asParameterUnsafe().get<float>());
             depth_.setTarget(paramTree_["Depth"].asParameterUnsafe().get<float>());
+            feedback_.setTarget(paramTree_["Feedback"].asParameterUnsafe().get<float>());
             mix_.setTarget(paramTree_["Mix"].asParameterUnsafe().get<float>());
         }
 
@@ -83,9 +86,11 @@ namespace dsp::effects {
             auto output = std::make_pair(0.0f, 0.0f);
             const auto rate = rate_();
             const auto depth = depth_();
+            const auto maxFeedback = 0.8f;
+            const auto feedback = std::lerp(0.0f, maxFeedback, feedback_());
 
             for (auto& v : voices_) {
-                const auto voiceOutput = v.processFrame(input, rate, depth, sampleRate_);
+                const auto voiceOutput = v.processFrame(input, rate, depth, feedback, sampleRate_);
                 output.first += voiceOutput.first;
                 output.second += voiceOutput.second;
             }
@@ -103,6 +108,7 @@ namespace dsp::effects {
             Oscillator lfo;
             std::array<float, 2> minDelays, maxDelays;
             std::array<FractionalDelayLine, 2> delayLines;
+            std::pair<float, float> prevInput{};
 
             void setup(float lfoPhaseOffset, float lfoRateOffset, float minDelayMs, float maxDelayMs, float sampleRate, bool flip) noexcept
             {
@@ -124,7 +130,7 @@ namespace dsp::effects {
                 }
             }
 
-            std::pair<float, float> processFrame(std::pair<float, float> input, float rate, float depth, float sampleRate) noexcept
+            std::pair<float, float> processFrame(std::pair<float, float> input, float rate, float depth, float feedback, float sampleRate) noexcept
             {
                 lfo.setFrequency(rate + rateOffset, sampleRate);
                 const auto lfoValue = lfo.sine() * 0.5f + 1.0f;
@@ -142,9 +148,9 @@ namespace dsp::effects {
                 const auto leftInput = std::lerp(input.first, input.second, stereoBleed);
                 const auto rightInput = std::lerp(input.second, input.first, stereoBleed);
 
-                return {
-                    delayLines[0].process(leftInput),
-                    delayLines[1].process(rightInput)
+                return prevInput = {
+                    delayLines[0].process(leftInput + prevInput.first * feedback),
+                    delayLines[1].process(rightInput + prevInput.second * feedback)
                 };
             }
         };
@@ -153,6 +159,7 @@ namespace dsp::effects {
         FloatSmoother rate_;
         FloatSmoother depth_;
         FloatSmoother mix_;
+        FloatSmoother feedback_;
 
         std::array<Voice, 4> voices_;
 
@@ -163,7 +170,8 @@ namespace dsp::effects {
             {
                 Param::makeFloat("Rate", 1.0f, {0.2f, 3.0f}),
                 Param::makeFloat("Depth", 0.5f, {0.0f, 1.0f}),
-                Param::makeFloat("Mix", 0.0f, {0.0f, 1.0f})
+                Param::makeFloat("Feedback", 0.0f, {0.0f, 1.0f}),
+                Param::makeFloat("Mix", 0.0f, {0.0f, 1.0f}),
             }
         };
     };
