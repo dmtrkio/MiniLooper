@@ -12,11 +12,12 @@
 #include "processing_chain.h"
 
 namespace looper {
-    static constexpr int kNoInput = -1;
 
     class SourceChannel
     {
     public:
+        static constexpr int kNoInput = -1;
+
         SourceChannel(const std::string name) : paramTree_(buildParamTree(name)) {}
 
         void prepare(unsigned int nInputBuffers, unsigned int maxFramesInBuffer, unsigned int sampleRate)

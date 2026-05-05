@@ -137,6 +137,26 @@ namespace dsp::parameter {
         });
         return j;
     }
+    
+    bool ParameterTree::tryLoadFromJson(const json& j) noexcept
+    {
+        if (!isValid()) return false;
+
+        if (isParameter()) {
+            return asParameterUnsafe().trySetFromJson(j);
+        }
+
+        if (!j.is_object()) return false;
+
+        bool success = true;
+        for (const auto& [key, value] : j.items()) {
+            auto child = (*this)[key];
+            if (!child.tryLoadFromJson(value)) {
+                success = false;
+            }
+        }
+        return success;
+    }
 
     void ParameterTree::throwDuplicateNameException()
     {

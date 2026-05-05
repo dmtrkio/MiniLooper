@@ -74,6 +74,7 @@ namespace dsp::parameter {
         [[nodiscard]] bool operator!=(const ParameterTree& other) const noexcept;
 
         [[nodiscard]] json toJson() const;
+        [[nodiscard]] bool tryLoadFromJson(const json& j) noexcept;
 
     private:
         void throwDuplicateNameException();

@@ -109,6 +109,9 @@ namespace looper {
             sourceMixer.getParameterTree()["SourceChannel1"]["Input1"]["Source"].asParameterUnsafe().set<int>(0);
             sourceMixer.getParameterTree()["SourceChannel1"]["Stereo"].asParameterUnsafe().set<bool>(false);
 
+            sourceMixer.getParameterTree()["SourceChannel2"]["Input1"]["Source"].asParameterUnsafe().set<int>(1);
+            sourceMixer.getParameterTree()["SourceChannel2"]["Stereo"].asParameterUnsafe().set<bool>(false);
+
             //std::cout << sourceMixer.getParameterTree().toJson().dump(4) << std::endl;
 
             levelMeter_.prepare(static_cast<float>(sampleRate));

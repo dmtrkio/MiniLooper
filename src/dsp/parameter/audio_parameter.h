@@ -1,15 +1,16 @@
 #pragma once
 
+#include <exception>
+#include <iostream>
 #include <string>
 #include <variant>
 #include <optional>
 #include <stdexcept>
 #include <cstdint>
 
-#include <nlohmann/json.hpp>
-
 #include "threading/atomic_wrapper.h"
 #include "dsp/dsp.h"
+#include "json.h"
 
 namespace dsp::parameter {
     enum class ParameterType
@@ -88,18 +89,20 @@ namespace dsp::parameter {
         }
 
         template<typename T>
-        void set(T value) noexcept
+        bool set(T value) noexcept
         {
-            std::visit([&](auto &p) {
+            std::visit([&](auto &p) -> bool {
                 using PType = std::decay_t<decltype(p)>;
                 const auto v = static_cast<decltype(p.defaultValue)>(value);
                 if constexpr (isRangedParameter<PType>()) {
-                    assert(p.range.contains(v));
+                    if (!p.range.contains(v)) return false;
                     p.value.store(p.range.clamp(v));
                 } else if constexpr (std::is_same_v<PType, BooleanData>) {
                     p.value.store(v);
                 }
+                return true;
             }, data_);
+            return false;
         }
 
         void setToDefault() noexcept
@@ -109,12 +112,12 @@ namespace dsp::parameter {
 
         void reset() noexcept { setToDefault(); }
 
-        [[nodiscard]] nlohmann::ordered_json toJson() const
+        [[nodiscard]] json toJson() const
         {
-            return std::visit([&](const auto& p) -> nlohmann::ordered_json {
+            return std::visit([&](const auto& p) -> json {
                 using T = std::decay_t<decltype(p)>;
 
-                nlohmann::ordered_json j;
+                json j;
                 j["name"] = name_;
                 j["type"] = typeToString(p.type);
                 j["value"] = p.value.load();
@@ -126,6 +129,27 @@ namespace dsp::parameter {
 
                 return j;
             }, data_);
+        }
+        
+        [[nodiscard]] bool trySetFromJson(const json& j) noexcept
+        {
+            try {
+                if (j.at("name").get<std::string>() != name_ ||
+                    j.at("type").get<std::string>() != typeToString(getType())
+                ) return false;
+
+                const auto value = j.at("value");
+
+                std::visit([&](auto &p) -> bool {
+                    using ValueType = std::decay_t<decltype(p.value.load())>;
+                    return set(value.get<ValueType>());
+                }, data_);
+
+                return true;
+            } catch (const std::exception& e) {
+                std::cerr << "Failed to set parameter from JSON: " << e.what() << std::endl;
+                return false;
+            }
         }
 
     private:
