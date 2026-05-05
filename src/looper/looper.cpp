@@ -1,6 +1,7 @@
 #include "looper.h"
 
 #include <format>
+#include <print>
 #include <cmath>
 
 #include "audio/audio_engine.h"
@@ -106,11 +107,10 @@ namespace looper {
             const auto nInputs = audio::AudioEngine::getInstance().getNumInputChannels();
 
             sourceMixer.prepare(nInputs, audio::kMaxFramesInBuffer, sampleRate);
-            sourceMixer.getParameterTree()["SourceChannel1"]["Input1"]["Source"].asParameterUnsafe().set<int>(0);
-            sourceMixer.getParameterTree()["SourceChannel1"]["Stereo"].asParameterUnsafe().set<bool>(false);
-
-            sourceMixer.getParameterTree()["SourceChannel2"]["Input1"]["Source"].asParameterUnsafe().set<int>(1);
-            sourceMixer.getParameterTree()["SourceChannel2"]["Stereo"].asParameterUnsafe().set<bool>(false);
+            // sourceMixer.getParameterTree()["SourceChannel1"]["Input1"]["Source"].asParameterUnsafe().set<int>(0);
+            // sourceMixer.getParameterTree()["SourceChannel1"]["Stereo"].asParameterUnsafe().set<bool>(false);
+            // sourceMixer.getParameterTree()["SourceChannel2"]["Input1"]["Source"].asParameterUnsafe().set<int>(1);
+            // sourceMixer.getParameterTree()["SourceChannel2"]["Stereo"].asParameterUnsafe().set<bool>(false);
 
             //std::cout << sourceMixer.getParameterTree().toJson().dump(4) << std::endl;
 
@@ -202,6 +202,19 @@ namespace looper {
         return { "Looper", {
             cb_->sourceMixer.getParameterTree(),
         }};
+    }
+
+    json Looper::getSettingsAsJson() const
+    {
+        return getParameterTree().toJson();
+    }
+
+    bool Looper::loadSettingsFromJson(const json& j)
+    {
+        if (const auto it = j.find("SourceMixer"); it != j.end() && it->is_object()) {
+            return cb_->sourceMixer.getParameterTree().tryLoadFromJson(*it);
+        }
+        return false;
     }
 
     void Looper::startRecording(int trackIndex) const

@@ -64,6 +64,10 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
             sessionManager_.openSessionsPathDialog();
         }
 
+        if (const auto it = settings.find("looper"); it != settings.end() && it->is_object()) {
+            looper_.loadSettingsFromJson(*it);
+        }
+
         std::cout << "Settings loaded from " << filepaths::settingsPath() << std::endl;
     }
 
@@ -114,6 +118,8 @@ MainApplication::~MainApplication()
 
     sessionManager_.saveCurrentSessionToDisk(looper_);
     j["sessionsPath"] = sessionManager_.getSessionsPath();
+
+    j["looper"] = looper_.getSettingsAsJson();
 
     if (saveJsonToFile(filepaths::settingsPath().string(), j)) {
         std::cout << "Settings saved to " << filepaths::settingsPath() << std::endl;

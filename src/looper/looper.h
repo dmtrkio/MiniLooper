@@ -62,6 +62,9 @@ namespace looper {
         [[nodiscard]] MixerParams& getMixerParams() const noexcept;
         [[nodiscard]] dsp::parameter::ParameterTree getParameterTree() const noexcept;
 
+        [[nodiscard]] json getSettingsAsJson() const;
+        bool loadSettingsFromJson(const json& j);
+
         void startRecording(int trackIndex) const;
         void stopRecording(int trackIndex) const;
         void clear(int trackIndex) const;
