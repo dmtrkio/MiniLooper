@@ -13,6 +13,7 @@ add_subdirectory(faust)
 set(SOURCE_FILES
     src/audio/audio_engine.cpp
     src/audio/wav_writer.cpp
+    src/dsp/parameter/parameter_tree.cpp
     src/midi/midi.cpp
     src/main_application.cpp
     src/main_callbacks.cpp

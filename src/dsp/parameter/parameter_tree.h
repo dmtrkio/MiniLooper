@@ -1,40 +1,26 @@
 #pragma once
 
-#include <stdexcept>
+#include <concepts>
+#include <functional>
+#include <memory>
+#include <optional>
+#include <string>
+#include <string_view>
 #include <variant>
 #include <vector>
-#include <optional>
-#include <concepts>
-#include <string_view>
-#include <memory>
 
 #include "audio_parameter.h"
+#include "json.h"
 
 namespace dsp::parameter {
     class ParameterTree
     {
     public:
-        explicit ParameterTree(std::string name)
-            : node_(std::make_shared<Node>(std::move(name), Vec{})) {}
+        explicit ParameterTree(std::string name);
+        explicit ParameterTree(Parameter param);
+        ParameterTree(std::string name, std::vector<Parameter> parameters);
+        ParameterTree(std::string name, std::vector<ParameterTree> children);
 
-        explicit ParameterTree(Parameter param)
-            : node_(std::make_shared<Node>(std::move(param))) {}
-
-        ParameterTree(std::string name, std::vector<Parameter> parameters)
-            : ParameterTree(std::move(name))
-        {
-            addParameters(std::move(parameters));
-        }
-
-        ParameterTree(std::string name, std::vector<ParameterTree> children)
-            : ParameterTree(std::move(name))
-        {
-            for (auto& subtree : children) {
-                addSubTree(std::move(subtree));
-            }
-        }
-
-        // Lightweight copy — shares the underlying node
         ParameterTree(const ParameterTree&) = default;
         ParameterTree& operator=(const ParameterTree&) = default;
         ParameterTree(ParameterTree&&) noexcept = default;
@@ -42,53 +28,18 @@ namespace dsp::parameter {
 
         [[nodiscard]] bool isValid() const noexcept { return node_ != nullptr; }
 
-        [[nodiscard]] const std::string& getName() const
-        {
-            if (!isValid()) throw std::runtime_error{"Invalid ParameterTree"};
-            if (isParameter())
-                return std::get<Parameter>(node_->data).getName();
-            return node_->name;
-        }
+        [[nodiscard]] const std::string& getName() const;
 
         [[nodiscard]] bool isSubTree() const { return isValid() && std::holds_alternative<Vec>(node_->data); }
         [[nodiscard]] bool isParameter() const { return isValid() && std::holds_alternative<Parameter>(node_->data); }
 
-        [[nodiscard]] Parameter& asParameterUnsafe()
-        {
-            if (!isParameter()) throw std::runtime_error{"Not a parameter node"};
-            return std::get<Parameter>(node_->data);
-        }
+        [[nodiscard]] Parameter& asParameterUnsafe();
+        [[nodiscard]] const Parameter& asParameterUnsafe() const;
 
-        [[nodiscard]] const Parameter& asParameterUnsafe() const
-        {
-            if (!isParameter()) throw std::runtime_error{"Not a parameter node"};
-            return std::get<Parameter>(node_->data);
-        }
+        [[nodiscard]] std::optional<std::reference_wrapper<Parameter>> asParameter() noexcept;
+        [[nodiscard]] std::optional<std::reference_wrapper<Parameter>> getParameter(const std::string& name);
 
-        [[nodiscard]] std::optional<std::reference_wrapper<Parameter>> asParameter() noexcept
-        {
-            if (!isParameter()) return std::nullopt;
-            return std::get<Parameter>(node_->data);
-        }
-
-        [[nodiscard]] std::optional<std::reference_wrapper<Parameter>> getParameter(const std::string& name)
-        {
-            auto tree = (*this)[name];
-            if (!tree.isValid()) return std::nullopt;
-            return tree.asParameter();
-        }
-
-        [[nodiscard]] ParameterTree operator[](std::string_view key) const
-        {
-            if (!isSubTree()) return ParameterTree{};
-
-            const auto& children = std::get<Vec>(node_->data);
-            const auto it = std::ranges::find_if(children, [&](const ParameterTree& node) {
-                return node.getName() == key;
-            });
-
-            return (it != children.end()) ? *it : ParameterTree{};
-        }
+        [[nodiscard]] ParameterTree operator[](std::string_view key) const;
 
         template <typename Fn>
         requires std::invocable<Fn, ParameterTree&>
@@ -115,77 +66,17 @@ namespace dsp::parameter {
             }
         }
 
-        ParameterTree addSubTree(ParameterTree subtree)
-        {
-            if (!isSubTree() || !subtree.isValid()) return ParameterTree{};
+        ParameterTree addSubTree(ParameterTree subtree);
+        ParameterTree addParameter(Parameter&& parameter);
+        void addParameters(std::vector<Parameter> parameters);
 
-            auto& children = std::get<Vec>(node_->data);
+        [[nodiscard]] bool operator==(const ParameterTree& other) const noexcept;
+        [[nodiscard]] bool operator!=(const ParameterTree& other) const noexcept;
 
-            const auto it = std::ranges::find_if(children, [&](const ParameterTree& node) {
-                return node.getName() == subtree.getName();
-            });
-
-            if (it != children.end()) throwDuplicateNameException();
-
-            children.push_back(std::move(subtree));
-            return children.back();
-        }
-
-        ParameterTree addParameter(Parameter&& parameter)
-        {
-            if (!isSubTree()) return ParameterTree{};
-
-            auto& children = std::get<Vec>(node_->data);
-
-            const auto it = std::ranges::find_if(children, [&](const ParameterTree& node) {
-                return node.getName() == parameter.getName();
-            });
-
-            if (it != children.end()) throwDuplicateNameException();
-
-            children.emplace_back(std::move(parameter));
-            return children.back();
-        }
-
-        void addParameters(std::vector<Parameter> parameters)
-        {
-            if (!isSubTree()) return;
-
-            for (auto& parameter : parameters) {
-                addParameter(std::move(parameter));
-            }
-        }
-
-        [[nodiscard]] bool operator==(const ParameterTree& other) const noexcept
-        {
-            return node_ == other.node_;
-        }
-
-        [[nodiscard]] bool operator!=(const ParameterTree& other) const noexcept
-        {
-            return node_ != other.node_;
-        }
-
-        [[nodiscard]] nlohmann::ordered_json toJson() const
-        {
-            if (!isValid()) return nullptr;
-
-            if (isParameter()) {
-                return asParameterUnsafe().toJson();
-            }
-
-            nlohmann::ordered_json j = nlohmann::ordered_json::object();
-            forEachChild([&](const ParameterTree& child) {
-                j[child.getName()] = child.toJson();
-            });
-            return j;
-        }
+        [[nodiscard]] json toJson() const;
 
     private:
-        void throwDuplicateNameException()
-        {
-            throw std::runtime_error{"Duplicate key: a parameter or subtree with the same name already exists in the current tree"};
-        }
+        void throwDuplicateNameException();
 
         using Vec = std::vector<ParameterTree>;
         using Variant = std::variant<Vec, Parameter>;
@@ -204,31 +95,8 @@ namespace dsp::parameter {
 
         std::shared_ptr<Node> node_;
 
-        // Private default invalid tree constructor
-        ParameterTree() : node_(nullptr) {}
+        ParameterTree();
     };
 
-    inline ParameterTree testParameterTree()
-    {
-        using namespace dsp::parameter;
-        ParameterTree paramTree{"Test Parameter Tree"};
-        paramTree.addParameters({Parameter::makeBoolean("On", false)});
-
-        ParameterTree group1{"Group 1"};
-        group1.addParameter(Parameter::makeFloat("Gain", 50.0f, dsp::Range{0.0f, 100.0f}));
-        group1.addParameter(Parameter::makeFloat("Mix", 50.0f, dsp::Range{0.0f, 100.0f}));
-        auto g1 = paramTree.addSubTree(std::move(group1));
-
-        g1.addSubTree(ParameterTree{"Nested", {
-            Parameter::makeInteger("Count", 0, dsp::Range{0, 10}),
-            Parameter::makeFloat("Pan", 0.0f, dsp::Range{-1.0f, 1.0f}),
-        }});
-
-        ParameterTree group2{"Group 2"};
-        group2.addParameter(Parameter::makeFloat("Cutoff", 50.0f, dsp::Range{0.0f, 100.0f}));
-        group2.addParameter(Parameter::makeFloat("Q", 50.0f, dsp::Range{0.0f, 100.0f}));
-        paramTree.addSubTree(std::move(group2));
-
-        return paramTree;
-    }
-} // namespace dsp::parameter
+    ParameterTree testParameterTree();
+}
