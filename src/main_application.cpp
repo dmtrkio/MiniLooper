@@ -1,11 +1,9 @@
 #include "main_application.h"
 
 #include <iostream>
-#include <fstream>
 #include <optional>
 
-#include "imgui.h"
-#include <nlohmann/json.hpp>
+#include <imgui.h>
 
 #include "audio/audio_engine.h"
 #include "ui/volume_meter.h"
@@ -17,8 +15,7 @@
 #include "ui/session_manager_ui.h"
 #include "filepaths.h"
 #include "fonts/Inter-Regular.h"
-
-using json = nlohmann::ordered_json;
+#include "json.h"
 
 static std::unique_ptr<midi::MidiEngine> makeMidiEngine(looper::Looper &looper)
 {
@@ -36,119 +33,6 @@ static std::unique_ptr<midi::MidiEngine> makeMidiEngine(looper::Looper &looper)
     }
 }
 
-static json audioSettingsToJson()
-{
-    const auto &audioEngine = audio::AudioEngine::getInstance();
-
-    auto audioDeviceToJson = [](const audio::AudioDevice &device) -> json {
-        return {
-            { "deviceIndex", device.deviceIndex },
-            { "deviceName", device.deviceName },
-            { "hostApi", device.hostApiName }
-        };
-    };
-
-    json j;
-
-    if (const auto *inputDevice = audioEngine.getInputAudioDeviceByIndex(audioEngine.getCurrentInputDevice())) {
-        j["inputDevice"] = audioDeviceToJson(*inputDevice);
-    }
-
-    if (const auto *outputDevice = audioEngine.getOutputAudioDeviceByIndex(audioEngine.getCurrentOutputDevice())) {
-        j["outputDevice"] = audioDeviceToJson(*outputDevice);
-    }
-
-    j["sampleRate"] = audioEngine.getSampleRate();
-    j["bufferSize"] = audioEngine.getBufferSize();
-
-    return j;
-}
-
-static void loadAudioSettingsFromJson(const json& j)
-{
-    auto &audioEngine = audio::AudioEngine::getInstance();
-
-    if (j.contains("inputDevice") && j["inputDevice"].is_object()) {
-        const auto& inputObj = j["inputDevice"];
-        if (inputObj.contains("deviceIndex") && inputObj["deviceIndex"].is_number()) {
-            const auto index = inputObj["deviceIndex"].get<audio::DeviceIndex>();
-            audioEngine.setInputDevice(index);
-        }
-    }
-
-    if (j.contains("outputDevice") && j["outputDevice"].is_object()) {
-        const auto& outputObj = j["outputDevice"];
-        if (outputObj.contains("deviceIndex") && outputObj["deviceIndex"].is_number()) {
-            const auto index = outputObj["deviceIndex"].get<audio::DeviceIndex>();
-            audioEngine.setOutputDevice(index);
-        }
-    }
-
-    if (j.contains("sampleRate") && j["sampleRate"].is_number()) {
-        const auto rate = j["sampleRate"].get<unsigned int>();
-        audioEngine.setSampleRate(rate);
-    }
-
-    if (j.contains("bufferSize") && j["bufferSize"].is_number()) {
-        const auto size = j["bufferSize"].get<unsigned int>();
-        audioEngine.setBufferSize(size);
-    }
-}
-
-static json midiSettingsToJson(const midi::MidiEngine& midiEngine)
-{
-    json j;
-
-    if (const auto* inputDevice = midiEngine.getMidiInputDeviceByIndex(midiEngine.getCurrentMidiInputDevice())) {
-        j["inputDevice"]["deviceIndex"] = inputDevice->deviceIndex;
-        j["inputDevice"]["deviceName"] = inputDevice->deviceName;
-        j["inputDevice"]["apiName"] = inputDevice->apiName;
-    }
-
-    return j;
-}
-
-static void loadMidiSettingsFromJson(const json& j, midi::MidiEngine& midiEngine)
-{
-    if (j.contains("inputDevice")) {
-        const auto& inputDevice = j["inputDevice"];
-        if (inputDevice.contains("deviceIndex") && inputDevice["deviceIndex"].is_number()) {
-            const auto deviceIndex = inputDevice["deviceIndex"].get<midi::DeviceIndex>();
-            midiEngine.setMidiInputDevice(deviceIndex);
-        }
-    }
-}
-
-bool saveJsonToFile(const std::string& filename, const json& j)
-{
-    try {
-        std::ofstream file(filename);
-        if (!file.is_open()) {
-            std::cerr << "Cound not open " << filename << std::endl;
-            return false;
-        }
-
-        file << j.dump(4);
-        return true;
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return false;
-    }
-}
-
-std::optional<json> loadJsonFromFile(const std::string& filename)
-{
-    try {
-        std::ifstream file(filename);
-        if (!file.is_open())
-            return std::nullopt;
-        return json::parse(file);
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return std::nullopt;
-    }
-}
-
 MainApplication::MainApplication(const int argc, const char* const* argv)
     : midiEngine_(makeMidiEngine(looper_))
 {
@@ -161,12 +45,13 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
     if (const auto j = loadJsonFromFile(filepaths::settingsPath().string()); j.has_value()) {
         const auto& settings = j.value();
 
-        if (settings.contains("midi") && midiEngine_) {
-            loadMidiSettingsFromJson(settings["midi"], *midiEngine_);
+        if (const auto it = settings.find("midi"); it != settings.end() && it->is_object()) {
+            if (midiEngine_)
+                midiEngine_->loadSettingsFromJson(*it);
         }
 
-        if (settings.contains("audio")) {
-            loadAudioSettingsFromJson(settings["audio"]);
+        if (const auto it = settings.find("audio"); it != settings.end() && it->is_object()) {
+            audio::AudioEngine::getInstance().loadSettingsFromJson(*it);
         }
 
         if (const auto it = settings.find("sessionsPath"); it != settings.end() && it->is_string()) {
@@ -180,9 +65,6 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
         }
 
         std::cout << "Settings loaded from " << filepaths::settingsPath() << std::endl;
-    } else {
-        audioEngine.setSampleRate(48000);
-        audioEngine.setBufferSize(64);
     }
 
     if (!audioEngine.start() || !audioEngine.isRunning()) {
@@ -224,10 +106,10 @@ MainApplication::~MainApplication()
         std::cout << "Audio engine stopped successfully.\n";
 
     json j;
-    j["audio"] = audioSettingsToJson();
+    j["audio"] = audio::AudioEngine::getInstance().getSettingsAsJson();
 
     if (midiEngine_) {
-        j["midi"] = midiSettingsToJson(*midiEngine_);
+        j["midi"] = midiEngine_->getSettingsAsJson();
     }
 
     sessionManager_.saveCurrentSessionToDisk(looper_);

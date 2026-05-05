@@ -9,6 +9,7 @@
 #include "porttime.h"
 
 #include "midi_message.h"
+#include "json.h"
 
 namespace midi {
     using MidiInputCallback = std::function<void(int, MidiMessage)>;
@@ -55,6 +56,30 @@ namespace midi {
             }
 
             Pm_Terminate();
+        }
+
+        [[nodiscard]] json getSettingsAsJson() const
+        {
+            json j;
+
+            if (const auto* inputDevice = getMidiInputDeviceByIndex(getCurrentMidiInputDevice())) {
+                j["inputDevice"]["deviceIndex"] = inputDevice->deviceIndex;
+                j["inputDevice"]["deviceName"] = inputDevice->deviceName;
+                j["inputDevice"]["apiName"] = inputDevice->apiName;
+            }
+
+            return j;
+        }
+
+        void loadSettingsFromJson(const json& j)
+        {
+            if (j.contains("inputDevice")) {
+                const auto& inputDevice = j["inputDevice"];
+                if (inputDevice.contains("deviceIndex") && inputDevice["deviceIndex"].is_number()) {
+                    const auto deviceIndex = inputDevice["deviceIndex"].get<midi::DeviceIndex>();
+                    setMidiInputDevice(deviceIndex);
+                }
+            }
         }
 
         void start()

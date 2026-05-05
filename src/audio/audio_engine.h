@@ -6,6 +6,7 @@
 #include <memory>
 
 #include "audio_device.h"
+#include "json.h"
 
 namespace audio {
     static constexpr unsigned int kMaxFramesInBuffer = 8096;
@@ -41,6 +42,9 @@ namespace audio {
 
         AudioEngine(AudioEngine&&) noexcept = delete;
         AudioEngine& operator=(AudioEngine&&) noexcept = delete;
+
+        [[nodiscard]] json getSettingsAsJson() const;
+        void loadSettingsFromJson(const json& j);
 
         // -- Only these are safe to be called from an audio callback --
         unsigned int getNumInputChannels() const noexcept;
@@ -85,7 +89,7 @@ namespace audio {
         mutable std::mutex streamMutex_;
 
         std::atomic<unsigned int> sampleRate_{48000};
-        std::atomic<unsigned int> bufferSize_{256};
+        std::atomic<unsigned int> bufferSize_{128};
 
         DeviceIndex inputDeviceIndex_{kNoDevice};
         DeviceIndex outputDeviceIndex_{kNoDevice};
