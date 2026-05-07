@@ -3,6 +3,10 @@ cmake_minimum_required(VERSION 3.22)
 # Project Settings
 project(MiniLooper VERSION 0.0.1)
 set(APP_ORGANIZATION "MiniLooper")
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies.cmake)
 
@@ -21,11 +25,6 @@ set(SOURCE_FILES
     src/ui/parameter_ui.cpp
     ${imgui_SOURCES}
 )
-
-# Build Executable
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
 if (WIN32)
     add_executable(${PROJECT_NAME} WIN32 ${SOURCE_FILES})
@@ -50,9 +49,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${portmidi_SOURCE_DIR}/porttime
     ${imgui_INCLUDES}
     ${dr_wav_SOURCE_DIR}
-)
-
-target_include_directories(${PROJECT_NAME} PUBLIC
     ${SDL3_INCLUDE_DIRS}
 )
 
@@ -64,8 +60,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     SDL3::SDL3-static
     nlohmann_json::nlohmann_json
 )
-
-target_compile_definitions(${PROJECT_NAME} PRIVATE SDL_MAIN_USE_CALLBACKS)
 
 # Compile options
 target_compile_options(${PROJECT_NAME} PRIVATE
