@@ -6,9 +6,6 @@ set(APP_ORGANIZATION "MiniLooper")
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies.cmake)
 
-# Faust Generated DSP
-add_subdirectory(faust)
-
 # Source files
 set(SOURCE_FILES
     src/audio/audio_engine.cpp
