@@ -9,3 +9,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_subdirectory(cmake)
 add_subdirectory(src)
+
+include(CTest)
+enable_testing()
+add_subdirectory(tests)
