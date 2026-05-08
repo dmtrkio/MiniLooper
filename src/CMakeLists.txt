@@ -13,6 +13,19 @@ add_library(${PROJECT_NAME}_core OBJECT
 
 target_include_directories(${PROJECT_NAME}_core PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/generated>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/res>
+)
+
+target_link_libraries(${PROJECT_NAME}_core PUBLIC
+    MiniLooper::dependencies
+)
+
+target_compile_options(${PROJECT_NAME}_core PRIVATE
+    $<$<CONFIG:Debug>:$<$<CXX_COMPILER_ID:MSVC>:/RTC1 /W3>>
+    $<$<CONFIG:Release>:$<$<CXX_COMPILER_ID:MSVC>:/O2 /W3>>
+    $<$<CONFIG:Debug>:$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-g -Wall -Wextra>>
+    $<$<CONFIG:Release>:$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-O2 -Wall -Wextra>>
 )
 
 if (WIN32)
@@ -25,5 +38,6 @@ else()
     add_executable(${PROJECT_NAME} main_callbacks.cpp)
 endif()
 
-
 target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_NAME}_core)
+
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
