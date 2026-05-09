@@ -4,7 +4,6 @@
 #include <array>
 #include <vector>
 #include <cassert>
-#include <ranges>
 
 #include "dsp/dsp.h"
 #include "dsp/parameter/parameter_tree.h"
@@ -12,7 +11,6 @@
 #include "processing_chain.h"
 
 namespace looper {
-
     class SourceChannel
     {
     public:
@@ -42,21 +40,22 @@ namespace looper {
 
         void processAdding(const float *const *in, float *const *out, unsigned int nFrames) noexcept
         {
-            // for (auto frame{0u}; frame < nFrames; ++frame) {
-            //     out[0][frame] += in[0][frame];
-            //     out[1][frame] += in[0][frame];
-            // }
-            // return;
+            assert(nFrames <= buffers_[0].size());
 
             applyParams();
 
-            assert(nFrames <= buffers_[0].size());
+            for (auto& buf : buffers_) {
+                std::fill_n(buf.begin(), nFrames, 0.0f);
+            }
 
             if (stereo_) {
-                for (auto [input, gain, buf] : std::views::zip(inputs_, inputGains_, buffers_)) {
+                dsp::staticFor<2>([&](auto ch) {
+                    const auto input = inputs_[ch];
+                    const auto gain = inputGains_[ch];
+                    auto& buf = buffers_[ch];
+
                     if (input == kNoInput) {
-                        std::fill_n(buf.begin(), nFrames, 0.0f);
-                        continue;
+                        return;
                     }
 
                     const float* inputBuffer = in[static_cast<std::size_t>(input)];
@@ -65,35 +64,35 @@ namespace looper {
                     for (auto frame{0u}; frame < nFrames; ++frame) {
                         buf[frame] = inputBuffer[frame] * gain;
                     }
-                }
+                });
             } else {
-                const auto input = inputs_[0];
-                const auto gain = inputGains_[0];
-                if (input == kNoInput) {
-                    for (auto& buf : buffers_) {
-                        std::fill_n(buf.begin(), nFrames, 0.0f);
+                dsp::staticFor<2>([&](auto ch) {
+                    const auto input = inputs_[ch];
+                    const auto gain = inputGains_[ch];
+
+                    if (input == kNoInput) {
+                        return;
                     }
-                } else {
+
                     const float* inputBuffer = in[static_cast<std::size_t>(input)];
                     assert(inputBuffer != nullptr);
 
                     for (auto frame{0u}; frame < nFrames; ++frame) {
-                        buffers_[0][frame] = inputBuffer[frame] * gain;
+                        const auto inputSample = inputBuffer[frame] * gain;
+                        for (auto& buf : buffers_) {
+                            buf[frame] += inputSample;
+                        }
                     }
-
-                    for (std::size_t i = 1; i < buffers_.size(); ++i) {
-                        std::copy_n(buffers_[0].data(), nFrames, buffers_[i].data());
-                    }
-                }
+                });
             }
             
             processInternal(nFrames);
 
-            for (auto ch{0u}; ch < 2; ++ch) {
-                for (auto frame{0u}; frame < nFrames; ++frame) {
+            dsp::staticFor<2>([&](auto ch) {
+                for (std::size_t frame{}; frame < nFrames; ++frame) {
                     out[ch][frame] += buffers_[ch][frame];
                 }
-            }
+            });
         }
 
         using Param = dsp::parameter::Parameter;
@@ -176,9 +175,9 @@ namespace looper {
 
         void process(const float *const *in, float *const *out, unsigned int nFrames) noexcept
         {
-            for (auto ch{0u}; ch < kNumChannels; ++ch) {
-                std::fill_n(out[ch], nFrames, 0.0f);
-            }
+            dsp::staticFor<2>([&](auto channel) {
+                std::fill_n(out[channel], nFrames, 0.0f);
+            });
 
             for (auto& ch : channels_) {
                 ch.processAdding(in, out, nFrames);
