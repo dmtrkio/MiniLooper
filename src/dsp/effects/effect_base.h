@@ -23,7 +23,7 @@ namespace dsp::effects {
         {
             auto tree = getParameterTree();
             if (tree.isValid()) {
-                return tree.tryLoadFromJson(j);
+                return tree.copyParameterValuesFromJson(j);
             }
             return false;
         }

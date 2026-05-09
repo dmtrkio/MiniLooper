@@ -212,7 +212,7 @@ namespace looper {
     bool Looper::loadSettingsFromJson(const json& j)
     {
         if (const auto it = j.find("SourceMixer"); it != j.end() && it->is_object()) {
-            return cb_->sourceMixer.getParameterTree().tryLoadFromJson(*it);
+            return cb_->sourceMixer.getParameterTree().copyParameterValuesFromJson(*it);
         }
         return false;
     }

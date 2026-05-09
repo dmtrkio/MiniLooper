@@ -29,7 +29,7 @@ namespace dsp::parameter {
 
     const std::string& ParameterTree::getName() const
     {
-        if (!isValid()) throw std::runtime_error{"Invalid ParameterTree"};
+        if (!isValid()) throwInvalidTreeException();
         if (isParameter())
             return std::get<Parameter>(node_->data).getName();
         return node_->name;
@@ -53,20 +53,25 @@ namespace dsp::parameter {
         return std::get<Parameter>(node_->data);
     }
 
-    std::optional<std::reference_wrapper<Parameter>> ParameterTree::getParameter(const std::string& name)
+    std::optional<std::reference_wrapper<Parameter>> ParameterTree::getParameter(const std::string& name) noexcept
     {
         auto tree = (*this)[name];
         if (!tree.isValid()) return std::nullopt;
         return tree.asParameter();
     }
 
-    ParameterTree ParameterTree::operator[](std::string_view key) const
+    ParameterTree ParameterTree::operator[](std::string_view key) const noexcept
     {
         if (!isSubTree()) return ParameterTree{};
 
         const auto& children = std::get<Vec>(node_->data);
         const auto it = std::ranges::find_if(children, [&](const ParameterTree& node) {
-            return node.getName() == key;
+            try {
+                return node.getName() == key;
+            } catch (...) {
+                assert(false && "should never run");
+                return false;
+            }
         });
 
         return (it != children.end()) ? *it : ParameterTree{};
@@ -138,7 +143,7 @@ namespace dsp::parameter {
         return j;
     }
     
-    bool ParameterTree::tryLoadFromJson(const json& j) noexcept
+    bool ParameterTree::copyParameterValuesFromJson(const json& j) noexcept
     {
         if (!isValid()) return false;
 
@@ -151,7 +156,7 @@ namespace dsp::parameter {
         bool success = true;
         for (const auto& [key, value] : j.items()) {
             auto child = (*this)[key];
-            if (!child.tryLoadFromJson(value)) {
+            if (!child.copyParameterValuesFromJson(value)) {
                 success = false;
             }
         }
@@ -163,27 +168,8 @@ namespace dsp::parameter {
         throw std::runtime_error{"Duplicate key: a parameter or subtree with the same name already exists in the current tree"};
     }
 
-    ParameterTree testParameterTree()
+    void ParameterTree::throwInvalidTreeException()
     {
-        using namespace dsp::parameter;
-        ParameterTree paramTree{"Test Parameter Tree"};
-        paramTree.addParameters({Parameter::makeBoolean("On", false)});
-
-        ParameterTree group1{"Group 1"};
-        group1.addParameter(Parameter::makeFloat("Gain", 50.0f, dsp::Range{0.0f, 100.0f}));
-        group1.addParameter(Parameter::makeFloat("Mix", 50.0f, dsp::Range{0.0f, 100.0f}));
-        auto g1 = paramTree.addSubTree(std::move(group1));
-
-        g1.addSubTree(ParameterTree{"Nested", {
-            Parameter::makeInteger("Count", 0, dsp::Range{0, 10}),
-            Parameter::makeFloat("Pan", 0.0f, dsp::Range{-1.0f, 1.0f}),
-        }});
-
-        ParameterTree group2{"Group 2"};
-        group2.addParameter(Parameter::makeFloat("Cutoff", 50.0f, dsp::Range{0.0f, 100.0f}));
-        group2.addParameter(Parameter::makeFloat("Q", 50.0f, dsp::Range{0.0f, 100.0f}));
-        paramTree.addSubTree(std::move(group2));
-
-        return paramTree;
+        throw std::runtime_error{"Parameter Tree is invalid"};
     }
 }

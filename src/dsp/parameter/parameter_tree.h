@@ -16,9 +16,13 @@ namespace dsp::parameter {
     class ParameterTree
     {
     public:
+        // creates an empty tree with a given name
         explicit ParameterTree(std::string name);
+        // wraps parameter in a parameter tree
         explicit ParameterTree(Parameter param);
+        // creates a tree with parameter child nodes creates from parameters vector
         ParameterTree(std::string name, std::vector<Parameter> parameters);
+        // creates a tree with given subtrees
         ParameterTree(std::string name, std::vector<ParameterTree> children);
 
         ParameterTree(const ParameterTree&) = default;
@@ -26,45 +30,30 @@ namespace dsp::parameter {
         ParameterTree(ParameterTree&&) noexcept = default;
         ParameterTree& operator=(ParameterTree&&) noexcept = default;
 
-        [[nodiscard]] bool isValid() const noexcept { return node_ != nullptr; }
-
         [[nodiscard]] const std::string& getName() const;
 
-        [[nodiscard]] bool isSubTree() const { return isValid() && std::holds_alternative<Vec>(node_->data); }
-        [[nodiscard]] bool isParameter() const { return isValid() && std::holds_alternative<Parameter>(node_->data); }
+        // refers to a valid node (Parameter or a tree)
+        [[nodiscard]] bool isValid() const noexcept;
+        // refers to a tree
+        [[nodiscard]] bool isSubTree() const;
+        // refers to a parameter
+        [[nodiscard]] bool isParameter() const;
 
         [[nodiscard]] Parameter& asParameterUnsafe();
         [[nodiscard]] const Parameter& asParameterUnsafe() const;
 
         [[nodiscard]] std::optional<std::reference_wrapper<Parameter>> asParameter() noexcept;
-        [[nodiscard]] std::optional<std::reference_wrapper<Parameter>> getParameter(const std::string& name);
+        [[nodiscard]] std::optional<std::reference_wrapper<Parameter>> getParameter(const std::string& name) noexcept;
 
-        [[nodiscard]] ParameterTree operator[](std::string_view key) const;
+        [[nodiscard]] ParameterTree operator[](std::string_view key) const noexcept;
 
         template <typename Fn>
         requires std::invocable<Fn, ParameterTree&>
-        void forEachChild(Fn&& fn) const
-        {
-            if (!isSubTree()) return;
-
-            for (auto& child : std::get<Vec>(node_->data)) {
-                fn(child);
-            }
-        }
+        void forEachChild(Fn&& fn);
 
         template <typename Fn>
-        requires std::invocable<Fn, Parameter&>
-        void forEachParameter(Fn&& fn) const
-        {
-            if (isParameter()) {
-                fn(asParameterUnsafe());
-                return;
-            }
-
-            for (auto& child : std::get<Vec>(node_->data)) {
-                child.forEachParameter(std::forward<Fn>(fn));
-            }
-        }
+        requires std::invocable<Fn, const ParameterTree&>
+        void forEachChild(Fn&& fn) const;
 
         ParameterTree addSubTree(ParameterTree subtree);
         ParameterTree addParameter(Parameter&& parameter);
@@ -74,10 +63,11 @@ namespace dsp::parameter {
         [[nodiscard]] bool operator!=(const ParameterTree& other) const noexcept;
 
         [[nodiscard]] json toJson() const;
-        bool tryLoadFromJson(const json& j) noexcept;
+        bool copyParameterValuesFromJson(const json& j) noexcept;
 
     private:
-        void throwDuplicateNameException();
+        static void throwDuplicateNameException();
+        static void throwInvalidTreeException();
 
         using Vec = std::vector<ParameterTree>;
         using Variant = std::variant<Vec, Parameter>;
@@ -99,5 +89,44 @@ namespace dsp::parameter {
         ParameterTree();
     };
 
-    ParameterTree testParameterTree();
+    [[nodiscard]] inline bool ParameterTree::isValid() const noexcept
+    {
+        return node_ != nullptr;
+    }
+
+    [[nodiscard]] inline bool ParameterTree::isSubTree() const 
+    {
+        return isValid() && std::holds_alternative<Vec>(node_->data);
+    }
+
+    [[nodiscard]] inline bool ParameterTree::isParameter() const
+    {
+        return isValid() && std::holds_alternative<Parameter>(node_->data);
+    }
+
+    template <typename Fn>
+    requires std::invocable<Fn, ParameterTree&>
+    inline void ParameterTree::forEachChild(Fn&& fn)
+    {
+        if (!isValid()) throwInvalidTreeException();
+
+        if (!isSubTree()) return;
+
+        for (auto& child : std::get<Vec>(node_->data)) {
+            fn(child);
+        }
+    }
+
+    template <typename Fn>
+    requires std::invocable<Fn, const ParameterTree&>
+    inline void ParameterTree::forEachChild(Fn&& fn) const
+    {
+        if (!isValid()) throwInvalidTreeException();
+
+        if (!isSubTree()) return;
+
+        for (const auto& child : std::get<Vec>(node_->data)) {
+            fn(child);
+        }
+    }
 }
