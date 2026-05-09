@@ -6,6 +6,7 @@
 #include "dsp/effects/effect_base.h"
 #include "dsp/parameter/parameter_tree.h"
 #include "dsp/dsp.h"
+#include "dsp/delay_line.h"
 
 namespace dsp::effects {
     class PitchShifter : public EffectBase
@@ -34,5 +35,6 @@ namespace dsp::effects {
 
         const std::size_t kBufferSize = 8046;
         std::array<std::vector<float>, 2> buffers_; 
+        std::array<FractionalDelayLine, 2> delay_;
     };
 }

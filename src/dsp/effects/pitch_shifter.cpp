@@ -14,16 +14,22 @@ namespace dsp::effects {
         semitones_.init(static_cast<float>(paramTree_["Semitones"].asParameterUnsafe().get<int>()));
         mix_.init(paramTree_["Mix"].asParameterUnsafe().get<float>());
 
-        setOn();
-
         shifter_.configure(
             2,
-            static_cast<int>(sampleRate * 0.05f),
-            static_cast<int>(sampleRate * 0.02f),
+            static_cast<int>(sampleRate * 0.025f),
+            static_cast<int>(sampleRate * 0.0125f),
             true
         );
 
         shifter_.reset();
+
+        const auto latency = static_cast<float>(shifter_.inputLatency() + shifter_.outputLatency());
+        for(auto& d : delay_) {
+            d.prepare(latency);
+            d.setDelay(latency);
+        }
+
+        setOn();
     }
 
     void PitchShifter::process(float *const *data, unsigned int nFrames)
@@ -41,7 +47,8 @@ namespace dsp::effects {
 
         staticFor<2>([&](auto channel) {
             for (std::size_t i{0u}; i < nFrames; ++i) {
-                data[channel][i] = std::lerp(data[channel][i], buffers_[channel][i], mix_.get<channel>());
+                const auto delayed = delay_[channel].process(data[channel][i]);
+                data[channel][i] = std::lerp(delayed, buffers_[channel][i], mix_.get<channel>());
             }
         });
     }
@@ -56,6 +63,9 @@ namespace dsp::effects {
         const auto on = paramTree_["On"].asParameterUnsafe().get<bool>();
         if (!on && on_) {
             shifter_.reset();
+            for (auto& d : delay_) {
+                d.clear();
+            }
         }
         on_ = on;
     }
