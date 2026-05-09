@@ -5,6 +5,7 @@
 #include "dsp/effects/guitar_amp.h"
 #include "dsp/effects/chorus.h"
 #include "dsp/effects/equalizer.h"
+#include "dsp/effects/pitch_shifter.h"
 
 namespace looper {
     class ProcessingChain final : public dsp::effects::EffectBase
@@ -22,6 +23,7 @@ namespace looper {
             linearGain.setSmoothingFrames(smoothFrames);
             pan.setSmoothingFrames(smoothFrames);
 
+            pitchShifter.prepare(sampleRate);
             guitarAmp.prepare(sampleRate);
             chorus.prepare(sampleRate);
             eq.prepare(sampleRate);
@@ -31,6 +33,7 @@ namespace looper {
         {
             applyParams();
 
+            pitchShifter.process(data, nFrames);
             guitarAmp.process(data, nFrames);
             chorus.process(data, nFrames);
             eq.process(data, nFrames);
@@ -65,6 +68,7 @@ namespace looper {
             return {"ProcessingChain", {
                 ParamTree{Param::makeFloat("GainDb", 0.0f, dsp::Range{-60.0f, 12.0f})},
                 ParamTree{Param::makeFloat("Pan", 0.0f, dsp::Range{-1.0f, 1.0f})},
+                pitchShifter.getParameterTree(),
                 guitarAmp.getParameterTree(),
                 chorus.getParameterTree(),
                 eq.getParameterTree(),
@@ -73,6 +77,8 @@ namespace looper {
 
         dsp::FloatSmoother linearGain;
         dsp::FloatSmoother pan;
+
+        dsp::effects::PitchShifter pitchShifter;
         dsp::effects::GuitarAmp guitarAmp;
         dsp::effects::Chorus chorus;
         dsp::effects::Equalizer eq;

@@ -1,6 +1,7 @@
 add_library(${PROJECT_NAME}_core OBJECT
     audio/audio_engine.cpp
     audio/wav_writer.cpp
+    dsp/effects/pitch_shifter.cpp
     dsp/parameter/parameter_tree.cpp
     midi/midi.cpp
     looper/looper_processor.cpp
