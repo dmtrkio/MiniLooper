@@ -4,6 +4,7 @@
 
 #include "dsp/effects/effect_base.h"
 #include "dsp/parameter/parameter_tree.h"
+#include "dsp/parameter/parameter_view.h"
 #include "dsp/dsp.h"
 #include "dsp/delay_line.h"
 
@@ -34,6 +35,10 @@ namespace dsp::effects {
             Param::makeInteger("Semitones", 0, {-12, 12}),
             Param::makeFloat("Mix", 0.0f, {0.0f, 1.0f}),
         }};
+
+        parameter::BooleanParameterView onParam_;
+        parameter::IntegerParameterView semitonesParam_;
+        parameter::FloatParameterView mixParam_;
         
         struct PitcherState;
         std::unique_ptr<PitcherState> pitcher_;

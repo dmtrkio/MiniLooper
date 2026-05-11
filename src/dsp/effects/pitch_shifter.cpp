@@ -46,13 +46,19 @@ namespace dsp::effects {
         for (auto& buf : buffers_) {
             buf.resize(kBufferSize);
         }
+        
+        onParam_.referTo(paramTree_["On"].asParameterUnsafe());
+        semitonesParam_.referTo(paramTree_["Semitones"].asParameterUnsafe());
+        mixParam_.referTo(paramTree_["Mix"].asParameterUnsafe());
 
         static constexpr float kSmoothingMs = 1.0f;
         const auto smoothFrames = kSmoothingMs * sampleRate * 0.001f;
+
         semitones_.setSmoothingFrames(smoothFrames);
         mix_.setSmoothingFrames(smoothFrames);
-        semitones_.init(static_cast<float>(paramTree_["Semitones"].asParameterUnsafe().get<int>()));
-        mix_.init(paramTree_["Mix"].asParameterUnsafe().get<float>());
+
+        semitones_.init(static_cast<float>(semitonesParam_.get()));
+        mix_.init(mixParam_.get());
 
         pitcher_ = std::make_unique<PitcherState>(sampleRate, kBufferSize);
 
@@ -66,8 +72,8 @@ namespace dsp::effects {
 
     void PitchShifter::process(float *const *data, unsigned int nFrames)
     {
-        semitones_.setTarget(static_cast<float>(paramTree_["Semitones"].asParameterUnsafe().get<int>()));
-        mix_.setTarget(paramTree_["Mix"].asParameterUnsafe().get<float>());
+        semitones_.setTarget(static_cast<float>(semitonesParam_.get()));
+        mix_.setTarget(mixParam_.get());
 
         setOn();
         if (!on_) return;
@@ -98,7 +104,7 @@ namespace dsp::effects {
 
     void PitchShifter::setOn()
     {
-        const auto on = paramTree_["On"].asParameterUnsafe().get<bool>();
+        const auto on = onParam_.get();
         if (!on && on_) {
             for (auto& d : delay_) {
                 d.clear();
