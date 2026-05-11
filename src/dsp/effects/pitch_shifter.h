@@ -1,7 +1,6 @@
 #include <vector>
 #include <array>
-
-#include <signalsmith-stretch/signalsmith-stretch.h>
+#include <memory>
 
 #include "dsp/effects/effect_base.h"
 #include "dsp/parameter/parameter_tree.h"
@@ -12,6 +11,15 @@ namespace dsp::effects {
     class PitchShifter : public EffectBase
     {
     public:
+        PitchShifter();
+        ~PitchShifter();
+
+        PitchShifter(const PitchShifter&) = delete;
+        PitchShifter& operator=(const PitchShifter&) = delete;
+
+        PitchShifter(PitchShifter&&) noexcept;
+        PitchShifter& operator=(PitchShifter&&) noexcept;
+
         void prepare(float sampleRate) override;
         void process(float *const *data, unsigned int nFrames) override;
         parameter::ParameterTree getParameterTree() const override;
@@ -27,13 +35,14 @@ namespace dsp::effects {
             Param::makeFloat("Mix", 0.0f, {0.0f, 1.0f}),
         }};
         
-        using Stretch = signalsmith::stretch::SignalsmithStretch<float>;
-        Stretch shifter_;
+        struct PitcherState;
+        std::unique_ptr<PitcherState> pitcher_;
+
         FloatSmoother semitones_;
         StereoFloatSmoother mix_;
         bool on_{false};
 
-        const std::size_t kBufferSize = 8046;
+        static constexpr std::size_t kBufferSize = 8046;
         std::array<std::vector<float>, 2> buffers_; 
         std::array<FractionalDelayLine, 2> delay_;
     };

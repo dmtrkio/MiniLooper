@@ -1,6 +1,44 @@
 #include "dsp/effects/pitch_shifter.h"
 
+#include <bungee/Stream.h>
+
 namespace dsp::effects {
+    struct PitchShifter::PitcherState
+    {
+        Bungee::Stretcher<Bungee::Basic> stretcher;
+        Bungee::Stream<Bungee::Basic> stream;
+
+        PitcherState(float sampleRate, int bufferSize)
+            : stretcher({static_cast<int>(sampleRate), static_cast<int>(sampleRate)}, 2)
+            , stream(stretcher, bufferSize, 2)
+        {
+            //stretcher.enableInstrumentation(true);
+        }
+
+        void process(float *const *input, float *const *output, int nFrames, double pitch)
+        {
+            const auto result = stream.process(
+                input,
+                output,
+                nFrames,
+                static_cast<double>(nFrames),
+                pitch
+            );
+            assert(result == nFrames);
+        }
+
+        double latency() const
+        {
+            return stream.latency();
+        }
+    };
+
+    PitchShifter::PitchShifter() = default;
+    PitchShifter::~PitchShifter() = default;
+
+    PitchShifter::PitchShifter(PitchShifter&&) noexcept = default;
+    PitchShifter& PitchShifter::operator=(PitchShifter&&) noexcept = default;
+
     void PitchShifter::prepare(float sampleRate)
     {
         for (auto& buf : buffers_) {
@@ -14,19 +52,11 @@ namespace dsp::effects {
         semitones_.init(static_cast<float>(paramTree_["Semitones"].asParameterUnsafe().get<int>()));
         mix_.init(paramTree_["Mix"].asParameterUnsafe().get<float>());
 
-        shifter_.configure(
-            2,
-            static_cast<int>(sampleRate * 0.025f),
-            static_cast<int>(sampleRate * 0.0125f),
-            true
-        );
+        pitcher_ = std::make_unique<PitcherState>(sampleRate, kBufferSize);
 
-        shifter_.reset();
-
-        const auto latency = static_cast<float>(shifter_.inputLatency() + shifter_.outputLatency());
-        for(auto& d : delay_) {
-            d.prepare(latency);
-            d.setDelay(latency);
+        const float maxLatency = sampleRate;
+        for (auto& d : delay_) {
+            d.prepare(maxLatency);
         }
 
         setOn();
@@ -42,8 +72,14 @@ namespace dsp::effects {
 
         assert(nFrames <= kBufferSize);
 
-        shifter_.setTransposeSemitones(semitones_());
-        shifter_.process(data, nFrames, buffers_, nFrames);
+        float *const streamData[2] = {buffers_[0].data(), buffers_[1].data()};
+        const auto pitch = std::pow(2.0, semitones_() / 12.0f);
+        pitcher_->process(data, streamData, nFrames, pitch);
+
+        const auto latency = static_cast<float>(pitcher_->latency());
+        for(auto& d : delay_) {
+            d.setDelay(latency);
+        }
 
         staticFor<2>([&](auto channel) {
             for (std::size_t i{0u}; i < nFrames; ++i) {
@@ -62,7 +98,6 @@ namespace dsp::effects {
     {
         const auto on = paramTree_["On"].asParameterUnsafe().get<bool>();
         if (!on && on_) {
-            shifter_.reset();
             for (auto& d : delay_) {
                 d.clear();
             }

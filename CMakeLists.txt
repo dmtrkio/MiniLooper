@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.30)
 
 # Project Settings
 project(MiniLooper VERSION 0.0.1)
