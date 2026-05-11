@@ -8,7 +8,7 @@
 #include <numbers>
 
 namespace dsp {
-    constexpr float linearToDb(const float value, const float minDb = -100.0f)
+    constexpr float linearToDb(const float value, const float minDb = -100.0f) noexcept
     {
         if (value <= 0.0000001f)
             return minDb;
@@ -22,13 +22,18 @@ namespace dsp {
         return std::pow<float>(10.0f, value * scale);
     }
 
-    inline std::pair<float, float> equalPowerPanGains(float pan)
+    inline std::pair<float, float> equalPowerPanGains(float pan) noexcept
     {
         pan = std::clamp(pan, -1.0f, 1.0f);
         const auto angle = (pan + 1.0f) * 0.25f * std::numbers::pi_v<float>;
         const auto leftGain = std::cos(angle);
         const auto rightGain = std::sin(angle);
         return {leftGain, rightGain};
+    }
+    
+    inline float semitonesToPitchMultiplier(float semitones) noexcept
+    {
+        return std::pow(2.0f, semitones / 12.0f);
     }
 
     template<std::size_t N, typename F, std::size_t... Is>

@@ -2,6 +2,8 @@
 
 #include <bungee/Stream.h>
 
+#include "dsp/dsp.h"
+
 namespace dsp::effects {
     struct PitchShifter::PitcherState
     {
@@ -9,7 +11,7 @@ namespace dsp::effects {
         Bungee::Stream<Bungee::Basic> stream;
 
         PitcherState(float sampleRate, int bufferSize)
-            : stretcher({static_cast<int>(sampleRate), static_cast<int>(sampleRate)}, 2)
+            : stretcher({static_cast<int>(sampleRate), static_cast<int>(sampleRate)}, 2, -1)
             , stream(stretcher, bufferSize, 2)
         {
             //stretcher.enableInstrumentation(true);
@@ -73,8 +75,8 @@ namespace dsp::effects {
         assert(nFrames <= kBufferSize);
 
         float *const streamData[2] = {buffers_[0].data(), buffers_[1].data()};
-        const auto pitch = std::pow(2.0, semitones_() / 12.0f);
-        pitcher_->process(data, streamData, nFrames, pitch);
+        const auto pitch = dsp::semitonesToPitchMultiplier(semitones_());
+        pitcher_->process(data, streamData, nFrames, static_cast<double>(pitch));
 
         const auto latency = static_cast<float>(pitcher_->latency());
         for(auto& d : delay_) {
