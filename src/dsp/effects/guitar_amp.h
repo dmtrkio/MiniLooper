@@ -4,6 +4,7 @@
 #include "dsp/filter/biquad_filter.h"
 #include "dsp/effects/effect_base.h"
 #include "dsp/parameter/parameter_tree.h"
+#include "dsp/parameter/parameter_view.h"
 
 namespace dsp::effects {
     class GuitarAmp final : public EffectBase
@@ -11,10 +12,10 @@ namespace dsp::effects {
     public:
         GuitarAmp()
         {
-            drive.init(paramTree_["Drive"].asParameterUnsafe().get<float>());
-            tone.init(paramTree_["Tone"].asParameterUnsafe().get<float>());
-            level.init(paramTree_["Level"].asParameterUnsafe().get<float>());
-            dryWet.init(paramTree_["DryWet"].asParameterUnsafe().get<float>());
+            driveParam_.referTo(paramTree_["Drive"].asParameterUnsafe());
+            toneParam_.referTo(paramTree_["Tone"].asParameterUnsafe());
+            levelParam_.referTo(paramTree_["Level"].asParameterUnsafe());
+            dryWetParam_.referTo(paramTree_["DryWet"].asParameterUnsafe());
         }
 
         void prepare(float sampleRate) override
@@ -26,6 +27,11 @@ namespace dsp::effects {
             tone.setSmoothingFrames(smoothFrames);
             level.setSmoothingFrames(smoothFrames);
             dryWet.setSmoothingFrames(smoothFrames);
+
+            drive.init(driveParam_.get());
+            tone.init(toneParam_.get());
+            level.init(levelParam_.get());
+            dryWet.init(dryWetParam_.get());
 
             preamp.prepare(sampleRate);
             toneStack.prepare(sampleRate);
@@ -59,16 +65,11 @@ namespace dsp::effects {
     private:
         void applyParams() noexcept
         {
-            drive = paramTree_["Drive"].asParameterUnsafe().get<float>();
-            tone = paramTree_["Tone"].asParameterUnsafe().get<float>();
-            level = paramTree_["Level"].asParameterUnsafe().get<float>();
-            dryWet = paramTree_["DryWet"].asParameterUnsafe().get<float>();
+            drive = driveParam_.get();
+            tone = toneParam_.get();
+            level = levelParam_.get();
+            dryWet = dryWetParam_.get();
         }
-
-        StereoFloatSmoother drive;
-        StereoFloatSmoother tone;
-        StereoFloatSmoother level;
-        StereoFloatSmoother dryWet;
 
         struct Preamp
         {
@@ -239,10 +240,6 @@ namespace dsp::effects {
             }
         };
 
-        Preamp preamp;
-        ToneStack toneStack;
-        Cabinet cabinet;
-
         using Param = dsp::parameter::Parameter;
         using ParamTree = dsp::parameter::ParameterTree;
 
@@ -252,5 +249,19 @@ namespace dsp::effects {
             ParamTree{Param::makeFloat("Level", 0.5f, dsp::Range{0.0f, 1.0f})},
             ParamTree{Param::makeFloat("DryWet", 0.0f, dsp::Range{0.0f, 1.0f})},
         }};
+
+        Preamp preamp;
+        ToneStack toneStack;
+        Cabinet cabinet;
+
+        StereoFloatSmoother drive;
+        StereoFloatSmoother tone;
+        StereoFloatSmoother level;
+        StereoFloatSmoother dryWet;
+
+        parameter::FloatParameterView driveParam_;
+        parameter::FloatParameterView toneParam_;
+        parameter::FloatParameterView levelParam_;
+        parameter::FloatParameterView dryWetParam_;
     };
 }
