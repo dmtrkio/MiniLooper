@@ -6,6 +6,7 @@
 #include "dsp/effects/effect_base.h"
 #include "dsp/oscillator.h"
 #include "dsp/delay_line.h"
+#include "dsp/parameter/parameter_view.h"
 
 namespace dsp::effects {
     class Chorus final : public EffectBase
@@ -13,10 +14,10 @@ namespace dsp::effects {
     public:
         Chorus()
         {
-            rate_.init(paramTree_["Rate"].asParameterUnsafe().get<float>());
-            depth_.init(paramTree_["Depth"].asParameterUnsafe().get<float>());
-            feedback_.init(paramTree_["Feedback"].asParameterUnsafe().get<float>());
-            mix_.init(paramTree_["Mix"].asParameterUnsafe().get<float>());
+            rateParam_.referTo(paramTree_["Rate"].asParameterUnsafe());
+            depthParam_.referTo(paramTree_["Depth"].asParameterUnsafe());
+            feedbackParam_.referTo(paramTree_["Feedback"].asParameterUnsafe());
+            mixParam_.referTo(paramTree_["Mix"].asParameterUnsafe());
         }
 
         void prepare(float sampleRate) override
@@ -30,6 +31,11 @@ namespace dsp::effects {
             depth_.setSmoothingFrames(smoothFrames);
             feedback_.setSmoothingFrames(smoothFrames);
             mix_.setSmoothingFrames(smoothFrames);
+
+            rate_.init(rateParam_.get());
+            depth_.init(depthParam_.get());
+            feedback_.init(feedbackParam_.get());
+            mix_.init(mixParam_.get());
 
             float lfoPhaseOffset = 0.0f;
             float lfoRateOffset = 0.0f;
@@ -75,10 +81,10 @@ namespace dsp::effects {
     private:
         void applyParams()
         {
-            rate_.setTarget(paramTree_["Rate"].asParameterUnsafe().get<float>());
-            depth_.setTarget(paramTree_["Depth"].asParameterUnsafe().get<float>());
-            feedback_.setTarget(paramTree_["Feedback"].asParameterUnsafe().get<float>());
-            mix_.setTarget(paramTree_["Mix"].asParameterUnsafe().get<float>());
+            rate_.setTarget(rateParam_.get());
+            depth_.setTarget(depthParam_.get());
+            feedback_.setTarget(feedbackParam_.get());
+            mix_.setTarget(mixParam_.get());
         }
 
         std::pair<float, float> processFrame(std::pair<float, float> input) noexcept
@@ -174,5 +180,10 @@ namespace dsp::effects {
                 Param::makeFloat("Mix", 0.0f, {0.0f, 1.0f}),
             }
         };
+
+        parameter::FloatParameterView rateParam_;
+        parameter::FloatParameterView depthParam_;
+        parameter::FloatParameterView mixParam_;
+        parameter::FloatParameterView feedbackParam_;
     };
 }

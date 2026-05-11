@@ -35,7 +35,13 @@ namespace dsp::effects {
         }
     };
 
-    PitchShifter::PitchShifter() = default;
+    PitchShifter::PitchShifter()
+    {
+        onParam_.referTo(paramTree_["On"].asParameterUnsafe());
+        semitonesParam_.referTo(paramTree_["Semitones"].asParameterUnsafe());
+        mixParam_.referTo(paramTree_["Mix"].asParameterUnsafe());
+    }
+
     PitchShifter::~PitchShifter() = default;
 
     PitchShifter::PitchShifter(PitchShifter&&) noexcept = default;
@@ -47,10 +53,6 @@ namespace dsp::effects {
             buf.resize(kBufferSize);
         }
         
-        onParam_.referTo(paramTree_["On"].asParameterUnsafe());
-        semitonesParam_.referTo(paramTree_["Semitones"].asParameterUnsafe());
-        mixParam_.referTo(paramTree_["Mix"].asParameterUnsafe());
-
         static constexpr float kSmoothingMs = 1.0f;
         const auto smoothFrames = kSmoothingMs * sampleRate * 0.001f;
 
