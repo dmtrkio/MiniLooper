@@ -1,10 +1,10 @@
 #pragma once
 
 #include <array>
-#include <cassert>
 
 #include "../filter/biquad_filter.h"
 #include "../parameter/parameter_tree.h"
+#include "../parameter/parameter_view.h"
 #include "effect_base.h"
 
 namespace dsp::effects {
@@ -13,7 +13,7 @@ namespace dsp::effects {
     public:
         static constexpr std::size_t kBands = 6;
 
-        Equalizer() : params_("Equalizer")
+        Equalizer() : paramTree_("Equalizer")
         {
             using namespace parameter;
             using namespace dsp::filter::FilterDefaults;
@@ -48,12 +48,14 @@ namespace dsp::effects {
                 Parameter::makeFloat("Q", kDefaultQ, {0.5f, 8.0f}),
             });
 
-            params_.addSubTree(std::move(highPass));
-            params_.addSubTree(std::move(lowShelf));
-            params_.addSubTree(std::move(peaking1));
-            params_.addSubTree(std::move(peaking2));
-            params_.addSubTree(std::move(highShelf));
-            params_.addSubTree(std::move(lowPass));
+            paramTree_.addSubTree(std::move(highPass));
+            paramTree_.addSubTree(std::move(lowShelf));
+            paramTree_.addSubTree(std::move(peaking1));
+            paramTree_.addSubTree(std::move(peaking2));
+            paramTree_.addSubTree(std::move(highShelf));
+            paramTree_.addSubTree(std::move(lowPass));
+
+            bindParameterViews();
         }
 
         void prepare(const float sampleRate) override
@@ -73,47 +75,49 @@ namespace dsp::effects {
             }
         }
 
-        parameter::ParameterTree getParameterTree() const noexcept override { return params_; }
+        parameter::ParameterTree getParameterTree() const noexcept override { return paramTree_; }
 
     private:
-        void applyParams()
+        struct BandViews {
+            parameter::FloatParameterView freq;
+            parameter::FloatParameterView q;
+            parameter::FloatParameterView gainDb;
+        };
+
+        void bindParameterViews()
         {
-            static constexpr std::array<std::string_view, kBands> kBandNames = {
-                "HighPass", "LowShelf", "Peak1", "Peak2", "HighShelf", "LowPass"
-            };
-
             for (std::size_t i = 0; i < kBands; ++i) {
-                auto subTree = params_[kBandNames[i]];
-                assert(subTree.isValid());
-
-                const auto freqHz = subTree.getParameter("Frequency")->get().get<float>();
+                auto subTree = paramTree_[kBandNames[i]];
+                bandViews_[i].freq.referTo(subTree["Frequency"].asParameterUnsafe());
 
                 const auto type = kFilterTypes[i];
+                if (type == filter::FilterType::LowPass || type == filter::FilterType::HighPass) {
+                    bandViews_[i].q.referTo(subTree["Q"].asParameterUnsafe());
+                } else {
+                    bandViews_[i].gainDb.referTo(subTree["GainDb"].asParameterUnsafe());
+                }
+            }
+        }
 
-                std::optional<float> qOpt = std::nullopt;
-                std::optional<float> gainOpt = std::nullopt;
+        void applyParams()
+        {
+            using namespace dsp::filter::FilterDefaults;
+
+            for (std::size_t i = 0; i < kBands; ++i) {
+                const auto freqHz = bandViews_[i].freq.get();
+                const auto type = kFilterTypes[i];
 
                 if (type == filter::FilterType::LowPass || type == filter::FilterType::HighPass) {
-                    auto qParam = subTree.getParameter("Q");
-                    if (qParam) qOpt = qParam->get().get<float>();
+                    bands_[i].setParameters(
+                        type, sampleRate_, freqHz,
+                        bandViews_[i].q.get(), kDefaultBw, kDefaultSlope, kDefaultGain
+                    );
                 } else {
-                    auto gainParam = subTree.getParameter("GainDb");
-                    if (gainParam) {
-                        const auto gainDb = gainParam->get().get<float>();
-                        gainOpt = dBtoLinear(gainDb);
-                    }
+                    bands_[i].setParameters(
+                        type, sampleRate_, freqHz,
+                        kDefaultQ, kDefaultBw, kDefaultSlope, dBtoLinear(bandViews_[i].gainDb.get())
+                    );
                 }
-
-                using namespace dsp::filter::FilterDefaults;
-                bands_[i].setParameters(
-                    type,
-                    sampleRate_,
-                    freqHz,
-                    qOpt.value_or(kDefaultQ),
-                    kDefaultBw,
-                    kDefaultSlope,
-                    gainOpt.value_or(kDefaultGain)
-                );
             }
         }
 
@@ -126,6 +130,10 @@ namespace dsp::effects {
             filter::FilterType::Peaking,
             filter::FilterType::HighShelf,
             filter::FilterType::LowPass,
+        };
+
+        static constexpr std::array<std::string_view, kBands> kBandNames = {
+            "HighPass", "LowShelf", "Peak1", "Peak2", "HighShelf", "LowPass"
         };
 
         static constexpr std::array<Range<float>, kBands> kBandRanges = {
@@ -143,7 +151,8 @@ namespace dsp::effects {
 
         float sampleRate_{44100.0f};
         std::array<Filter, kBands> bands_{};
+        std::array<BandViews, kBands> bandViews_;
 
-        parameter::ParameterTree params_;
+        dsp::parameter::ParameterTree paramTree_;
     };
 }
