@@ -43,11 +43,10 @@ namespace looper {
     }
 
     // unlike other commands this one should always be awaited for completion
-    LooperCommand LooperCommand::copyLoops(CopyData* copyData, CompletionFlag* completionFlag) noexcept
+    LooperCommand LooperCommand::copyLoops(CopyData& copyData, CompletionFlag& completionFlag) noexcept
     {
-        assert(copyData && completionFlag);
-        auto cmd = LooperCommand{ CopyLoops{ copyData } };
-        cmd.addCompletionFlag(completionFlag);
+        auto cmd = LooperCommand{ CopyLoops{ &copyData } };
+        cmd.addCompletionFlag(&completionFlag);
         return cmd;
     }
 

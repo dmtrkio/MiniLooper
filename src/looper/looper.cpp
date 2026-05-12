@@ -256,7 +256,7 @@ namespace looper {
         };
 
         LooperCommand::CompletionFlag completionFlag;
-        const auto cmd = LooperCommand::copyLoops(&copyData, &completionFlag);
+        const auto cmd = LooperCommand::copyLoops(copyData, completionFlag);
 
         if (audio::AudioEngine::getInstance().isRunning()) {
             getCommandMailbox().waitPush(cmd);

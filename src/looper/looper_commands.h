@@ -39,7 +39,7 @@ namespace looper {
         static LooperCommand resume(int trackIndex) noexcept;
         static LooperCommand resumeAll() noexcept;
         static LooperCommand clearAllTracks() noexcept;
-        static LooperCommand copyLoops(CopyData* copyData, CompletionFlag* completionFlag) noexcept;
+        static LooperCommand copyLoops(CopyData& copyData, CompletionFlag& completionFlag) noexcept;
 
         void addCompletionFlag(CompletionFlag* flag) noexcept;
         void apply(LooperProcessor& looper) const;
