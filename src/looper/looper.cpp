@@ -162,8 +162,12 @@ namespace looper {
         dsp::LevelMeter levelMeter_;
     };
 
-    Looper::Looper() : cb_(std::make_shared<LooperCallback>())
+    Looper::Looper()
+        : cb_(std::make_shared<LooperCallback>())
+        , paramTree_("Looper")
     {
+        paramTree_.addSubTree(cb_->sourceMixer.getParameterTree());
+
         auto& engine = audio::AudioEngine::getInstance();
         engine.setAudioCallback(cb_);
     }
@@ -199,9 +203,7 @@ namespace looper {
 
     dsp::parameter::ParameterTree Looper::getParameterTree() const noexcept
     {
-        return { "Looper", {
-            cb_->sourceMixer.getParameterTree(),
-        }};
+        return paramTree_;
     }
 
     json Looper::getSettingsAsJson() const

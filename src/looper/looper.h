@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 
+#include "dsp/parameter/parameter_tree.h"
 #include "looper_commands.h"
 #include "looper_processor.h"
 #include "midi/midi_message.h"
@@ -82,5 +83,7 @@ namespace looper {
         class LooperCallback;
         std::shared_ptr<LooperCallback> cb_;
         LooperStateSnapshot snapshot_{};
+
+        dsp::parameter::ParameterTree paramTree_;
     };
 }
