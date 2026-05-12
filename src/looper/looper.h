@@ -60,7 +60,6 @@ namespace looper {
 
         [[nodiscard]] const TrackStateSnapshot& getTrackState(int trackIndex) const noexcept;
         [[nodiscard]] const LooperStateSnapshot& getLooperState() const noexcept;
-        [[nodiscard]] MixerParams& getMixerParams() const noexcept;
         [[nodiscard]] dsp::parameter::ParameterTree getParameterTree() const noexcept;
 
         [[nodiscard]] json getSettingsAsJson() const;

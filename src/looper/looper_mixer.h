@@ -2,111 +2,110 @@
 
 #include <cassert>
 #include <vector>
+#include <format>
 
 #include "audio/audio_engine.h"
 #include "dsp/dsp.h"
 #include "dsp/level_meter.h"
-#include "../dsp/parameter/audio_parameter.h"
 #include "dsp/effects/equalizer.h"
+#include "dsp/parameter/parameter_tree.h"
+#include "dsp/parameter/parameter_view.h"
 
 namespace looper {
-    struct MixerParams
+    class Mixer
     {
-        using Param = dsp::parameter::Parameter;
-
-        struct ChannelParams
+    public:
+        explicit Mixer(const unsigned int nChannels)
+            : paramTree_("LooperMixer")
         {
-            Param gainDb;
-            Param pan;
-            dsp::parameter::ParameterTree eqParamTree;
-        };
+            using Param = dsp::parameter::Parameter;
+            using ParamTree = dsp::parameter::ParameterTree;
 
-        std::vector<ChannelParams> channels;
+            channels_.clear();
+            channels_.resize(nChannels);
 
-        explicit MixerParams(const unsigned int nChannels)
-        {
-            channels.reserve(nChannels);
-            for (auto i{0u}; i < nChannels; ++i) {
-                channels.emplace_back(ChannelParams{
-                    .gainDb = Param::makeFloat("GainDb", 0.0f, dsp::Range{-60.0f, 12.0f}),
-                    .pan = Param::makeFloat("Pan", 0.0f, dsp::Range{-1.0f, 1.0f}),
-                    .eqParamTree = dsp::parameter::ParameterTree{"placeholder"},
-                });
+            for (std::size_t i{}; i < nChannels; ++i) {
+                auto& channel = channels_[i];
+                const auto name = std::format("Track {}", i + 1);
+
+                auto channelSubTree =  paramTree_.addSubTree({name, {
+                    ParamTree(Param::makeFloat("GainDb", 0.0f, dsp::Range{-60.0f, 12.0f})),
+                    ParamTree(Param::makeFloat("Pan", 0.0f, dsp::Range{-1.0f, 1.0f})),
+                    channel.eq.getParameterTree(),
+                }});
+
+                channel.gainParam.referTo(channelSubTree["GainDb"].asParameterUnsafe());
+                channel.panParam.referTo(channelSubTree["Pan"].asParameterUnsafe());
             }
         }
-    };
-
-    struct Mixer
-    {
-        explicit Mixer(const unsigned int nChannels) : params(nChannels) {}
 
         void prepare(unsigned int sampleRate)
         {
-            const auto nChannels = params.channels.size();
             const auto sr = static_cast<float>(sampleRate);
 
             static constexpr float kSmoothingMs = 1.0f;
             const auto smoothFrames = kSmoothingMs * sr * 0.001f;
 
-            channels.clear();
-            channels.resize(nChannels);
-            for (auto i{0u}; i < nChannels; ++i) {
-                auto &channel = channels[i];
-                const auto &chParams = params.channels[i];
-                channel.gain.init(dsp::dBtoLinear(chParams.gainDb.get<float>()));
-                channel.pan.init(chParams.pan.get<float>());
+            for (auto& channel : channels_) {
                 channel.gain.setSmoothingFrames(smoothFrames);
                 channel.pan.setSmoothingFrames(smoothFrames);
+
+                channel.gain.init(dsp::dBtoLinear(channel.gainParam.get()));
+                channel.pan.init(channel.panParam.get());
 
                 channel.meter.prepare(sr);
                 channel.bufferL.assign(audio::kMaxFramesInBuffer, 0.0f);
                 channel.bufferR.assign(audio::kMaxFramesInBuffer, 0.0f);
 
                 channel.eq.prepare(sr);
-                params.channels[i].eqParamTree = channel.eq.getParameterTree();
             }
-        }
-
-        void applyParams()
-        {
-            const auto nChannels = params.channels.size();
-            assert(channels.size() == nChannels);
-
-            for (auto i{0u}; i < nChannels; ++i) {
-                auto &channel = channels[i];
-                const auto &chParams = params.channels[i];
-                channel.gain.setTarget(dsp::dBtoLinear(chParams.gainDb.get<float>()));
-                channel.pan.setTarget(chParams.pan.get<float>());
-            }
-        }
-
-        std::pair<float*, float*> getChannelBuffers(const int index)
-        {
-            assert((index >= 0) && (index < static_cast<int>(channels.size())));
-            auto &channel = channels[index];
-            return {channel.bufferL.data(), channel.bufferR.data()};
         }
 
         void process(float *const *data, const unsigned int nFrames)
         {
             applyParams();
 
-            for (auto& channel : channels) {
-                float *bufs[2] = { channel.bufferL.data(), channel.bufferR.data() };
+            for (auto& channel : channels_) {
+                float *const bufs[2] = {channel.bufferL.data(), channel.bufferR.data()};
                 channel.eq.process(bufs, nFrames);
 
-                auto [leftGain, rightGain] = dsp::equalPowerPanGains(channel.pan());
-                const auto gain = channel.gain();
-                leftGain *= gain;
-                rightGain *= gain;
-
                 for (auto i{0u}; i < nFrames; ++i) {
+                    auto [leftGain, rightGain] = dsp::equalPowerPanGains(channel.pan());
+                    const auto gain = channel.gain();
+                    leftGain *= gain;
+                    rightGain *= gain;
+
                     const auto leftSample = channel.bufferL[i] * leftGain;;
                     const auto rightSample = channel.bufferR[i] * rightGain;
                     channel.meter(leftSample, rightSample);
                     data[0][i] += leftSample;
                     data[1][i] += rightSample;
                 }
+            }
+        }
+
+        dsp::parameter::ParameterTree getParameterTree() const noexcept { return paramTree_; }
+
+        std::pair<float*, float*> getChannelBuffers(const int index)
+        {
+            assert((index >= 0) && (index < static_cast<int>(channels_.size())));
+            auto &channel = channels_[index];
+            return {channel.bufferL.data(), channel.bufferR.data()};
+        }
+
+        std::pair<float, float> getLevel(const int index)
+        {
+            assert((index >= 0) && (index < static_cast<int>(channels_.size())));
+            auto &channel = channels_[index];
+            return channel.meter.getLevel();
+        }
+
+    private:
+        void applyParams()
+        {
+            for (auto& channel : channels_) {
+                channel.gain.setTarget(dsp::dBtoLinear(channel.gainParam.get()));
+                channel.pan.setTarget(channel.panParam.get());
             }
         }
 
@@ -117,12 +116,14 @@ namespace looper {
             dsp::LevelMeter meter;
             dsp::effects::Equalizer eq;
 
+            dsp::parameter::FloatParameterView gainParam;
+            dsp::parameter::FloatParameterView panParam;
+
             std::vector<float> bufferL;
             std::vector<float> bufferR;
         };
 
-        std::vector<Channel> channels;
-
-        MixerParams params;
+        std::vector<Channel> channels_;
+        dsp::parameter::ParameterTree paramTree_;
     };
 }

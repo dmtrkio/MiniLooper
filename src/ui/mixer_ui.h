@@ -19,7 +19,8 @@ namespace ui {
     protected:
         void drawContent() override
         {
-            auto &mixer = looper_->getMixerParams();
+            auto paramTree = looper_->getParameterTree()["LooperMixer"];
+            assert(paramTree.isValid());
 
             for (auto i{0}; i < looper_->getNumLooperTracks(); ++i) {
                 constexpr float sliderWidth = 100.0f;
@@ -34,13 +35,14 @@ namespace ui {
                 const auto [left, right] = track.level;
                 volumeMeter(left, right);
 
-                auto &params = mixer.channels[i];
+                const auto id = std::format("Track {}", i + 1);
+                auto params = paramTree[id];
 
                 ImGui::Dummy(ImVec2(0, 2.0f));
-                parameterUi(params.gainDb);
+                parameterUi(params["GainDb"].asParameterUnsafe());
 
                 ImGui::Dummy(ImVec2(0, 2.0f));
-                parameterUi(params.pan);
+                parameterUi(params["Pan"].asParameterUnsafe());
 
                 if (ImGui::Button("Show EQ")) {
                     eqOpened_[i].value = !eqOpened_[i].value;
@@ -56,7 +58,7 @@ namespace ui {
                     ImGui::SameLine();
                 }
 
-                parameterTreeUiWindowed(params.eqParamTree, &(eqOpened_[i].value), std::format("Track {}: ", i));
+                parameterTreeUiWindowed(params["Equalizer"], &(eqOpened_[i].value), id);
 
                 ImGui::PopID();
             }

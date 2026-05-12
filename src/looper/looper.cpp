@@ -107,13 +107,6 @@ namespace looper {
             const auto nInputs = audio::AudioEngine::getInstance().getNumInputChannels();
 
             sourceMixer.prepare(nInputs, audio::kMaxFramesInBuffer, sampleRate);
-            // sourceMixer.getParameterTree()["SourceChannel1"]["Input1"]["Source"].asParameterUnsafe().set<int>(0);
-            // sourceMixer.getParameterTree()["SourceChannel1"]["Stereo"].asParameterUnsafe().set<bool>(false);
-            // sourceMixer.getParameterTree()["SourceChannel2"]["Input1"]["Source"].asParameterUnsafe().set<int>(1);
-            // sourceMixer.getParameterTree()["SourceChannel2"]["Stereo"].asParameterUnsafe().set<bool>(false);
-
-            //std::cout << sourceMixer.getParameterTree().toJson().dump(4) << std::endl;
-
             levelMeter_.prepare(static_cast<float>(sampleRate));
         }
 
@@ -146,7 +139,7 @@ namespace looper {
                 nFrames = looperProcessor.getCurrentNumFrames(i);
                 position = looperProcessor.getCurrentPosition(i);
                 state = looperProcessor.getState(i);
-                level = looperProcessor.getMixer().channels[i].meter.getLevel();
+                level = looperProcessor.getMixer().getLevel(i);
             }
 
             snapshot.level = levelMeter_.getLevel();
@@ -167,6 +160,7 @@ namespace looper {
         , paramTree_("Looper")
     {
         paramTree_.addSubTree(cb_->sourceMixer.getParameterTree());
+        paramTree_.addSubTree(cb_->looperProcessor.getMixer().getParameterTree());
 
         auto& engine = audio::AudioEngine::getInstance();
         engine.setAudioCallback(cb_);
@@ -196,11 +190,6 @@ namespace looper {
         return snapshot_;
     }
 
-    MixerParams& Looper::getMixerParams() const noexcept
-    {
-        return cb_->looperProcessor.getMixer().params;
-    }
-
     dsp::parameter::ParameterTree Looper::getParameterTree() const noexcept
     {
         return paramTree_;
@@ -213,10 +202,7 @@ namespace looper {
 
     bool Looper::loadSettingsFromJson(const json& j)
     {
-        if (const auto it = j.find("SourceMixer"); it != j.end() && it->is_object()) {
-            return cb_->sourceMixer.getParameterTree().copyParameterValuesFromJson(*it);
-        }
-        return false;
+        return paramTree_.copyParameterValuesFromJson(j);
     }
 
     void Looper::startRecording(int trackIndex) const
