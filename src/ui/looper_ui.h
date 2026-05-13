@@ -61,13 +61,13 @@ namespace ui {
             ImGui::ProgressBar(progress);
 
             if (ImGui::Button((track.state == looper::State::Recording) ? "Stop" : "Record")) {
-                toggleRec(trackIndex);
+                looper_->toggleRecording(trackIndex);
             }
 
             ImGui::SameLine();
 
             if (ImGui::Button((track.state == looper::State::Paused) ? "Resume" : "Pause")) {
-                togglePlay(trackIndex);
+                looper_->togglePlay(trackIndex);
             }
 
             if (track.state != looper::State::Cleared) {
@@ -84,34 +84,16 @@ namespace ui {
                 const auto key = ImGuiKey_1 + trackIndex;
 
                 if (ImGui::Shortcut(key, ImGuiInputFlags_RouteGlobal)) {
-                    toggleRec(trackIndex);
+                    looper_->toggleRecording(trackIndex);
                 }
 
                 if (ImGui::Shortcut(key | ImGuiMod_Shift, ImGuiInputFlags_RouteGlobal)) {
-                    togglePlay(trackIndex);
+                    looper_->togglePlay(trackIndex);
                 }
             }
 
             if (ImGui::Shortcut(ImGuiKey_C, ImGuiInputFlags_RouteGlobal)) {
                 looper_->clearAll();
-            }
-        }
-
-        void toggleRec(const int trackIndex)
-        {
-            if (looper_->getTrackState(trackIndex).state != looper::State::Recording) {
-                looper_->startRecording(trackIndex);
-            } else {
-                looper_->stopRecording(trackIndex);
-            }
-        }
-
-        void togglePlay(const int trackIndex)
-        {
-            if (looper_->getTrackState(trackIndex).state == looper::State::Paused) {
-                looper_->resume(trackIndex);
-            } else {
-                looper_->pause(trackIndex);
             }
         }
 

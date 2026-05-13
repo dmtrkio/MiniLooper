@@ -205,6 +205,28 @@ namespace looper {
         return paramTree_.copyParameterValuesFromJson(j);
     }
 
+    bool Looper::toggleRecording(int trackIndex) const
+    {
+        if (getTrackState(trackIndex).state != looper::State::Recording) {
+            startRecording(trackIndex);
+            return true;
+        } else {
+            stopRecording(trackIndex);
+            return false;
+        }
+    }
+
+    bool Looper::togglePlay(int trackIndex) const
+    {
+        if (getTrackState(trackIndex).state == looper::State::Paused) {
+            resume(trackIndex);
+            return true;
+        } else {
+            pause(trackIndex);
+            return false;
+        }
+    }
+
     void Looper::startRecording(int trackIndex) const
     {
         auto &looperMailbox = getCommandMailbox();
