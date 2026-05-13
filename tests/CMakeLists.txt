@@ -12,6 +12,7 @@ include(Catch)
 add_executable(tests
     test_parameter_view.cpp
     test_parameter_tree.cpp
+    test_processor_chain.cpp
 )
 
 target_link_libraries(tests PRIVATE

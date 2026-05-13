@@ -15,6 +15,18 @@ namespace dsp::processors {
         constexpr explicit ProcessorChain(Processors... ps)
             : chain(std::move(ps)...) {}
 
+        template<std::size_t I>
+        auto& getProcessor()
+        {
+            return std::get<I>(chain);
+        }
+
+        template<std::size_t I>
+        const auto& getProcessor() const
+        {
+            return std::get<I>(chain);
+        }
+
         void prepare(float sampleRate)
         {
             std::apply([sampleRate](auto&... p) {
