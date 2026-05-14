@@ -175,4 +175,11 @@ namespace looper {
         }
         return levels;
     }
+
+    void SourceMixer::skipInternalProcessing(bool shouldSkip) noexcept
+    {
+        for (auto& ch : channels_) {
+            ch.skipInternalProcessing(shouldSkip);
+        }
+    }
 }

@@ -54,6 +54,9 @@ namespace looper {
         [[nodiscard]] dsp::parameter::ParameterTree getParameterTree() const noexcept;
         [[nodiscard]] std::array<std::pair<float, float>, kNumChannels> getLevels() const noexcept;
 
+        // for testing purposes
+        void skipInternalProcessing(bool shouldSkip) noexcept;
+
     private:
         std::array<SourceChannel, kNumChannels> channels_{
             SourceChannel("SourceChannel1"),
