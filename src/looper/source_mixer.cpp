@@ -76,7 +76,9 @@ namespace looper {
             });
         }
         
-        processInternal(nFrames);
+        if (!skipProcessing_) {
+            processInternal(nFrames);
+        }
 
         dsp::staticFor<2>([&](auto ch) {
             for (std::size_t frame{}; frame < nFrames; ++frame) {
@@ -87,6 +89,11 @@ namespace looper {
 
     dsp::parameter::ParameterTree SourceChannel::getParameterTree() const noexcept { return paramTree_; }
     std::pair<float, float> SourceChannel::getLevel() const noexcept { return levelMeter_.getLevel(); }
+
+    void SourceChannel::skipInternalProcessing(bool shouldSkip) noexcept
+    {
+        skipProcessing_ = shouldSkip;
+    }
 
     SourceChannel::ParamTree SourceChannel::buildParamTree(const std::string& name) const
     {

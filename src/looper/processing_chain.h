@@ -18,7 +18,7 @@ namespace looper {
             static constexpr float kSmoothingMs = 1.0f;
             const auto smoothFrames = kSmoothingMs * sampleRate * 0.001f;
 
-            linearGain.init(paramTree_["GainDb"].asParameterUnsafe().get<float>());
+            linearGain.init(dsp::dBtoLinear(paramTree_["GainDb"].asParameterUnsafe().get<float>()));
             pan.init(paramTree_["Pan"].asParameterUnsafe().get<float>());
             linearGain.setSmoothingFrames(smoothFrames);
             pan.setSmoothingFrames(smoothFrames);

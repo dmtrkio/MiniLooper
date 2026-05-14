@@ -20,6 +20,9 @@ namespace looper {
 
         [[nodiscard]] dsp::parameter::ParameterTree getParameterTree() const noexcept;
         [[nodiscard]] std::pair<float, float> getLevel() const noexcept;
+        
+        // for testing purposes
+        void skipInternalProcessing(bool shouldSkip) noexcept;
 
     private:
         using Param = dsp::parameter::Parameter;
@@ -29,6 +32,7 @@ namespace looper {
         void applyParams();
         void processInternal(unsigned int nFrames);
 
+        bool skipProcessing_{false};
         int nInputBuffers_{0};
         bool stereo_{false};
         std::array<int, 2> inputs_{kNoInput, kNoInput};
