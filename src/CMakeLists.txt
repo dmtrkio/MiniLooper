@@ -4,6 +4,7 @@ add_library(${PROJECT_NAME}_core OBJECT
     dsp/effects/pitch_shifter.cpp
     dsp/parameter/parameter_tree.cpp
     midi/midi.cpp
+    looper/source_mixer.cpp
     looper/looper_processor.cpp
     looper/looper_commands.cpp
     looper/looper.cpp
