@@ -23,6 +23,7 @@ public:
     void onFrame();
 
 private:
+    void processInput();
     void drawTopBarMenu() const;
 
     SessionManager sessionManager_;

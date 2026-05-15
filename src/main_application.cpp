@@ -129,11 +129,31 @@ MainApplication::~MainApplication()
 void MainApplication::onFrame()
 {
     looper_.updateSnapshot();
+    processInput();
 
     drawTopBarMenu();
 
     for (const auto& window : windowRegistry_) {
         window->draw();
+    }
+}
+
+void MainApplication::processInput()
+{
+    for (auto trackIndex{0}; trackIndex < looper_.getNumLooperTracks(); ++trackIndex) {
+        const auto key = ImGuiKey_1 + trackIndex;
+
+        if (ImGui::Shortcut(key, ImGuiInputFlags_RouteGlobal)) {
+            looper_.toggleRecording(trackIndex);
+        }
+
+        if (ImGui::Shortcut(key | ImGuiMod_Shift, ImGuiInputFlags_RouteGlobal)) {
+            looper_.togglePlay(trackIndex);
+        }
+    }
+
+    if (ImGui::Shortcut(ImGuiKey_C, ImGuiInputFlags_RouteGlobal)) {
+        looper_.clearAll();
     }
 }
 

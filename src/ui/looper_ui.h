@@ -15,12 +15,6 @@ namespace ui {
         [[nodiscard]] const char* getTitle() const override { return "Looper"; }
 
     protected:
-        void onFrame() override
-        {
-            // to make input processing work even when the window is closed
-            processInput();
-        }
-
         void drawContent() override
         {
             const auto nTracks = looper_->getNumLooperTracks();
@@ -75,25 +69,6 @@ namespace ui {
                 if (ImGui::Button("Clear")) {
                     looper_->clear(trackIndex);
                 }
-            }
-        }
-
-        void processInput()
-        {
-            for (auto trackIndex{0}; trackIndex < looper_->getNumLooperTracks(); ++trackIndex) {
-                const auto key = ImGuiKey_1 + trackIndex;
-
-                if (ImGui::Shortcut(key, ImGuiInputFlags_RouteGlobal)) {
-                    looper_->toggleRecording(trackIndex);
-                }
-
-                if (ImGui::Shortcut(key | ImGuiMod_Shift, ImGuiInputFlags_RouteGlobal)) {
-                    looper_->togglePlay(trackIndex);
-                }
-            }
-
-            if (ImGui::Shortcut(ImGuiKey_C, ImGuiInputFlags_RouteGlobal)) {
-                looper_->clearAll();
             }
         }
 
