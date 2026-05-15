@@ -1,7 +1,6 @@
 #include "looper.h"
 
 #include <format>
-#include <print>
 #include <cmath>
 
 #include "audio/audio_engine.h"
@@ -40,6 +39,8 @@ namespace looper {
     public:
         void onProcess(const float *const *in, float *const *out, const unsigned int nFrames) override
         {
+            fsTrackIndex_ = fsTrackParam.asParameterUnsafe().get<int>();
+
             for (auto i{0u}; i < nFrames; ++i) {
                 footSwitch.tick();
             }
@@ -83,18 +84,16 @@ namespace looper {
             looperProcessor.clearAll();
             updateSnapshot();
 
-            constexpr int trackIndex = 0;
-
             footSwitch.setOnSinglePressed([&] {
-                if (looperProcessor.getState(trackIndex) != looper::State::Recording) {
-                    looperProcessor.startRecording(trackIndex);
+                if (looperProcessor.getState(fsTrackIndex_) != looper::State::Recording) {
+                    looperProcessor.startRecording(fsTrackIndex_);
                 } else {
-                    looperProcessor.stopRecording(trackIndex);
+                    looperProcessor.stopRecording(fsTrackIndex_);
                 }
             });
 
             footSwitch.setOnDoublePressed([&] {
-                looperProcessor.clear(trackIndex);
+                looperProcessor.clear(fsTrackIndex_);
             });
 
             footSwitch.setOnHold([&] {
@@ -153,6 +152,15 @@ namespace looper {
         SourceMixer sourceMixer;
 
         dsp::LevelMeter levelMeter_;
+
+        dsp::parameter::ParameterTree fsTrackParam{dsp::parameter::Parameter::makeInteger(
+            "FootSwitchTrackIndex",
+            0,
+            {0, LooperProcessor::getNumLooperTracks() - 1}
+        )};
+
+    private:
+        int fsTrackIndex_{0};
     };
 
     Looper::Looper()
@@ -161,6 +169,7 @@ namespace looper {
     {
         paramTree_.addSubTree(cb_->sourceMixer.getParameterTree());
         paramTree_.addSubTree(cb_->looperProcessor.getMixer().getParameterTree());
+        paramTree_.addSubTree(cb_->fsTrackParam);
 
         auto& engine = audio::AudioEngine::getInstance();
         engine.setAudioCallback(cb_);
