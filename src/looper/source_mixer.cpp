@@ -139,6 +139,10 @@ namespace looper {
 
     void SourceChannel::processInternal(unsigned int nFrames)
     {
+        if (std::ranges::all_of(inputs_, [](int input) { return input == kNoInput; })) {
+            return;
+        }
+
         float *channelData[2] = {buffers_[0].data(), buffers_[1].data()};
         processingChain_.process(channelData, nFrames);
         levelMeter_(channelData[0], channelData[1], nFrames);
