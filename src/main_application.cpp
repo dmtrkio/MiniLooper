@@ -13,6 +13,7 @@
 #include "ui/mixer_ui.h"
 #include "ui/source_mixer_ui.h"
 #include "ui/session_manager_ui.h"
+#include "ui/theme.h"
 #include "filepaths.h"
 #include "fonts/Inter-Regular.h"
 #include "json.h"
@@ -68,6 +69,11 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
             looper_.loadSettingsFromJson(*it);
         }
 
+        if (const auto it = settings.find("theme"); it != settings.end() && it->is_string()) {
+            currentTheme_ = ui::themeFromString(*it).value_or(ui::ImGuiTheme::WarmNeutral);
+            ui::applyImGuiTheme(currentTheme_);
+        }
+
         std::cout << "Settings loaded from " << filepaths::settingsPath() << std::endl;
     }
 
@@ -76,13 +82,6 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
     }
 
     std::cout << "Audio engine started\n";
-
-    auto &style = ImGui::GetStyle();
-    constexpr float rounding = 4.0f;
-    style.FrameRounding = rounding;
-    style.WindowRounding = rounding;
-    style.ChildRounding = rounding;
-    style.PopupRounding = rounding;
 
     ImGui::GetIO().IniFilename = filepaths::imguiIniPath();
 
@@ -121,6 +120,8 @@ MainApplication::~MainApplication()
 
     j["looper"] = looper_.getSettingsAsJson();
 
+    j["theme"] = ui::themeToString(currentTheme_);
+
     if (saveJsonToFile(filepaths::settingsPath().string(), j)) {
         std::cout << "Settings saved to " << filepaths::settingsPath() << std::endl;
     }
@@ -157,13 +158,24 @@ void MainApplication::processInput()
     }
 }
 
-void MainApplication::drawTopBarMenu() const
+void MainApplication::drawTopBarMenu()
 {
     ImGui::BeginMainMenuBar();
 
     for (auto& window : windowRegistry_) {
         ImGui::PushID(&window);
         ImGui::MenuItem(window->getTitle(), nullptr, &window->opened);
+        ImGui::PopID();
+    }
+
+    {
+        const auto themeMenuLabel = std::format("Theme: {}", ui::themeToString(currentTheme_));
+        ImGui::PushID(themeMenuLabel.c_str());
+        if (ImGui::MenuItem(themeMenuLabel.c_str())) {
+            const auto nextTheme = static_cast<ui::ImGuiTheme>((static_cast<int>(currentTheme_) + 1) % static_cast<int>(ui::ImGuiTheme::Count));
+            ui::applyImGuiTheme(nextTheme);
+            const_cast<MainApplication*>(this)->currentTheme_ = nextTheme;
+        }
         ImGui::PopID();
     }
 

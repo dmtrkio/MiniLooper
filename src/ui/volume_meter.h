@@ -77,14 +77,12 @@ namespace ui {
             const ImVec2 t0(pos.x + meterWidth + 4, y);
             const ImVec2 t1(pos.x + meterWidth + 4 + tickWidth, y);
 
-            //draw->AddLine(t0, t1, IM_COL32(200, 200, 200, 255), 1.0f);
-
             char label[8];
             snprintf(label, sizeof(label), "%.0f", db);
-
+            
             draw->AddText(
                 ImVec2(t1.x + 4, y - ImGui::GetFontSize() * 0.5f),
-                IM_COL32(200, 200, 200, 255),
+                ImGui::GetColorU32(ImGuiCol_Text),
                 label
             );
         }

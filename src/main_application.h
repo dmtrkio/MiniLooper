@@ -7,6 +7,7 @@
 #include "looper/looper.h"
 #include "midi/midi.h"
 #include "ui/ui_window_base.h"
+#include "ui/theme.h"
 
 class MainApplication
 {
@@ -24,11 +25,12 @@ public:
 
 private:
     void processInput();
-    void drawTopBarMenu() const;
+    void drawTopBarMenu();
 
     SessionManager sessionManager_;
     looper::Looper looper_;
     std::unique_ptr<midi::MidiEngine> midiEngine_;
 
+    ui::ImGuiTheme currentTheme_ = ui::ImGuiTheme::WarmNeutral;
     std::vector<std::unique_ptr<ui::WindowBase>> windowRegistry_;
 };
