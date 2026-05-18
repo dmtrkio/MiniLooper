@@ -56,6 +56,7 @@ void initializeImgui()
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
     // Setup scaling
     ImGuiStyle& style = ImGui::GetStyle();
@@ -99,6 +100,7 @@ SDL_AppResult SDL_AppIterate(void *)
     ImGui_ImplSDLRenderer3_NewFrame();
     ImGui_ImplSDL3_NewFrame();
     ImGui::NewFrame();
+    ImGui::DockSpaceOverViewport();
 
     const auto *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->Pos);
