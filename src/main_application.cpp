@@ -43,6 +43,14 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
     auto& audioEngine = audio::AudioEngine::getInstance();
     audioEngine.rescanDevices();
 
+    windowRegistry_.emplace_back(std::make_unique<ui::SessionManagerUi>(sessionManager_, looper_));
+    windowRegistry_.emplace_back(std::make_unique<ui::AudioSettingsUi>());
+    windowRegistry_.emplace_back(std::make_unique<ui::MidiSettingsUi>(midiEngine_.get()));
+    windowRegistry_.emplace_back(std::make_unique<ui::LooperUi>(looper_, sessionManager_));
+    windowRegistry_.emplace_back(std::make_unique<ui::MixerUi>(looper_));
+    windowRegistry_.emplace_back(std::make_unique<ui::SourceMixerUi>(looper_));
+    windowRegistry_.emplace_back(std::make_unique<ui::VolumeMeterWindow>(looper_))->opened = true;
+
     if (const auto j = loadJsonFromFile(filepaths::settingsPath().string()); j.has_value()) {
         const auto& settings = j.value();
 
@@ -74,6 +82,14 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
             ui::applyImGuiTheme(currentTheme_);
         }
 
+        for (auto& window : windowRegistry_) {
+            if (const auto it = settings.find(window->getTitle()); it != settings.end() && it->is_object()) {
+                if (const auto openedIt = it->find("opened"); openedIt != it->end() && openedIt->is_boolean()) {
+                    window->opened = *openedIt;
+                }
+            }
+        }
+
         std::cout << "Settings loaded from " << filepaths::settingsPath() << std::endl;
     }
 
@@ -93,14 +109,6 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
         15.0f,
         &fontConfig
     );
-
-    windowRegistry_.emplace_back(std::make_unique<ui::SessionManagerUi>(sessionManager_, looper_));
-    windowRegistry_.emplace_back(std::make_unique<ui::AudioSettingsUi>());
-    windowRegistry_.emplace_back(std::make_unique<ui::MidiSettingsUi>(midiEngine_.get()));
-    windowRegistry_.emplace_back(std::make_unique<ui::LooperUi>(looper_, sessionManager_));
-    windowRegistry_.emplace_back(std::make_unique<ui::MixerUi>(looper_));
-    windowRegistry_.emplace_back(std::make_unique<ui::SourceMixerUi>(looper_));
-    windowRegistry_.emplace_back(std::make_unique<ui::VolumeMeterWindow>(looper_))->opened = true;
 }
 
 MainApplication::~MainApplication()
@@ -121,6 +129,12 @@ MainApplication::~MainApplication()
     j["looper"] = looper_.getSettingsAsJson();
 
     j["theme"] = ui::themeToString(currentTheme_);
+
+    for (const auto& window : windowRegistry_) {
+        j[window->getTitle()] = {
+            {"opened", window->opened}
+        };
+    }
 
     if (saveJsonToFile(filepaths::settingsPath().string(), j)) {
         std::cout << "Settings saved to " << filepaths::settingsPath() << std::endl;
