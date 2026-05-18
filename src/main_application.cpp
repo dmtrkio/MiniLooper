@@ -82,10 +82,13 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
             ui::applyImGuiTheme(currentTheme_);
         }
 
-        for (auto& window : windowRegistry_) {
-            if (const auto it = settings.find(window->getTitle()); it != settings.end() && it->is_object()) {
-                if (const auto openedIt = it->find("opened"); openedIt != it->end() && openedIt->is_boolean()) {
-                    window->opened = *openedIt;
+        if (const auto it = settings.find("windows"); it != settings.end() && it->is_object()) {
+            const auto windows = *it;
+            for (auto& window : windowRegistry_) {
+                if (const auto it = windows.find(window->getTitle()); it != windows.end() && it->is_object()) {
+                    if (const auto openedIt = it->find("opened"); openedIt != it->end() && openedIt->is_boolean()) {
+                        window->opened = *openedIt;
+                    }
                 }
             }
         }
@@ -130,8 +133,9 @@ MainApplication::~MainApplication()
 
     j["theme"] = ui::themeToString(currentTheme_);
 
+    j["windows"] = json::object();
     for (const auto& window : windowRegistry_) {
-        j[window->getTitle()] = {
+        j["windows"][window->getTitle()] = {
             {"opened", window->opened}
         };
     }
