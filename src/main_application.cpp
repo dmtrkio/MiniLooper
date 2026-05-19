@@ -78,8 +78,9 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
         }
 
         if (const auto it = settings.find("theme"); it != settings.end() && it->is_string()) {
-            currentTheme_ = ui::themeFromString(*it).value_or(ui::ImGuiTheme::WarmNeutral);
-            ui::applyImGuiTheme(currentTheme_);
+            const auto themeName = it->get<std::string>();
+            currentTheme_ = ui::themeFromString(std::string_view(themeName))
+                                .value_or(ui::ImGuiTheme::WarmNeutral);
         }
 
         if (const auto it = settings.find("windows"); it != settings.end() && it->is_object()) {
@@ -112,6 +113,8 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
         15.0f,
         &fontConfig
     );
+
+    ui::applyImGuiTheme(currentTheme_);
 }
 
 MainApplication::~MainApplication()
