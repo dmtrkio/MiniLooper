@@ -9,6 +9,7 @@ add_library(${PROJECT_NAME}_core OBJECT
     looper/looper_commands.cpp
     looper/looper.cpp
     ui/parameter_ui.cpp
+    ui/audio_thumbnail.cpp
     main_application.cpp
     session_manager.cpp
 )

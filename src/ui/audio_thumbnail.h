@@ -1,17 +1,14 @@
 #pragma once
 
 #include <utility>
-#include <algorithm>
 #include <vector>
 #include <cstdlib>
 #include <cmath>
 
 #include <imgui.h>
 
-#include "ui/ui_utils.h"
-
 namespace ui {
-    inline bool audioThumbnail(
+    bool audioThumbnail(
         const char* id,
         const std::pair<float, float>* minMaxPairs,
         int pairCount,
@@ -19,104 +16,7 @@ namespace ui {
         const ImVec2& sizeArg = ImVec2(0, 0),
         ImU32 waveformColor   = IM_COL32(230, 220, 60, 255),
         ImU32 backgroundColor = IM_COL32(40, 40, 40, 255)
-    )
-    {
-        ImVec2 size = sizeArg;
-        if (size.x <= 0.0f)
-            size.x = ImGui::CalcItemWidth();
-        if (size.y <= 0.0f)
-            size.y = ImGui::GetFrameHeight();
-
-        const ImVec2 bbMin = ImGui::GetCursorScreenPos();
-        const ImVec2 bbMax = ImVec2(bbMin.x + size.x, bbMin.y + size.y);
-
-        ImGui::InvisibleButton(id, size);
-        const bool hovered = ImGui::IsItemHovered();
-
-        if (!ImGui::IsItemVisible() || size.x <= 0.0f || size.y <= 0.0f)
-            return hovered;
-
-        ImDrawList* drawList = ImGui::GetWindowDrawList();
-        const ImGuiStyle& style = ImGui::GetStyle();
-
-        const float playheadClamped = pairCount > 0 ? std::clamp(playhead, 0.0f, 1.0f) : 0.0f;
-        const float playheadX       = bbMin.x + size.x * playheadClamped;
-        const float halfH           = size.y * 0.5f;
-        const float centerY         = bbMin.y + halfH;
-
-        const ImU32 playedBgColor = backgroundColor;
-        const ImU32 playedWaveColor = waveformColor;
-        
-        constexpr float unplayedAlphaScale = 0.5f;
-        const ImU32 unplayedBgColor = scaleRgb(backgroundColor, unplayedAlphaScale);
-        const ImU32 unplayedWaveColor = scaleRgb(waveformColor, unplayedAlphaScale);
-
-        // 1) Background rectangles — rounded only on their outer corners so the
-        //    seam at playheadX stays perfectly vertical.
-        drawList->AddRectFilled(
-            bbMin,
-            ImVec2(playheadX, bbMax.y),
-            playedBgColor,
-            style.FrameRounding,
-            ImDrawFlags_RoundCornersLeft
-        );
-        drawList->AddRectFilled(
-            ImVec2(playheadX, bbMin.y),
-            bbMax,
-            unplayedBgColor,
-            style.FrameRounding,
-            ImDrawFlags_RoundCornersRight
-        );
-
-        // 2) Waveform
-        if (pairCount == 1) {
-            const float x       = bbMin.x + size.x * 0.5f;
-            const float minVal  = minMaxPairs[0].first;
-            const float maxVal  = minMaxPairs[0].second;
-            const float yTop    = centerY - maxVal * halfH;
-            const float yBottom = centerY - minVal * halfH;
-            const ImU32 color   = (x < playheadX) ? playedWaveColor : unplayedWaveColor;
-
-            drawList->AddLine(ImVec2(x, yTop), ImVec2(x, yBottom), color, 1.0f);
-        } else {
-            const float step = size.x / static_cast<float>(pairCount - 1);
-
-            for (int i = 0; i < pairCount; ++i) {
-                const float x       = bbMin.x + i * step;
-                const float minVal  = minMaxPairs[i].first;
-                const float maxVal  = minMaxPairs[i].second;
-                const float yTop    = centerY - maxVal * halfH;
-                const float yBottom = centerY - minVal * halfH;
-                const ImU32 color   = (x < playheadX) ? playedWaveColor : unplayedWaveColor;
-
-                drawList->AddLine(ImVec2(x, yTop), ImVec2(x, yBottom), color, 1.0f);
-            }
-        }
-
-        // 3) Thin playhead divider
-        if (pairCount > 0) {
-            drawList->AddLine(
-                ImVec2(playheadX, bbMin.y),
-                ImVec2(playheadX, bbMax.y),
-                ImGui::GetColorU32(ImGuiCol_Border),
-                1.0f
-            );
-        }
-
-        // 4) Border — same color, thickness and rounding as ImGui frames/sliders
-        if (style.FrameBorderSize > 0.0f) {
-            drawList->AddRect(
-                bbMin,
-                bbMax,
-                ImGui::GetColorU32(ImGuiCol_Border),
-                style.FrameRounding,
-                ImDrawFlags_RoundCornersAll,
-                style.FrameBorderSize
-            );
-        }
-
-        return hovered;
-    }
+    );
 
     inline std::vector<std::pair<float, float>> generateSyntheticWaveform(int bucketCount, unsigned int seed = 12345)
     {
@@ -173,7 +73,7 @@ namespace ui {
         ImGui::Begin("Audio Thumbnail Demo");
 
         // 1. Generate data once (or cache it somewhere static)
-        static std::vector<std::pair<float, float>> waveform = ui::generateSyntheticWaveform(1000);
+        static std::vector<std::pair<float, float>> waveform = ui::generateSyntheticWaveform(200);
 
         // 2. Animated playhead so you can see the color inversion
         static float playhead = 0.0f;
@@ -187,7 +87,7 @@ namespace ui {
         ImGui::Spacing();
 
         ImGui::Text("Empty");
-        ui::audioThumbnail("##demo2", nullptr, 0, playhead);
+        ui::audioThumbnail("##demo2", nullptr, (int)waveform.size(), playhead);
 
         // 4. Manual scrubbing
         ImGui::Spacing();
