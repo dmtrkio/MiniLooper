@@ -2,14 +2,19 @@
 
 #include "ui_window_base.h"
 #include "looper/looper.h"
+#include "looper/looper_thumbnail_cache.h"
 #include "parameter_ui.h"
 #include "volume_meter.h"
+#include "audio_thumbnail.h"
 
 namespace ui {
     class MixerUi final : public WindowBase
     {
     public:
-        explicit MixerUi(looper::Looper &looper) : looper_(&looper), paramTree_(looper_->getParameterTree())
+        explicit MixerUi(looper::Looper &looper)
+            : looper_(&looper)
+            , thumbnailCache_(*looper_)
+            , paramTree_(looper_->getParameterTree()) 
         {
             assert(paramTree_.isValid());
             eqOpened_.assign(looper_->getNumLooperTracks(), {});
@@ -55,7 +60,16 @@ namespace ui {
             ImGui::Text("State: %s", looper::stateToStr(track.state));
 
             const auto progress = (track.nFrames > 0) ? (static_cast<float>(track.position) / static_cast<float>(track.nFrames)) : 0.0f;
-            ImGui::ProgressBar(progress, ImVec2(sliderWidth, 0));
+            //ImGui::ProgressBar(progress, ImVec2(sliderWidth, 0));
+
+            thumbnailCache_.update(trackIndex);
+            const auto *thumb = thumbnailCache_.get(trackIndex);
+            ui::audioThumbnail(
+                std::format("##thumbnail{}", trackIndex).c_str(),
+                thumb ? thumb->buckets : nullptr,
+                looper::ThumbnailCache::kBuckets,
+                progress
+            );
 
             if (ImGui::Button((track.state == looper::State::Recording) ? "Stop" : "Record")) {
                 looper_->toggleRecording(trackIndex);
@@ -94,6 +108,7 @@ namespace ui {
         }
 
         looper::Looper *looper_;
+        looper::ThumbnailCache thumbnailCache_;
         dsp::parameter::ParameterTree paramTree_;
 
         struct Bool

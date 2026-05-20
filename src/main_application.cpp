@@ -201,7 +201,5 @@ void MainApplication::drawTopBarMenu()
         ImGui::PopID();
     }
 
-    ui::showAudioThumbnailDemo();
-
     ImGui::EndMainMenuBar();
 }

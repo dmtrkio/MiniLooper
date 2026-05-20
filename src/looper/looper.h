@@ -73,6 +73,7 @@ namespace looper {
         void pause(int trackIndex) const;
         void resume(int trackIndex) const;
         void clearAll() const;
+        void getThumbnail(int trackIndex, ThumbnailSnapshot& out) const noexcept;
 
         [[nodiscard]] std::unique_ptr<LooperSessionData> getSessionData() const;
 

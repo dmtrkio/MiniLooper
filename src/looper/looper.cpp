@@ -272,6 +272,14 @@ namespace looper {
         looperMailbox.tryPush(LooperCommand::clearAllTracks());
     }
 
+    void Looper::getThumbnail(int trackIndex, ThumbnailSnapshot& out) const noexcept
+    {
+        LooperCommand::CompletionFlag completionFlag;
+        const auto cmd = LooperCommand::getThumbnail(trackIndex, out, completionFlag);
+        getCommandMailbox().waitPush(cmd);
+        while (!completionFlag.complete) {}
+    }
+
     std::unique_ptr<LooperSessionData> Looper::getSessionData() const
     {
         const auto sampleRate = audio::AudioEngine::getInstance().getSampleRate();

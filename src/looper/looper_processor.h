@@ -11,6 +11,13 @@ namespace looper {
     constexpr unsigned int kLooperTrackCount = 4;
     constexpr float kFadeLengthMs = 5.0f;
 
+    struct ThumbnailSnapshot
+    {
+        static constexpr int kBuckets = 400;
+        std::pair<float, float> buckets[kBuckets];
+        unsigned int length = 0;
+    };
+
     enum class State
     {
         Cleared,
@@ -48,6 +55,7 @@ namespace looper {
         void resume(int trackIndex) noexcept;
         void clearAll() noexcept;
         [[nodiscard]] unsigned int copyLoop(int trackIndex, float *const *data, unsigned int capacity) const noexcept;
+        void extractThumbnail(int trackIndex, ThumbnailSnapshot& out) const noexcept;
 
     private:
         [[nodiscard]] unsigned int getNextGridDivision(int frameIndex) const noexcept;

@@ -213,6 +213,38 @@ namespace looper {
         return toCopy;
     }
 
+    void LooperProcessor::extractThumbnail(int trackIndex, ThumbnailSnapshot& out) const noexcept
+    {
+        if (!isTrackIndexValid(trackIndex)) return;
+        const auto& track = tracks_[trackIndex];
+        const auto len = track.length;
+
+        out.length = len;
+        if (len == 0) {
+            for (int i = 0; i < ThumbnailSnapshot::kBuckets; ++i)
+                out.buckets[i] = {0.0f, 0.0f};
+            return;
+        }
+
+        const float step = static_cast<float>(len) / ThumbnailSnapshot::kBuckets;
+        for (int b = 0; b < ThumbnailSnapshot::kBuckets; ++b) {
+            int start = static_cast<int>(b * step);
+            int end   = static_cast<int>((b + 1) * step);
+            if (end > static_cast<int>(len)) end = static_cast<int>(len);
+            if (end <= start) end = start + 1;
+
+            float minV = 0.0f, maxV = 0.0f;
+            for (int i = start; i < end; ++i) {
+                float l = track.buffers[0][i];
+                float r = track.buffers[1][i];
+                float s = (std::abs(l) > std::abs(r)) ? l : r;
+                if (s < minV) minV = s;
+                if (s > maxV) maxV = s;
+            }
+            out.buckets[b] = {minV, maxV};
+        }
+    }
+
     unsigned int LooperProcessor::getNextGridDivision(int frameIndex) const noexcept
     {
         int target = static_cast<int>(transport_.largestPossibleLoopLength);

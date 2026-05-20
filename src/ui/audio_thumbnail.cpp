@@ -78,9 +78,9 @@ namespace ui {
                 drawBin(x, minVal, maxVal);
             } else {
                 const float step = size.x / static_cast<float>(pairCount - 1);
-                const bool sparse = step > 1.0f;
+                const bool sparse = step > 2.0f;
 
-                if (!sparse) {
+                if (sparse) {
                     for (int i = 0; i < pairCount; ++i) {
                         const float x = bbMin.x + i * step;
                         const auto [minVal, maxVal] = minMaxPairs[i];

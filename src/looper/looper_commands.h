@@ -7,7 +7,6 @@
 #include "looper_processor.h"
 
 namespace looper {
-
     class LooperProcessor;
 
     class LooperCommand
@@ -39,7 +38,9 @@ namespace looper {
         static LooperCommand resume(int trackIndex) noexcept;
         static LooperCommand resumeAll() noexcept;
         static LooperCommand clearAllTracks() noexcept;
+        // unlike other commands those should always be awaited for completion
         static LooperCommand copyLoops(CopyData& copyData, CompletionFlag& completionFlag) noexcept;
+        static LooperCommand getThumbnail(int trackIndex, ThumbnailSnapshot& out, CompletionFlag& completionFlag) noexcept;
 
         void addCompletionFlag(CompletionFlag* flag) noexcept;
         void apply(LooperProcessor& looper) const;
@@ -93,6 +94,13 @@ namespace looper {
             void apply(LooperProcessor& looper) const;
         };
 
+        struct GetThumbnail
+        {
+            int trackIndex;
+            ThumbnailSnapshot* out;
+            void apply(LooperProcessor& looper) const;
+        };
+
         using Variant = std::variant<
             Dummy,
             StartRecording,
@@ -101,7 +109,8 @@ namespace looper {
             Pause,
             Resume,
             ClearAllTracks,
-            CopyLoops
+            CopyLoops,
+            GetThumbnail
         >;
 
         explicit LooperCommand(Variant cmd) noexcept : cmd_(cmd) {}

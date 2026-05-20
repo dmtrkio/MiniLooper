@@ -1,4 +1,5 @@
 #include "looper_commands.h"
+#include "looper/looper.h"
 #include "looper_processor.h"
 
 namespace looper {
@@ -42,10 +43,16 @@ namespace looper {
         return LooperCommand{ ClearAllTracks{} };
     }
 
-    // unlike other commands this one should always be awaited for completion
     LooperCommand LooperCommand::copyLoops(CopyData& copyData, CompletionFlag& completionFlag) noexcept
     {
         auto cmd = LooperCommand{ CopyLoops{ &copyData } };
+        cmd.addCompletionFlag(&completionFlag);
+        return cmd;
+    }
+
+    LooperCommand LooperCommand::getThumbnail(int trackIndex, ThumbnailSnapshot& out, CompletionFlag& completionFlag) noexcept
+    {
+        auto cmd = LooperCommand{ GetThumbnail{ trackIndex, &out } };
         cmd.addCompletionFlag(&completionFlag);
         return cmd;
     }
@@ -112,5 +119,11 @@ namespace looper {
             float *data[2] = { copyData->buffersL[i], copyData->buffersR[i] };
             copyData->framesWritten[i] = looper.copyLoop(i, data, copyData->maxFrames);
         }
+    }
+
+    void LooperCommand::GetThumbnail::apply(LooperProcessor& looper) const
+    {
+        if (!out) return;
+        looper.extractThumbnail(trackIndex, *out);
     }
 }
