@@ -14,6 +14,7 @@
 #include "ui/source_mixer_ui.h"
 #include "ui/session_manager_ui.h"
 #include "ui/theme.h"
+#include "ui/audio_thumbnail.h"
 #include "filepaths.h"
 #include "fonts/Inter-Regular.h"
 #include "json.h"
@@ -199,6 +200,8 @@ void MainApplication::drawTopBarMenu()
         }
         ImGui::PopID();
     }
+
+    ui::showAudioThumbnailDemo();
 
     ImGui::EndMainMenuBar();
 }
