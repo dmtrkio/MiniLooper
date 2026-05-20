@@ -33,13 +33,13 @@ namespace ui {
         ImGui::InvisibleButton(id, size);
         const bool hovered = ImGui::IsItemHovered();
 
-        if (!ImGui::IsItemVisible() || pairCount <= 0 || size.x <= 0.0f || size.y <= 0.0f)
+        if (!ImGui::IsItemVisible() || size.x <= 0.0f || size.y <= 0.0f)
             return hovered;
 
         ImDrawList* drawList = ImGui::GetWindowDrawList();
         const ImGuiStyle& style = ImGui::GetStyle();
 
-        const float playheadClamped = std::clamp(playhead, 0.0f, 1.0f);
+        const float playheadClamped = pairCount > 0 ? std::clamp(playhead, 0.0f, 1.0f) : 0.0f;
         const float playheadX       = bbMin.x + size.x * playheadClamped;
         const float halfH           = size.y * 0.5f;
         const float centerY         = bbMin.y + halfH;
@@ -94,12 +94,14 @@ namespace ui {
         }
 
         // 3) Thin playhead divider
-        drawList->AddLine(
-            ImVec2(playheadX, bbMin.y),
-            ImVec2(playheadX, bbMax.y),
-            ImGui::GetColorU32(ImGuiCol_Border),
-            1.0f
-        );
+        if (pairCount > 0) {
+            drawList->AddLine(
+                ImVec2(playheadX, bbMin.y),
+                ImVec2(playheadX, bbMax.y),
+                ImGui::GetColorU32(ImGuiCol_Border),
+                1.0f
+            );
+        }
 
         // 4) Border — same color, thickness and rounding as ImGui frames/sliders
         if (style.FrameBorderSize > 0.0f) {
@@ -179,21 +181,13 @@ namespace ui {
         if (playhead > 1.0f) playhead = 0.0f;
 
         // 3. Draw the widget
-        ImGui::Text("Default colors");
+        ImGui::Text("Full");
         ui::audioThumbnail("##demo1", waveform.data(), (int)waveform.size(), playhead);
 
         ImGui::Spacing();
 
-        ImGui::Text("Custom colors (dark theme)");
-        ui::audioThumbnail(
-            "##demo2",
-            waveform.data(),
-            (int)waveform.size(),
-            playhead,
-            ImVec2(0, 0),
-            IM_COL32(230, 220, 60, 255),
-            IM_COL32(40, 40, 40, 255)
-        );
+        ImGui::Text("Empty");
+        ui::audioThumbnail("##demo2", nullptr, 0, playhead);
 
         // 4. Manual scrubbing
         ImGui::Spacing();
