@@ -85,7 +85,6 @@ namespace looper {
             [[nodiscard]] unsigned int phase(unsigned int transportFrame) const noexcept;
             [[nodiscard]] std::pair<float, float> getFadeScalars(unsigned int pos) const noexcept;
 
-            int trackIndex{-1};
             State state{State::Cleared};
             unsigned int start{0};
             unsigned int length{0};

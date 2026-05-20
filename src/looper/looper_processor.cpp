@@ -350,7 +350,6 @@ namespace looper {
 
     void LooperProcessor::Track::init(int index, unsigned int nChannels, unsigned int maxFrames) noexcept
     {
-        trackIndex = index;
         buffers.resize(nChannels);
         for (auto& buffer : buffers) {
             buffer.resize(maxFrames);
