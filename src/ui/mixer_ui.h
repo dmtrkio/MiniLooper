@@ -68,7 +68,8 @@ namespace ui {
                 std::format("##thumbnail{}", trackIndex).c_str(),
                 thumb ? thumb->buckets : nullptr,
                 looper::ThumbnailCache::kBuckets,
-                progress
+                progress,
+                track.state != looper::State::Cleared
             );
 
             if (ImGui::Button((track.state == looper::State::Recording) ? "Stop" : "Record")) {

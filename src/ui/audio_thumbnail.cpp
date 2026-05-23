@@ -10,6 +10,7 @@ namespace ui {
         const std::pair<float, float>* minMaxPairs,
         int pairCount,
         float playhead,
+        bool drawPlayhead,
         const ImVec2& sizeArg,
         ImU32 waveformColor,
         ImU32 backgroundColor
@@ -62,6 +63,16 @@ namespace ui {
             ImDrawFlags_RoundCornersRight
         );
 
+        drawList->PushClipRect(bbMin, bbMax, true);
+
+        auto getMinMaxPair = [&minMaxPairs] (std::size_t index) {
+            const auto [minVal, maxVal] = minMaxPairs[index];
+            return std::make_pair(
+                std::max(minVal, -1.0f),
+                std::min(maxVal, 1.0f)
+            );
+        };
+
         auto drawBin = [&](float x, float minVal, float maxVal) {
             const float yTop    = centerY - maxVal * halfH;
             const float yBottom = centerY - minVal * halfH;
@@ -74,7 +85,7 @@ namespace ui {
         if (minMaxPairs) {
             if (pairCount == 1) {
                 const float x = bbMin.x + size.x * 0.5f;
-                const auto [minVal, maxVal] = minMaxPairs[0];
+                const auto [minVal, maxVal] = getMinMaxPair(0);
                 drawBin(x, minVal, maxVal);
             } else {
                 const float step = size.x / static_cast<float>(pairCount - 1);
@@ -83,7 +94,7 @@ namespace ui {
                 if (sparse) {
                     for (int i = 0; i < pairCount; ++i) {
                         const float x = bbMin.x + i * step;
-                        const auto [minVal, maxVal] = minMaxPairs[i];
+                        const auto [minVal, maxVal] = getMinMaxPair(i);
                         drawBin(x, minVal, maxVal);
                     }
                 } else {
@@ -106,8 +117,8 @@ namespace ui {
                         const float x0 = bbMin.x + i * step;
                         const float x1 = bbMin.x + (i + 1) * step;
 
-                        const auto [minVal0, maxVal0] = minMaxPairs[i];
-                        const auto [minVal1, maxVal1] = minMaxPairs[i + 1];
+                        const auto [minVal0, maxVal0] = getMinMaxPair(i);
+                        const auto [minVal1, maxVal1] = getMinMaxPair(i + 1);
 
                         const float yTop0    = centerY - maxVal0 * halfH;
                         const float yBottom0 = centerY - minVal0 * halfH;
@@ -133,12 +144,14 @@ namespace ui {
         }
 
         // 3) Playhead divider
-        drawList->AddLine(
-            ImVec2(playheadX, bbMin.y),
-            ImVec2(playheadX, bbMax.y),
-            ImGui::GetColorU32(ImGuiCol_Border),
-            1.0f
-        );
+        if (drawPlayhead) {
+            drawList->AddLine(
+                ImVec2(playheadX, bbMin.y),
+                ImVec2(playheadX, bbMax.y),
+                ImGui::GetColorU32(ImGuiCol_Border),
+                1.0f
+            );
+        }
 
         // 4) Border — same color, thickness and rounding as ImGui frames/sliders
         if (style.FrameBorderSize > 0.0f) {
@@ -151,6 +164,8 @@ namespace ui {
                 style.FrameBorderSize
             );
         }
+
+        drawList->PopClipRect();
 
         return hovered;
     }
