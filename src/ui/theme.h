@@ -151,16 +151,16 @@ namespace ui {
         style.FrameBorderSize    = 1.0f;
         style.TabBorderSize      = 1.0f;
 
-        style.WindowPadding      = ImVec2(10.0f, 10.0f);
-        style.FramePadding       = ImVec2(6.0f, 4.0f);
-        style.CellPadding        = ImVec2(6.0f, 4.0f);
-        style.ItemSpacing        = ImVec2(8.0f, 6.0f);
-        style.ItemInnerSpacing   = ImVec2(6.0f, 4.0f);
+        style.WindowPadding      = ImVec2(12.0f, 12.0f);
+        style.FramePadding       = ImVec2(8.0f, 5.0f);
+        style.CellPadding        = ImVec2(8.0f, 5.0f);
+        style.ItemSpacing        = ImVec2(10.0f, 8.0f);
+        style.ItemInnerSpacing   = ImVec2(8.0f, 6.0f);
         style.IndentSpacing      = 24.0f;
-        style.ScrollbarSize      = 14.0f;
-        style.GrabMinSize        = 10.0f;
-        style.SeparatorTextBorderSize = 2.0f;
-        style.SeparatorTextPadding    = ImVec2(8.0f, 4.0f);
+        style.ScrollbarSize      = 16.0f;
+        style.GrabMinSize        = 12.0f;
+        style.SeparatorTextBorderSize = 1.0f;
+        style.SeparatorTextPadding    = ImVec2(10.0f, 4.0f);
         style.SeparatorTextAlign    = ImVec2(0.0f, 0.5f);
     }
 
