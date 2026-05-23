@@ -217,7 +217,13 @@ namespace looper {
     {
         if (!isTrackIndexValid(trackIndex)) return;
         const auto& track = tracks_[trackIndex];
-        const auto len = track.length;
+        const auto len = [&] {
+            if (track.state == State::Recording && track.length == 0) {
+                return transport_.currentFrame - track.start;
+            } else {
+                return track.length;
+            }
+        }();
 
         out.length = len;
         if (len == 0) {

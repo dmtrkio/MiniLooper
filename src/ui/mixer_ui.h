@@ -64,12 +64,13 @@ namespace ui {
 
             thumbnailCache_.update(trackIndex);
             const auto *thumb = thumbnailCache_.get(trackIndex);
+            const bool drawPlayhead = (track.state == looper::State::Recording && track.nFrames > 0) || (track.state == looper::State::Playback);
             ui::audioThumbnail(
                 std::format("##thumbnail{}", trackIndex).c_str(),
                 thumb ? thumb->buckets : nullptr,
                 looper::ThumbnailCache::kBuckets,
                 progress,
-                track.state != looper::State::Cleared
+                drawPlayhead
             );
 
             if (ImGui::Button((track.state == looper::State::Recording) ? "Stop" : "Record")) {
