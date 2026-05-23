@@ -35,12 +35,13 @@ namespace dsp::filter {
         return coefficients.process(x0, x1, x2, y1, y2);
     }
 
-    namespace FilterDefaults {
-        constexpr double kDefaultFrequency = 440.0;
-        constexpr double kDefaultQ = 0.7071;
-        constexpr double kDefaultBw = 1.0;
-        constexpr double kDefaultSlope = 1.0;
-        constexpr double kDefaultGain = 1.0;
+    template <typename T>
+    struct FilterDefaults {
+        static constexpr auto kDefaultFrequency = static_cast<T>(440.0);
+        static constexpr auto kDefaultQ         = static_cast<T>(0.7071);
+        static constexpr auto kDefaultBw        = static_cast<T>(1.0);
+        static constexpr auto kDefaultSlope     = static_cast<T>(1.0);
+        static constexpr auto kDefaultGain      = static_cast<T>(1.0);
     };
 
     template<typename T, std::size_t N>
@@ -51,6 +52,7 @@ namespace dsp::filter {
 
         using DataType = T;
         using Coefficients = BiquadCoefficients<T>;
+        using FilterDefaults = FilterDefaults<T>;
         static constexpr auto kChannelCount = N;
 
         void setParameters(const FilterType filterType, T sampleRate, T frequencyHz, std::optional<T> q = std::nullopt, std::optional<T> bw = std::nullopt, std::optional<T> slope = std::nullopt, std::optional<T> gain = std::nullopt) noexcept

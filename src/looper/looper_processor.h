@@ -74,7 +74,7 @@ namespace looper {
             void setBarLength(unsigned int nFrames, unsigned int maxFrames) noexcept;
             void reset(unsigned int maxFrames) noexcept;
 
-            std::uint64_t currentFrame{};
+            unsigned int currentFrame{};
             unsigned int barLength{};
             unsigned int largestPossibleLoopLength{};
         };

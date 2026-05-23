@@ -16,11 +16,10 @@ namespace dsp::effects {
         Equalizer() : paramTree_("Equalizer")
         {
             using namespace parameter;
-            using namespace dsp::filter::FilterDefaults;
 
             auto highPass = ParameterTree("HighPass", {
                 Parameter::makeFloat("Frequency", kDefaultFrequencies[0], kBandRanges[0]),
-                Parameter::makeFloat("Q", kDefaultQ, {0.5f, 8.0f}),
+                Parameter::makeFloat("Q", static_cast<float>(Filter::FilterDefaults::kDefaultQ), {0.5f, 8.0f}),
             });
 
             auto lowShelf = ParameterTree("LowShelf", {
@@ -45,7 +44,7 @@ namespace dsp::effects {
 
             auto lowPass = ParameterTree("LowPass", {
                 Parameter::makeFloat("Frequency", kDefaultFrequencies[5], kBandRanges[5]),
-                Parameter::makeFloat("Q", kDefaultQ, {0.5f, 8.0f}),
+                Parameter::makeFloat("Q", static_cast<float>(Filter::FilterDefaults::kDefaultQ), {0.5f, 8.0f}),
             });
 
             paramTree_.addSubTree(std::move(highPass));
@@ -101,8 +100,6 @@ namespace dsp::effects {
 
         void applyParams()
         {
-            using namespace dsp::filter::FilterDefaults;
-
             for (std::size_t i = 0; i < kBands; ++i) {
                 const auto freqHz = bandViews_[i].freq.get();
                 const auto type = kFilterTypes[i];
@@ -110,12 +107,12 @@ namespace dsp::effects {
                 if (type == filter::FilterType::LowPass || type == filter::FilterType::HighPass) {
                     bands_[i].setParameters(
                         type, sampleRate_, freqHz,
-                        bandViews_[i].q.get(), kDefaultBw, kDefaultSlope, kDefaultGain
+                        bandViews_[i].q.get(), Filter::FilterDefaults::kDefaultBw, Filter::FilterDefaults::kDefaultSlope, Filter::FilterDefaults::kDefaultGain
                     );
                 } else {
                     bands_[i].setParameters(
                         type, sampleRate_, freqHz,
-                        kDefaultQ, kDefaultBw, kDefaultSlope, dBtoLinear(bandViews_[i].gainDb.get())
+                        Filter::FilterDefaults::kDefaultQ, Filter::FilterDefaults::kDefaultBw, Filter::FilterDefaults::kDefaultSlope, dBtoLinear(bandViews_[i].gainDb.get())
                     );
                 }
             }

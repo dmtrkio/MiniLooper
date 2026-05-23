@@ -36,8 +36,8 @@ namespace looper {
         numChannels_ = nChannels;
         maxFrames_ = mFrames;
 
-        for (int i = 0; i < tracks_.size(); ++i) {
-            tracks_[i].init(i, nChannels, mFrames);
+        for (std::size_t i{}; i < tracks_.size(); ++i) {
+            tracks_[i].init(static_cast<int>(i), nChannels, mFrames);
         }
 
         mixer_.prepare(sampleRate);
@@ -250,7 +250,7 @@ namespace looper {
         int target = static_cast<int>(transport_.largestPossibleLoopLength);
         int distance = target - frameIndex;
 
-        while (target > transport_.barLength) {
+        while (target > static_cast<int>(transport_.barLength)) {
             const auto newTarget = target / 2;
             const auto newDistance = newTarget - frameIndex;
 
