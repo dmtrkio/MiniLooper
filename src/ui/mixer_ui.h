@@ -65,12 +65,20 @@ namespace ui {
             thumbnailCache_.update(trackIndex);
             const auto *thumb = thumbnailCache_.get(trackIndex);
             const bool drawPlayhead = (track.state == looper::State::Recording && track.nFrames > 0) || (track.state == looper::State::Playback);
+            const ImU32 waveformColor = [&] {
+                if (track.state == looper::State::Recording) {
+                    return IM_COL32(230, 20, 20, 255);
+                }
+                return ImGui::GetColorU32(ImGuiCol_PlotHistogram);
+            }();
             ui::audioThumbnail(
                 std::format("##thumbnail{}", trackIndex).c_str(),
                 thumb ? thumb->buckets : nullptr,
                 looper::ThumbnailCache::kBuckets,
                 progress,
-                drawPlayhead
+                drawPlayhead,
+                ImVec2(0, 0),
+                waveformColor
             );
 
             if (ImGui::Button((track.state == looper::State::Recording) ? "Stop" : "Record")) {
