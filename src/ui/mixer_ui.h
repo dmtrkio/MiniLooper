@@ -59,11 +59,10 @@ namespace ui {
 
             ImGui::Text("State: %s", looper::stateToStr(track.state));
 
-            const auto progress = (track.nFrames > 0) ? (static_cast<float>(track.position) / static_cast<float>(track.nFrames)) : 0.0f;
-            //ImGui::ProgressBar(progress, ImVec2(sliderWidth, 0));
-
             thumbnailCache_.update(trackIndex);
+
             const auto *thumb = thumbnailCache_.get(trackIndex);
+            const auto progress = (track.nFrames > 0) ? (static_cast<float>(track.position) / static_cast<float>(track.nFrames)) : 0.0f;
             const bool drawPlayhead = (track.state == looper::State::Recording && track.nFrames > 0) || (track.state == looper::State::Playback);
             const ImU32 waveformColor = [&] {
                 if (track.state == looper::State::Recording) {
@@ -71,6 +70,7 @@ namespace ui {
                 }
                 return ImGui::GetColorU32(ImGuiCol_PlotHistogram);
             }();
+
             ui::audioThumbnail(
                 std::format("##thumbnail{}", trackIndex).c_str(),
                 thumb ? thumb->buckets : nullptr,

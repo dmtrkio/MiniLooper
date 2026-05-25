@@ -7,7 +7,7 @@
 namespace ui {
     bool audioThumbnail(
         const char* id,
-        const std::pair<float, float>* minMaxPairs,
+        const dsp::MinMax* minMaxPairs,
         int pairCount,
         float playhead,
         bool drawPlayhead,

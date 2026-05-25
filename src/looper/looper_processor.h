@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "looper_mixer.h"
+#include "dsp/dsp.h"
 
 namespace looper {
     constexpr unsigned int kMaxLoopSecs = 32;
@@ -20,7 +21,7 @@ namespace looper {
         ThumbnailSnapshot& operator=(ThumbnailSnapshot&&) = default;
 
         static constexpr int kBuckets = 200;
-        std::pair<float, float> buckets[kBuckets];
+        dsp::MinMax buckets[kBuckets];
     };
 
     enum class State

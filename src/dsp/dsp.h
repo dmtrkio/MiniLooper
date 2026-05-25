@@ -8,6 +8,12 @@
 #include <numbers>
 
 namespace dsp {
+    struct MinMax
+    {
+        float min;
+        float max;
+    };
+
     constexpr float linearToDb(const float value, const float minDb = -100.0f) noexcept
     {
         if (value <= 0.0000001f)

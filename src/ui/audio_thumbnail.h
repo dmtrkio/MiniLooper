@@ -7,10 +7,12 @@
 
 #include <imgui.h>
 
+#include "dsp/dsp.h"
+
 namespace ui {
     bool audioThumbnail(
         const char* id,
-        const std::pair<float, float>* minMaxPairs,
+        const dsp::MinMax* minMaxPairs,
         int pairCount,
         float playhead,
         bool drawPlayhead = true,
@@ -19,9 +21,9 @@ namespace ui {
         ImU32 backgroundColor = IM_COL32(40, 40, 40, 255)
     );
 
-    inline std::vector<std::pair<float, float>> generateSyntheticWaveform(int bucketCount, unsigned int seed = 12345)
+    inline std::vector<dsp::MinMax> generateSyntheticWaveform(int bucketCount, unsigned int seed = 12345)
     {
-        std::vector<std::pair<float, float>> out;
+        std::vector<dsp::MinMax> out;
         out.reserve(bucketCount);
 
         std::srand(seed);
@@ -74,7 +76,7 @@ namespace ui {
         ImGui::Begin("Audio Thumbnail Demo");
 
         // 1. Generate data once (or cache it somewhere static)
-        static std::vector<std::pair<float, float>> waveform = ui::generateSyntheticWaveform(200);
+        static std::vector<dsp::MinMax> waveform = ui::generateSyntheticWaveform(200);
 
         // 2. Animated playhead so you can see the color inversion
         static float playhead = 0.0f;
