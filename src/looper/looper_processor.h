@@ -13,9 +13,14 @@ namespace looper {
 
     struct ThumbnailSnapshot
     {
-        static constexpr int kBuckets = 400;
+        ThumbnailSnapshot() = default;
+        ThumbnailSnapshot(const ThumbnailSnapshot&) = default;
+        ThumbnailSnapshot& operator=(const ThumbnailSnapshot&) = default;
+        ThumbnailSnapshot(ThumbnailSnapshot&&) = default;
+        ThumbnailSnapshot& operator=(ThumbnailSnapshot&&) = default;
+
+        static constexpr int kBuckets = 200;
         std::pair<float, float> buckets[kBuckets];
-        unsigned int length = 0;
     };
 
     enum class State

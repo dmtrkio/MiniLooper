@@ -225,7 +225,6 @@ namespace looper {
             }
         }();
 
-        out.length = len;
         if (len == 0) {
             for (int i = 0; i < ThumbnailSnapshot::kBuckets; ++i)
                 out.buckets[i] = {0.0f, 0.0f};
