@@ -24,6 +24,7 @@ namespace looper {
     struct LooperStateSnapshot
     {
         std::array<TrackStateSnapshot, kLooperTrackCount> tracks;
+        unsigned int maxLoopLength{};
         std::pair<float, float> level;
     };
 

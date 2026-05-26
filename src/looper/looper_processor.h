@@ -50,6 +50,7 @@ namespace looper {
 
         [[nodiscard]] Mixer& getMixer() noexcept;
         [[nodiscard]] State getState(int trackIndex) const noexcept;
+        [[nodiscard]] unsigned int getMaxFramesInLoop() const noexcept;
         [[nodiscard]] unsigned int getCurrentPosition(int trackIndex) const noexcept;
         [[nodiscard]] unsigned int getCurrentNumFrames(int trackIndex) const noexcept;
         [[nodiscard]] bool isEmpty(int trackIndex) const noexcept;

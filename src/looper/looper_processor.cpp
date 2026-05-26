@@ -66,6 +66,11 @@ namespace looper {
         return tracks_[trackIndex].state;
     }
 
+    unsigned int LooperProcessor::getMaxFramesInLoop() const noexcept
+    {
+        return maxFrames_;
+    }
+
     unsigned int LooperProcessor::getCurrentPosition(int trackIndex) const noexcept
     {
         if (!isTrackIndexValid(trackIndex)) return 0;

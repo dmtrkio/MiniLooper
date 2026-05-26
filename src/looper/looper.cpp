@@ -141,6 +141,7 @@ namespace looper {
                 level = looperProcessor.getMixer().getLevel(i);
             }
 
+            snapshot.maxLoopLength = looperProcessor.getMaxFramesInLoop();
             snapshot.level = levelMeter_.getLevel();
         }
 
@@ -282,8 +283,7 @@ namespace looper {
 
     std::unique_ptr<LooperSessionData> Looper::getSessionData() const
     {
-        const auto sampleRate = audio::AudioEngine::getInstance().getSampleRate();
-        const auto maxFrames = sampleRate * kMaxLoopSecs;
+        const auto maxFrames = cb_->looperProcessor.getMaxFramesInLoop();
 
         auto session = std::make_unique<LooperSessionData>(maxFrames);
 

@@ -1,5 +1,4 @@
 #include "looper_commands.h"
-#include "looper/looper.h"
 #include "looper_processor.h"
 
 namespace looper {
