@@ -66,13 +66,13 @@ namespace looper {
         [[nodiscard]] json getSettingsAsJson() const;
         bool loadSettingsFromJson(const json& j);
 
-        bool toggleRecording(int trackIndex) const;
-        bool togglePlay(int trackIndex) const;
-        void startRecording(int trackIndex) const;
-        void stopRecording(int trackIndex) const;
+        bool toggleRecording(int trackIndex, bool synced = true) const;
+        bool togglePlay(int trackIndex, bool synced = true) const;
+        void startRecording(int trackIndex, bool synced = true) const;
+        void stopRecording(int trackIndex, bool synced = true) const;
         void clear(int trackIndex) const;
-        void pause(int trackIndex) const;
-        void resume(int trackIndex) const;
+        void pause(int trackIndex, bool synced = true) const;
+        void resume(int trackIndex, bool synced = true) const;
         void clearAll() const;
         void getThumbnail(int trackIndex, ThumbnailSnapshot& out) const noexcept;
 

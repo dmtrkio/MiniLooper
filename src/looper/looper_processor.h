@@ -55,11 +55,11 @@ namespace looper {
         [[nodiscard]] unsigned int getCurrentNumFrames(int trackIndex) const noexcept;
         [[nodiscard]] bool isEmpty(int trackIndex) const noexcept;
 
-        void startRecording(int trackIndex) noexcept;
-        void stopRecording(int trackIndex) noexcept;
+        void startRecording(int trackIndex, bool synced = true) noexcept;
+        void stopRecording(int trackIndex, bool synced = true) noexcept;
         void clear(int trackIndex) noexcept;
-        void pause(int trackIndex) noexcept;
-        void resume(int trackIndex) noexcept;
+        void pause(int trackIndex, bool synced = true) noexcept;
+        void resume(int trackIndex, bool synced = true) noexcept;
         void clearAll() noexcept;
         [[nodiscard]] unsigned int copyLoop(int trackIndex, float *const *data, unsigned int capacity) const noexcept;
         void extractThumbnail(int trackIndex, ThumbnailSnapshot& out) const noexcept;

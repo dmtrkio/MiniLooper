@@ -86,9 +86,9 @@ namespace looper {
 
             footSwitch.setOnSinglePressed([&] {
                 if (looperProcessor.getState(fsTrackIndex_) != looper::State::Recording) {
-                    looperProcessor.startRecording(fsTrackIndex_);
+                    looperProcessor.startRecording(fsTrackIndex_, false);
                 } else {
-                    looperProcessor.stopRecording(fsTrackIndex_);
+                    looperProcessor.stopRecording(fsTrackIndex_, false);
                 }
             });
 
@@ -215,38 +215,38 @@ namespace looper {
         return paramTree_.copyParameterValuesFromJson(j);
     }
 
-    bool Looper::toggleRecording(int trackIndex) const
+    bool Looper::toggleRecording(int trackIndex, bool synced) const
     {
         if (getTrackState(trackIndex).state != looper::State::Recording) {
-            startRecording(trackIndex);
+            startRecording(trackIndex, synced);
             return true;
         } else {
-            stopRecording(trackIndex);
+            stopRecording(trackIndex, synced);
             return false;
         }
     }
 
-    bool Looper::togglePlay(int trackIndex) const
+    bool Looper::togglePlay(int trackIndex, bool synced) const
     {
         if (getTrackState(trackIndex).state == looper::State::Paused) {
-            resume(trackIndex);
+            resume(trackIndex, synced);
             return true;
         } else {
-            pause(trackIndex);
+            pause(trackIndex, synced);
             return false;
         }
     }
 
-    void Looper::startRecording(int trackIndex) const
+    void Looper::startRecording(int trackIndex, bool synced) const
     {
         auto &looperMailbox = getCommandMailbox();
-        looperMailbox.tryPush(looper::LooperCommand::startRecording(trackIndex));
+        looperMailbox.tryPush(looper::LooperCommand::startRecording(trackIndex, synced));
     }
 
-    void Looper::stopRecording(int trackIndex) const
+    void Looper::stopRecording(int trackIndex, bool synced) const
     {
         auto &looperMailbox = getCommandMailbox();
-        looperMailbox.tryPush(looper::LooperCommand::stopRecording(trackIndex));
+        looperMailbox.tryPush(looper::LooperCommand::stopRecording(trackIndex, synced));
     }
 
     void Looper::clear(int trackIndex) const
@@ -255,16 +255,16 @@ namespace looper {
         looperMailbox.tryPush(looper::LooperCommand::clear(trackIndex));
     }
 
-    void Looper::pause(int trackIndex) const
+    void Looper::pause(int trackIndex, bool synced) const
     {
         auto &looperMailbox = getCommandMailbox();
-        looperMailbox.tryPush(looper::LooperCommand::pause(trackIndex));
+        looperMailbox.tryPush(looper::LooperCommand::pause(trackIndex, synced));
     }
 
-    void Looper::resume(int trackIndex) const
+    void Looper::resume(int trackIndex, bool synced) const
     {
         auto &looperMailbox = getCommandMailbox();
-        looperMailbox.tryPush(looper::LooperCommand::resume(trackIndex));
+        looperMailbox.tryPush(looper::LooperCommand::resume(trackIndex, synced));
     }
 
     void Looper::clearAll() const

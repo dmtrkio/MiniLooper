@@ -2,14 +2,14 @@
 #include "looper_processor.h"
 
 namespace looper {
-    LooperCommand LooperCommand::startRecording(int trackIndex) noexcept
+    LooperCommand LooperCommand::startRecording(int trackIndex, bool synced) noexcept
     {
-        return LooperCommand{ StartRecording{ trackIndex } };
+        return LooperCommand{ StartRecording{ trackIndex, synced } };
     }
 
-    LooperCommand LooperCommand::stopRecording(int trackIndex) noexcept
+    LooperCommand LooperCommand::stopRecording(int trackIndex, bool synced) noexcept
     {
-        return LooperCommand{ StopRecording{ trackIndex } };
+        return LooperCommand{ StopRecording{ trackIndex, synced } };
     }
 
     LooperCommand LooperCommand::clear(int trackIndex) noexcept
@@ -17,24 +17,24 @@ namespace looper {
         return LooperCommand{ Clear{ trackIndex } };
     }
 
-    LooperCommand LooperCommand::pause(int trackIndex) noexcept
+    LooperCommand LooperCommand::pause(int trackIndex, bool synced) noexcept
     {
-        return LooperCommand{ Pause{ trackIndex, false } };
+        return LooperCommand{ Pause{ trackIndex, false, synced } };
     }
 
     LooperCommand LooperCommand::pauseAll() noexcept
     {
-        return LooperCommand{ Pause{ -1, true } };
+        return LooperCommand{ Pause{ -1, true, true } };
     }
 
-    LooperCommand LooperCommand::resume(int trackIndex) noexcept
+    LooperCommand LooperCommand::resume(int trackIndex, bool synced) noexcept
     {
-        return LooperCommand{ Resume{ trackIndex, false } };
+        return LooperCommand{ Resume{ trackIndex, false, synced } };
     }
 
     LooperCommand LooperCommand::resumeAll() noexcept
     {
-        return LooperCommand{ Resume{ -1, true } };
+        return LooperCommand{ Resume{ -1, true, true } };
     }
 
     LooperCommand LooperCommand::clearAllTracks() noexcept
@@ -71,12 +71,12 @@ namespace looper {
 
     void LooperCommand::StartRecording::apply(LooperProcessor& looper) const
     {
-        looper.startRecording(trackIndex);
+        looper.startRecording(trackIndex, synced);
     }
 
     void LooperCommand::StopRecording::apply(LooperProcessor& looper) const
     {
-        looper.stopRecording(trackIndex);
+        looper.stopRecording(trackIndex, synced);
     }
 
     void LooperCommand::Clear::apply(LooperProcessor& looper) const
@@ -88,10 +88,10 @@ namespace looper {
     {
         if (all) {
             for (int i = 0; i < looper.getNumLooperTracks(); ++i) {
-                looper.pause(i);
+                looper.pause(i, synced);
             }
         } else {
-            looper.pause(trackIndex);
+            looper.pause(trackIndex, synced);
         }
     }
 
@@ -99,10 +99,10 @@ namespace looper {
     {
         if (all) {
             for (int i = 0; i < looper.getNumLooperTracks(); ++i) {
-                looper.resume(i);
+                looper.resume(i, synced);
             }
         } else {
-            looper.resume(trackIndex);
+            looper.resume(trackIndex, synced);
         }
     }
 

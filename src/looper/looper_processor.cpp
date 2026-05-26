@@ -90,7 +90,7 @@ namespace looper {
         return tracks_[trackIndex].isEmpty();
     }
 
-    void LooperProcessor::startRecording(int trackIndex) noexcept
+    void LooperProcessor::startRecording(int trackIndex, bool synced) noexcept
     {
         if (!isTrackIndexValid(trackIndex)) return;
 
@@ -113,15 +113,21 @@ namespace looper {
                 [[fallthrough]];
             }
             case State::Playback: {
-                const auto framesToLoop = track.length - track.phase(transport_.currentFrame);
-                track.scheduleTransition(State::Recording, framesToLoop);
+                track.scheduleTransition(State::Recording, [&] {
+                    if (synced) {
+                        const auto framesToLoop = track.length - track.phase(transport_.currentFrame);
+                        return framesToLoop;
+                    } else {
+                        return 0u;
+                    }
+                }());
                 break;
             }
             default:;
         }
     }
 
-    void LooperProcessor::stopRecording(int trackIndex) noexcept
+    void LooperProcessor::stopRecording(int trackIndex, bool synced) noexcept
     {
         if (!isTrackIndexValid(trackIndex)) return;
 
@@ -141,8 +147,14 @@ namespace looper {
                         track.scheduleTransition(State::Playback, toWait);
                     }
                 } else {
-                    const auto framesToLoop = track.length - track.phase(transport_.currentFrame);
-                    track.scheduleTransition(State::Playback, framesToLoop);
+                    track.scheduleTransition(State::Playback, [&] {
+                        if (synced) {
+                            const auto framesToLoop = track.length - track.phase(transport_.currentFrame);
+                            return framesToLoop;
+                        } else {
+                            return 0u;
+                        }
+                    }());
                 }
 
                 break;
@@ -178,7 +190,7 @@ namespace looper {
         }
     }
 
-    void LooperProcessor::pause(int trackIndex) noexcept
+    void LooperProcessor::pause(int trackIndex, bool synced) noexcept
     {
         if (!isTrackIndexValid(trackIndex)) return;
 
@@ -186,11 +198,11 @@ namespace looper {
 
         if (track.state != State::Playback) return;
 
-        const auto toWait = track.length - track.phase(transport_.currentFrame);
+        const auto toWait = synced ? (track.length - track.phase(transport_.currentFrame)) : 0;
         track.scheduleTransition(State::Paused, toWait);
     }
 
-    void LooperProcessor::resume(int trackIndex) noexcept
+    void LooperProcessor::resume(int trackIndex, bool synced) noexcept
     {
         if (!isTrackIndexValid(trackIndex)) return;
 
@@ -198,7 +210,7 @@ namespace looper {
 
         if (track.state != State::Paused) return;
 
-        const auto toWait = track.length - track.phase(transport_.currentFrame);
+        const auto toWait = synced ? (track.length - track.phase(transport_.currentFrame)) : 0;
         track.scheduleTransition(State::Playback, toWait);
     }
 
@@ -422,7 +434,9 @@ namespace looper {
     {
         switch (newState) {
             case State::Recording: {
-                start = transportFrame;
+                if (isEmpty()) {
+                    start = transportFrame;
+                }
                 state = State::Recording;
                 break;
             }

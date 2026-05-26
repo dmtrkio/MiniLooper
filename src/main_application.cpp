@@ -167,11 +167,11 @@ void MainApplication::processInput()
         const auto key = ImGuiKey_1 + trackIndex;
 
         if (ImGui::Shortcut(key, ImGuiInputFlags_RouteGlobal)) {
-            looper_.toggleRecording(trackIndex);
+            looper_.toggleRecording(trackIndex, false);
         }
 
         if (ImGui::Shortcut(key | ImGuiMod_Shift, ImGuiInputFlags_RouteGlobal)) {
-            looper_.togglePlay(trackIndex);
+            looper_.togglePlay(trackIndex, false);
         }
     }
 

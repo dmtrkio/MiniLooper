@@ -82,11 +82,11 @@ namespace ui {
             );
 
             if (ImGui::Button((track.state == looper::State::Recording) ? "Stop" : "Record")) {
-                looper_->toggleRecording(trackIndex);
+                looper_->toggleRecording(trackIndex, false);
             }
 
             if (ImGui::Button((track.state == looper::State::Paused) ? "Resume" : "Pause")) {
-                looper_->togglePlay(trackIndex);
+                looper_->togglePlay(trackIndex, false);
             }
 
             if (track.state != looper::State::Cleared) {
