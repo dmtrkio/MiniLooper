@@ -8,9 +8,9 @@
 #include "dsp/dsp.h"
 
 namespace looper {
-    constexpr unsigned int kMaxLoopSecs = 32;
-    constexpr unsigned int kLooperTrackCount = 4;
-    constexpr float kFadeLengthMs = 5.0f;
+    inline constexpr unsigned int kMaxLoopSecs = 32;
+    inline constexpr unsigned int kLooperTrackCount = 4;
+    inline constexpr float kFadeLengthMs = 5.0f;
 
     struct ThumbnailSnapshot
     {

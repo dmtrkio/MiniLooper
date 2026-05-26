@@ -9,7 +9,7 @@
 #include "midi/midi_message.h"
 
 namespace looper {
-    static constexpr float kHeadRoomDb = 6.0f;
+    inline constexpr float kHeadRoomDb = 6.0f;
 
     struct TrackStateSnapshot
     {
