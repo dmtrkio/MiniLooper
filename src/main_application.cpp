@@ -42,7 +42,7 @@ namespace ui {
                 ImGui::TableSetupColumn("Action", ImGuiTableColumnFlags_WidthStretch);
                 ImGui::TableHeadersRow();
 
-                const std::string trackKey = "1 – " + std::to_string(numTracks_);
+                const std::string trackKey = "1 - " + std::to_string(numTracks_);
                 const char* none = "";
 
                 const auto row = [](const char* key, const char* mod, const char* action) {
