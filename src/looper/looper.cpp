@@ -161,6 +161,11 @@ namespace looper {
         )};
 
     private:
+        void rotateTrackIndex()
+        {
+            fsTrackParam.asParameterUnsafe().set((fsTrackIndex_ + 1) % LooperProcessor::getNumLooperTracks());
+        }
+
         int fsTrackIndex_{0};
     };
 
