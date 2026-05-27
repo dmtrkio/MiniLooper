@@ -27,9 +27,19 @@
     },
 
     {
-      "name": "wayland",
+      "name": "wayland-debug",
       "inherits": "base",
       "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SDL_X11": "OFF"
+      }
+    },
+
+    {
+      "name": "wayland-release",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
         "SDL_X11": "OFF"
       }
     },
