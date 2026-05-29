@@ -8,7 +8,7 @@
 #include "dsp/dsp.h"
 
 namespace looper {
-    inline constexpr unsigned int kMaxLoopSecs = 32;
+    inline constexpr unsigned int kMaxLoopSecs = 20;
     inline constexpr unsigned int kLooperTrackCount = 4;
     inline constexpr float kFadeLengthMs = 5.0f;
 

@@ -356,11 +356,16 @@ namespace looper {
             }
 
             if (pos == (transport_.largestPossibleLoopLength - 1)) {
+                // if clamp the largest possible loop length 
                 if (track.isEmpty() && track.state == State::Recording) {
-                    track.length = pos + 1;
-                }
-                if (!transport_.isTempoSet()) {
-                    transport_.setBarLength(track.length, maxFrames_);
+                    track.length = transport_.largestPossibleLoopLength;
+                    // if no tempo set, set it to the length of the first recorded loop
+                    if (!transport_.isTempoSet()) {
+                        track.start = 0;
+                        transport_.setBarLength(track.length, maxFrames_);
+                        // only stop recording if it is the first loop, otherwise start overdubbing automatically
+                        track.state = State::Playback;
+                    }
                 }
             }
         }
@@ -388,7 +393,7 @@ namespace looper {
 
         largestPossibleLoopLength = barLength;
 
-        for (int i = kGridMultipliers.size() - 1; i >= 0; --i) {
+        for (int i = static_cast<int>(kGridMultipliers.size()) - 1; i >= 0; --i) {
             const auto target = static_cast<unsigned int>(kGridMultipliers[i] * static_cast<float>(barLength));
             if (target < maxFrames) {
                 largestPossibleLoopLength = target;
