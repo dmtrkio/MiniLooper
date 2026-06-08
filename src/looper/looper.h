@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 
+#include "audio/audio_engine.h"
 #include "dsp/parameter/parameter_tree.h"
 #include "looper_commands.h"
 #include "looper_processor.h"
@@ -13,8 +14,8 @@ namespace looper {
 
     struct TrackStateSnapshot
     {
-        unsigned int nFrames;
-        unsigned int position;
+        FrameInt nFrames;
+        FrameInt position;
         State state;
         std::pair<float, float> level;
 
@@ -24,7 +25,7 @@ namespace looper {
     struct LooperStateSnapshot
     {
         std::array<TrackStateSnapshot, kLooperTrackCount> tracks;
-        unsigned int maxLoopLength{};
+        FrameInt maxLoopLength{};
         std::pair<float, float> level;
     };
 
@@ -33,9 +34,9 @@ namespace looper {
         static constexpr auto kCount = kLooperTrackCount;
         float *leftBuffers[kLooperTrackCount]{};
         float *rightBuffers[kLooperTrackCount]{};
-        unsigned int frameCounts[kLooperTrackCount]{};
+        FrameInt frameCounts[kLooperTrackCount]{};
 
-        explicit LooperSessionData(unsigned int maxFrames);
+        explicit LooperSessionData(FrameInt maxFrames);
 
     private:
         using SampleBuffer = std::vector<float>;
@@ -45,7 +46,7 @@ namespace looper {
     class Looper
     {
     public:
-        Looper();
+        Looper(audio::AudioEngine &audioEngine);
         ~Looper() = default;
 
         Looper(const Looper &) = delete;
@@ -76,7 +77,7 @@ namespace looper {
         void clearAll() const;
         void getThumbnail(int trackIndex, ThumbnailSnapshot& out) const noexcept;
 
-        [[nodiscard]] std::unique_ptr<LooperSessionData> getSessionData() const;
+        [[nodiscard]] std::unique_ptr<LooperSessionData> getSessionData(bool isAudioThreadRunning = true) const;
 
         [[nodiscard]] bool sendMidiMessage(const midi::MidiMessage& message) const;
 

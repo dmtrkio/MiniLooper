@@ -84,16 +84,18 @@ static std::unique_ptr<midi::MidiEngine> makeMidiEngine(looper::Looper &looper)
 }
 
 MainApplication::MainApplication(const int argc, const char* const* argv)
-    : midiEngine_(makeMidiEngine(looper_))
+    : audioEngine_(std::make_unique<audio::AudioEngine>())
+    , sessionManager_(*audioEngine_)
+    , looper_(*audioEngine_)
+    , midiEngine_(makeMidiEngine(looper_))
 {
     (void)argc;
     (void)argv;
 
-    auto& audioEngine = audio::AudioEngine::getInstance();
-    audioEngine.rescanDevices();
+    audioEngine_->rescanDevices();
 
     windowRegistry_.emplace_back(std::make_unique<ui::SessionManagerUi>(sessionManager_, looper_));
-    windowRegistry_.emplace_back(std::make_unique<ui::AudioSettingsUi>());
+    windowRegistry_.emplace_back(std::make_unique<ui::AudioSettingsUi>(*audioEngine_));
     windowRegistry_.emplace_back(std::make_unique<ui::MidiSettingsUi>(midiEngine_.get()));
     windowRegistry_.emplace_back(std::make_unique<ui::LooperUi>(looper_, sessionManager_));
     windowRegistry_.emplace_back(std::make_unique<ui::MixerUi>(looper_));
@@ -110,7 +112,7 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
         }
 
         if (const auto it = settings.find("audio"); it != settings.end() && it->is_object()) {
-            audio::AudioEngine::getInstance().loadSettingsFromJson(*it);
+            audioEngine_->loadSettingsFromJson(*it);
         }
 
         if (const auto it = settings.find("sessionsPath"); it != settings.end() && it->is_string()) {
@@ -147,7 +149,7 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
         std::cout << "Settings loaded from " << filepaths::settingsPath() << std::endl;
     }
 
-    if (!audioEngine.start() || !audioEngine.isRunning()) {
+    if (!audioEngine_->start() || !audioEngine_->isRunning()) {
         throw std::runtime_error("Failed to start audio engine.");
     }
 
@@ -169,11 +171,11 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
 
 MainApplication::~MainApplication()
 {
-    if (audio::AudioEngine::getInstance().stop())
+    if (audioEngine_->stop())
         std::cout << "Audio engine stopped successfully.\n";
 
     json j;
-    j["audio"] = audio::AudioEngine::getInstance().getSettingsAsJson();
+    j["audio"] = audioEngine_->getSettingsAsJson();
 
     if (midiEngine_) {
         j["midi"] = midiEngine_->getSettingsAsJson();

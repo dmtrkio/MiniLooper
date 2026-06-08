@@ -8,7 +8,7 @@
 namespace looper {
     SourceChannel::SourceChannel(const std::string name) : paramTree_(buildParamTree(name)) {}
 
-    void SourceChannel::prepare(unsigned int nInputBuffers, unsigned int maxFramesInBuffer, unsigned int sampleRate)
+    void SourceChannel::prepare(unsigned int nInputBuffers, unsigned int maxFramesInBuffer, float sampleRate)
     {
         nInputBuffers_ = static_cast<int>(nInputBuffers);
 
@@ -24,8 +24,8 @@ namespace looper {
             }
         }
 
-        processingChain_.prepare(static_cast<float>(sampleRate));
-        levelMeter_.prepare(static_cast<float>(sampleRate));
+        processingChain_.prepare(sampleRate);
+        levelMeter_.prepare(sampleRate);
     }
 
     void SourceChannel::processAdding(const float *const *in, float *const *out, unsigned int nFrames) noexcept
@@ -148,7 +148,7 @@ namespace looper {
         levelMeter_(channelData[0], channelData[1], nFrames);
     }
 
-    void SourceMixer::prepare(unsigned int nInputs, unsigned int maxFramesInBuffer, unsigned int sampleRate)
+    void SourceMixer::prepare(unsigned int nInputs, unsigned int maxFramesInBuffer, float sampleRate)
     {
         for (auto& ch : channels_) {
             ch.prepare(nInputs, maxFramesInBuffer, sampleRate);

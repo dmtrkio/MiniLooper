@@ -2,7 +2,6 @@
 
 #include <functional>
 
-#include "audio/audio_engine.h"
 #include "midi_message.h"
 #include "timer.h"
 
@@ -15,6 +14,11 @@ namespace midi {
 
         FootSwitch() = default;
         explicit FootSwitch(const uint8_t cc) : cc_(cc) {}
+
+        void prepare(float sampleRate)
+        {
+            sampleRate_ = sampleRate;
+        }
 
         void setOnSinglePressed(FootSwitchCallback&& callback)
         {
@@ -46,9 +50,8 @@ namespace midi {
                     if (onDoublePressed_) onDoublePressed_();
                 }
 
-                const auto sampleRate = static_cast<float>(audio::AudioEngine::getInstance().getSampleRate());
                 pressTimer_.setOneShot(true);
-                pressTimer_.setTimeoutSecs(sampleRate, kTimeoutSecs);
+                pressTimer_.setTimeoutSecs(sampleRate_, kTimeoutSecs);
                 pressTimer_.start();
             }
         }
@@ -63,9 +66,8 @@ namespace midi {
 
                 if (pressed) {
                     if (!lastPressed_) {
-                        const auto sampleRate = static_cast<float>(audio::AudioEngine::getInstance().getSampleRate());
                         holdTimer_.setOneShot(true);
-                        holdTimer_.setTimeoutSecs(sampleRate, kHoldTimeSecs);
+                        holdTimer_.setTimeoutSecs(sampleRate_, kHoldTimeSecs);
                         holdTimer_.start();
                     }
                 } else {
@@ -90,5 +92,6 @@ namespace midi {
 
         uint8_t cc_{64};
         bool lastPressed_{false};
+        float sampleRate_{44100.0f};
     };
 }

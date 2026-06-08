@@ -12,6 +12,10 @@ namespace ui {
     class AudioSettingsUi final : public WindowBase
     {
     public:
+        AudioSettingsUi(audio::AudioEngine& audioEngine)
+            : WindowBase()
+            , audioEngine_(audioEngine)
+        {}
         [[nodiscard]] const char* getTitle() const override { return "Audio Settings"; }
 
     protected:
@@ -22,16 +26,15 @@ namespace ui {
             using namespace audio;
             static constexpr auto kNoDeviceString = "No device";
 
-            auto &audioEngine = AudioEngine::getInstance();
-            const auto &inputDevices = audioEngine.getInputDevices();
-            const auto &outputDevices = audioEngine.getOutputDevices();
+            const auto &inputDevices = audioEngine_.getInputDevices();
+            const auto &outputDevices = audioEngine_.getOutputDevices();
 
             std::vector<unsigned int> sampleRates;
 
             const auto displayDeviceSettings = [&](const bool input) {
                 ImGui::PushID(input ? "input device" : "output device");
 
-                const auto index = input ? audioEngine.getCurrentInputDevice() : audioEngine.getCurrentOutputDevice();
+                const auto index = input ? audioEngine_.getCurrentInputDevice() : audioEngine_.getCurrentOutputDevice();
                 const auto &devices = input ? inputDevices : outputDevices;
 
                 const auto pred = [index](const AudioDevice& device) { return device.deviceIndex == index; };
@@ -51,9 +54,9 @@ namespace ui {
                         const auto label = std::format("({}) ", device.hostApiName) + device.deviceName;
                         if (ImGui::Selectable(label.c_str(), isSelected)) {
                             if (input) {
-                                audioEngine.setInputDevice(device.deviceIndex);
+                                audioEngine_.setInputDevice(device.deviceIndex);
                             } else {
-                                audioEngine.setOutputDevice(device.deviceIndex);
+                                audioEngine_.setOutputDevice(device.deviceIndex);
                             }
                         }
 
@@ -101,11 +104,11 @@ namespace ui {
 
             ImGui::Separator();
 
-            const auto currentSr = audioEngine.getSampleRate();
+            const auto currentSr = audioEngine_.getSampleRate();
             if (ImGui::BeginCombo("Sample rate", std::to_string(currentSr).c_str())) {
                 for (const auto sr : sampleRates) {
                     if (ImGui::Selectable(std::to_string(sr).c_str(), (sr == currentSr))) {
-                        audioEngine.setSampleRate(sr);
+                        audioEngine_.setSampleRate(sr);
                     }
                 }
                 ImGui::EndCombo();
@@ -114,7 +117,7 @@ namespace ui {
             ImGui::Separator();
 
             if (ImGui::Button("Restart Audio Stream")) {
-                if (audioEngine.restart()) {
+                if (audioEngine_.restart()) {
                     std::cout << "Audio Engine restarted" << std::endl;
                 } else {
                     std::cerr << "Failed to restart" << std::endl;
@@ -122,10 +125,13 @@ namespace ui {
             }
 
             if (ImGui::Button("Rescan audio devices")) {
-                audioEngine.rescanDevices();
+                audioEngine_.rescanDevices();
             }
 
             //ImGui::EndGroup();
         }
+
+    private:
+        audio::AudioEngine& audioEngine_;
     };
 }

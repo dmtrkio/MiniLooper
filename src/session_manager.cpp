@@ -2,8 +2,6 @@
 
 #include <algorithm>
 
-#include "SDL3/SDL.h"
-
 #include "audio/wav_writer.h"
 #include "filepaths.h"
 
@@ -29,8 +27,10 @@ static std::filesystem::path generateUniqueFileName(const std::filesystem::path&
     }
 }
 
-SessionManager::SessionManager()
-    : sessionsPath_(filepaths::defaultSaveDirPath()) {}
+SessionManager::SessionManager(audio::AudioEngine& audioEngine)
+    : audioEngine_(audioEngine)
+    , sessionsPath_(filepaths::defaultSaveDirPath())
+{}
 
 std::filesystem::path SessionManager::getSessionsPath() const
 {
@@ -67,7 +67,7 @@ void SessionManager::openSessionsPathDialog()
 
 void SessionManager::saveCurrentSessionToDisk(const looper::Looper& looper) const
 {
-    const auto session = looper.getSessionData();
+    const auto session = looper.getSessionData(audioEngine_.isRunning());
 
     if (std::ranges::all_of(session->frameCounts, [](const auto fc) { return fc == 0; })) {
         return;
@@ -84,7 +84,7 @@ void SessionManager::saveCurrentSessionToDisk(const looper::Looper& looper) cons
         const float *data[2] = { session->leftBuffers[i], session->rightBuffers[i] };
         if (const auto framesToWrite = session->frameCounts[i]; framesToWrite > 0) {
             const auto filePath = currentSessionPath / std::format("loop_{}.wav", i);
-            audio::WavWriter wavWriter(filePath, audio::AudioEngine::getInstance().getSampleRate(), 2);
+            audio::WavWriter wavWriter(filePath, audioEngine_.getSampleRate(), 2);
             wavWriter.writeFrames(data, framesToWrite);
         }
     }

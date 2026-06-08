@@ -39,12 +39,10 @@ namespace looper {
             }
         }
 
-        void prepare(unsigned int sampleRate)
+        void prepare(float sampleRate)
         {
-            const auto sr = static_cast<float>(sampleRate);
-
             static constexpr float kSmoothingMs = 1.0f;
-            const auto smoothFrames = kSmoothingMs * sr * 0.001f;
+            const auto smoothFrames = kSmoothingMs * sampleRate * 0.001f;
 
             for (auto& channel : channels_) {
                 channel.gain.setSmoothingFrames(smoothFrames);
@@ -53,11 +51,11 @@ namespace looper {
                 channel.gain.init(dsp::dBtoLinear(channel.gainParam.get()));
                 channel.pan.init(channel.panParam.get());
 
-                channel.meter.prepare(sr);
+                channel.meter.prepare(sampleRate);
                 channel.bufferL.assign(audio::kMaxFramesInBuffer, 0.0f);
                 channel.bufferR.assign(audio::kMaxFramesInBuffer, 0.0f);
 
-                channel.eq.prepare(sr);
+                channel.eq.prepare(sampleRate);
             }
         }
 

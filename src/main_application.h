@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 
+#include "audio/audio_engine.h"
 #include "session_manager.h"
 #include "looper/looper.h"
 #include "midi/midi.h"
@@ -27,6 +28,7 @@ private:
     void processInput();
     void drawTopBarMenu();
 
+    std::unique_ptr<audio::AudioEngine> audioEngine_;
     SessionManager sessionManager_;
     looper::Looper looper_;
     std::unique_ptr<midi::MidiEngine> midiEngine_;

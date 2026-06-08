@@ -15,6 +15,7 @@ add_executable(tests
     test_processor_chain.cpp
     test_source_mixer.cpp
     test_dsp.cpp
+    test_looper_processor.cpp
 )
 
 target_link_libraries(tests PRIVATE

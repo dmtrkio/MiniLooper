@@ -23,7 +23,7 @@ namespace looper {
         return std::format("nFrames: {}, position: {}, state: {}", nFrames, position, stateToStr(state));
     }
 
-    LooperSessionData::LooperSessionData(const unsigned int maxFrames)
+    LooperSessionData::LooperSessionData(const FrameInt maxFrames)
     {
         for (auto i{0u}; i < kLooperTrackCount; ++i) {
             buffers_[i].first.resize(maxFrames);
@@ -49,7 +49,7 @@ namespace looper {
             consumeCommands();
 
             sourceMixer.process(in, out, nFrames);
-            looperProcessor.process(out, nFrames);
+            looperProcessor.process(out, static_cast<FrameInt>(nFrames));
 
             levelMeter_(out[0], out[1], nFrames);
 
@@ -61,24 +61,14 @@ namespace looper {
             }
 
             updateSnapshot();
-
-            /*const auto sr = static_cast<float>(engine.getSampleRate());
-            constexpr auto twoPi = 2.0f * std::numbers::pi_v<float>;
-            const float phaseIncr = twoPi * 440.0f / sr;
-            static float osc{0};
-            for (auto i{0u}; i < nFrames; ++i) {
-                osc += phaseIncr;
-                if (osc >= twoPi) osc -= twoPi;
-                const float sine = std::sin(osc) * 0.03f;
-                for (auto c{0u}; c < 2; ++c) {
-                    out[c][i] = sine;
-                }
-            }*/
         }
 
-        void onStart() override
+        void onStart(float sampleRate, int nInputChannels, int nOutputChannels) override
         {
-            looperProcessor.onStart();
+            assert(nOutputChannels >= 2);
+
+            looperProcessor.prepare(sampleRate);
+
             // ensure mailbox is clear from stale messages
             consumeCommands();
             looperProcessor.clearAll();
@@ -100,19 +90,11 @@ namespace looper {
                 looperProcessor.clearAll();
             });
 
-            assert(audio::AudioEngine::getInstance().getNumOutputChannels() >= 2);
-
-            const auto sampleRate = audio::AudioEngine::getInstance().getSampleRate();
-            const auto nInputs = audio::AudioEngine::getInstance().getNumInputChannels();
-
-            sourceMixer.prepare(nInputs, audio::kMaxFramesInBuffer, sampleRate);
-            levelMeter_.prepare(static_cast<float>(sampleRate));
+            sourceMixer.prepare(nInputChannels, audio::kMaxFramesInBuffer, sampleRate);
+            levelMeter_.prepare(sampleRate);
         }
 
-        void onStop() override
-        {
-            looperProcessor.onStop();
-        }
+        void onStop() override {}
 
         void drainMidiQueue()
         {
@@ -133,7 +115,7 @@ namespace looper {
             auto writer = sharedData.state.getWriter();
             auto &snapshot = writer.data();
 
-            for (auto i{0}; i < LooperProcessor::getNumLooperTracks(); ++i) {
+            for (auto i{0}; i < looperProcessor.getNumLooperTracks(); ++i) {
                 auto& [nFrames, position, state, level] = snapshot.tracks[i];
                 nFrames = looperProcessor.getCurrentNumFrames(i);
                 position = looperProcessor.getCurrentPosition(i);
@@ -157,19 +139,19 @@ namespace looper {
         dsp::parameter::ParameterTree fsTrackParam{dsp::parameter::Parameter::makeInteger(
             "FootSwitchTrackIndex",
             0,
-            {0, LooperProcessor::getNumLooperTracks() - 1}
+            {0, kLooperTrackCount - 1}
         )};
 
     private:
         void rotateTrackIndex()
         {
-            fsTrackParam.asParameterUnsafe().set((fsTrackIndex_ + 1) % LooperProcessor::getNumLooperTracks());
+            fsTrackParam.asParameterUnsafe().set((fsTrackIndex_ + 1) % kLooperTrackCount);
         }
 
         int fsTrackIndex_{0};
     };
 
-    Looper::Looper()
+    Looper::Looper(audio::AudioEngine &audioEngine)
         : cb_(std::make_shared<LooperCallback>())
         , paramTree_("Looper")
     {
@@ -177,13 +159,12 @@ namespace looper {
         paramTree_.addSubTree(cb_->looperProcessor.getMixer().getParameterTree());
         paramTree_.addSubTree(cb_->fsTrackParam);
 
-        auto& engine = audio::AudioEngine::getInstance();
-        engine.setAudioCallback(cb_);
+        audioEngine.setAudioCallback(cb_);
     }
 
     int Looper::getNumLooperTracks() const noexcept
     {
-        return LooperProcessor::getNumLooperTracks();
+        return cb_->looperProcessor.getNumLooperTracks();
     }
 
     void Looper::updateSnapshot() noexcept
@@ -286,7 +267,7 @@ namespace looper {
         while (!completionFlag.complete) {}
     }
 
-    std::unique_ptr<LooperSessionData> Looper::getSessionData() const
+    std::unique_ptr<LooperSessionData> Looper::getSessionData(bool isAudioThreadRunning) const
     {
         const auto maxFrames = cb_->looperProcessor.getMaxFramesInLoop();
 
@@ -302,7 +283,7 @@ namespace looper {
         LooperCommand::CompletionFlag completionFlag;
         const auto cmd = LooperCommand::copyLoops(copyData, completionFlag);
 
-        if (audio::AudioEngine::getInstance().isRunning()) {
+        if (isAudioThreadRunning) {
             getCommandMailbox().waitPush(cmd);
             while (!completionFlag.complete) {
                 //std::this_thread::sleep_for(std::chrono::milliseconds(1));

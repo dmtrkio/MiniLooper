@@ -1,15 +1,20 @@
 #pragma once
 
 #include <array>
+#include <climits>
 #include <vector>
 #include <utility>
+#include <cstdint>
+#include <concepts>
 
 #include "looper_mixer.h"
 #include "dsp/dsp.h"
 
 namespace looper {
-    inline constexpr unsigned int kMaxLoopSecs = 20;
-    inline constexpr unsigned int kLooperTrackCount = 4;
+    using FrameInt = std::int32_t;
+
+    inline constexpr int kLooperTrackCount = 4;
+    inline constexpr float kMaxLoopSecs = 20;
     inline constexpr float kFadeLengthMs = 5.0f;
 
     struct ThumbnailSnapshot
@@ -40,19 +45,21 @@ namespace looper {
         LooperProcessor();
 
         // lifetime callbacks
-        void process(float *const *data, unsigned int nFrames) noexcept;
-        void onStart();
-        void onStop();
+        void prepare(float sampleRate);
+        void process(float *const *data, FrameInt nFrames) noexcept;
 
-        static constexpr int getNumLooperTracks() { return kLooperTrackCount; }
+        [[nodiscard]] constexpr int getNumLooperTracks() const noexcept
+        {
+            return static_cast<int>(tracks_.size());
+        }
 
         // All the methods below are not thread-safe, they are meant to be used in the same thread where process() is called
 
         [[nodiscard]] Mixer& getMixer() noexcept;
         [[nodiscard]] State getState(int trackIndex) const noexcept;
-        [[nodiscard]] unsigned int getMaxFramesInLoop() const noexcept;
-        [[nodiscard]] unsigned int getCurrentPosition(int trackIndex) const noexcept;
-        [[nodiscard]] unsigned int getCurrentNumFrames(int trackIndex) const noexcept;
+        [[nodiscard]] FrameInt getMaxFramesInLoop() const noexcept;
+        [[nodiscard]] FrameInt getCurrentPosition(int trackIndex) const noexcept;
+        [[nodiscard]] FrameInt getCurrentNumFrames(int trackIndex) const noexcept;
         [[nodiscard]] bool isEmpty(int trackIndex) const noexcept;
 
         void startRecording(int trackIndex, bool synced = true) noexcept;
@@ -61,61 +68,131 @@ namespace looper {
         void pause(int trackIndex, bool synced = true) noexcept;
         void resume(int trackIndex, bool synced = true) noexcept;
         void clearAll() noexcept;
-        [[nodiscard]] unsigned int copyLoop(int trackIndex, float *const *data, unsigned int capacity) const noexcept;
+        [[nodiscard]] FrameInt copyLoop(int trackIndex, float *const *data, FrameInt capacity) const noexcept;
         void extractThumbnail(int trackIndex, ThumbnailSnapshot& out) const noexcept;
 
     private:
-        [[nodiscard]] unsigned int getNextGridDivision(int frameIndex) const noexcept;
-        static constexpr bool isTrackIndexValid(int trackIndex);
+        [[nodiscard]] constexpr bool isTrackIndexValid(int trackIndex) const noexcept
+        {
+            return trackIndex >= 0 && trackIndex < getNumLooperTracks();
+        }
+
         [[nodiscard]] bool isAnyTrackCurrentlyRecording() const noexcept;
-
-        void processInternal(float *const *data, unsigned int nFrames) noexcept;
-        void processTrack(int trackIndex, float *const *data, unsigned int nFrames) noexcept;
-
-        static constexpr std::array<float, 5> kGridMultipliers = { 1.0f, 2.0f, 4.0f, 8.0f, 16.0f };
 
         struct Transport
         {
             [[nodiscard]] bool isTempoSet() const noexcept;
-            void tick(unsigned int nFrames) noexcept;
-            void setBarLength(unsigned int nFrames, unsigned int maxFrames) noexcept;
-            void reset(unsigned int maxFrames) noexcept;
+            void tick(FrameInt nFrames) noexcept;
+            void setTempo(FrameInt firstLoopLength) noexcept;
+            void reset(FrameInt maxFrameCount, float sr) noexcept;
 
-            unsigned int currentFrame{};
-            unsigned int barLength{};
-            unsigned int largestPossibleLoopLength{};
+            float sampleRate;
+            FrameInt maxFrames{};
+            FrameInt currentFrame{};
+            FrameInt unitLength{};
+            FrameInt largestPossibleLoopLength{};
         };
 
         Transport transport_;
 
-        unsigned int numChannels_{0};
-        unsigned int maxFrames_{0};
+        float sampleRate_{44100.0f};
+        FrameInt maxFrames_{0};
 
         struct Track
         {
-            void init(int index, unsigned int numChannels, unsigned int maxFrames) noexcept;
+            void init(Transport* transport, FrameInt maxFrames, float sampleRate) noexcept;
+            void process(const float *const *in, float *const *out, const FrameInt nFrames) noexcept;
+
+            void startRecording(bool synced) noexcept;
+            void stopRecording(bool synced) noexcept;
+            void pause(bool synced) noexcept;
+            void resume(bool synced) noexcept;
+            bool clear() noexcept;
+
+            [[nodiscard]] FrameInt getPosition() const noexcept;
+            [[nodiscard]] FrameInt getLength() const noexcept;
+
             [[nodiscard]] bool isEmpty() const noexcept;
-            void scheduleTransition(State next, unsigned int when);
-            void transitionState(State newState, unsigned int transportFrame) noexcept;
-            [[nodiscard]] unsigned int phase(unsigned int transportFrame) const noexcept;
-            [[nodiscard]] std::pair<float, float> getFadeScalars(unsigned int pos) const noexcept;
+            void scheduleTransition(State next, FrameInt when);
+            void handlePendingTransition(FrameInt now) noexcept;
+            [[nodiscard]] FrameInt phase(FrameInt transportFrame) const noexcept;
+            [[nodiscard]] std::pair<float, float> getFadeScalars(FrameInt pos) const noexcept;
+
+            Transport* transportPtr;
 
             State state{State::Cleared};
-            unsigned int start{0};
-            unsigned int length{0};
-
-            unsigned int fadeLength{64};
-
-            std::vector<std::vector<float>> buffers;
+            FrameInt start{0};
+            FrameInt length{0};
 
             State pendingState{State::Cleared};
             bool hasPendingTransition{false};
-            int framesToTransition{0};
+            FrameInt whenTransition{};
+
+            FrameInt fadeLength{64};
+            std::array<std::vector<float>, 2> buffers;
         };
 
         std::array<Track, kLooperTrackCount> tracks_{};
 
         Mixer mixer_;
-        std::vector<std::vector<float>> sumBuffers_;
     };
+
+    template <typename T>
+    requires std::signed_integral<T> && ((sizeof(T) * CHAR_BIT) >= 32)
+    [[nodiscard]] constexpr T snapForwardSquareGrid(const T value, const T grid) noexcept
+    {
+        if (value <= 0 || grid <= 0) return grid;
+        if (value <= grid) return grid;
+        
+        T ratio = (value + grid - 1) / grid;
+        
+        ratio--;
+        ratio |= ratio >> 1;
+        ratio |= ratio >> 2;
+        ratio |= ratio >> 4;
+        ratio |= ratio >> 8;
+        ratio |= ratio >> 16;
+        ratio++;
+        
+        return ratio * grid;
+    }
+
+    [[nodiscard]] inline FrameInt estimateQuarterNoteUnit(FrameInt firstLoopLength, float sampleRate) noexcept
+    {
+        if (firstLoopLength <= 0) return 0;
+
+        const float loopSeconds = static_cast<float>(firstLoopLength) / sampleRate;
+
+        constexpr float kMinBPM = 50.0f;
+        constexpr float kMaxBPM = 240.0f;
+        constexpr float kTargetBPM = 120.0f;
+
+        int bestK = 0;
+        float bestScore = std::numeric_limits<float>::max();
+        bool found = false;
+
+        for (int k = -2; k <= 6; ++k) {
+            const float n = std::exp2f(static_cast<float>(k));
+            const float bpm = 240.0f * n / loopSeconds;
+
+            if (bpm >= kMinBPM && bpm <= kMaxBPM) {
+                const float score = std::abs(bpm - kTargetBPM);
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestK = k;
+                    found = true;
+                }
+            }
+        }
+
+        if (found) {
+            const float n = std::exp2f(static_cast<float>(bestK));
+            const FrameInt unit = static_cast<FrameInt>(std::round(
+                static_cast<float>(firstLoopLength) / (4.0f * n)
+            ));
+            return (unit < 1) ? 1 : unit;
+        }
+
+        return firstLoopLength;
+    }
 }

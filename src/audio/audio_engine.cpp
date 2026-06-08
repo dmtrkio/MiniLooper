@@ -9,20 +9,12 @@
 namespace audio {
     using DefaultAudioBackend = audio::PortAudioBackend;
 
-    AudioEngine& AudioEngine::getInstance()
-    {
-        static AudioEngine instance;
-        return instance;
-    }
-
     AudioEngine::AudioEngine()
     {
-        auto audioCallback = [this](const float *in, float *out, unsigned int nFrames) -> bool {
-            return this->callback(in, out, nFrames);
-        };
-
         try {
-            backend_ = std::make_unique<DefaultAudioBackend>(std::move(audioCallback));
+            backend_ = std::make_unique<DefaultAudioBackend>([this](const float *in, float *out, unsigned int nFrames) {
+                return this->callback(in, out, nFrames);
+            });
         } catch (std::exception &e) {
             std::cerr << "Error creating audio backend: " << e.what() << std::endl;
         }
@@ -30,7 +22,7 @@ namespace audio {
 
     AudioEngine::~AudioEngine()
     {
-        backend_ = nullptr;
+        backend_.reset();
     }
 
     json AudioEngine::getSettingsAsJson() const
@@ -109,7 +101,7 @@ namespace audio {
             return;
 
         if (isRunning())
-            cb->onStart();
+            cb->onStart(static_cast<float>(getSampleRate()), static_cast<int>(inputChannels_), static_cast<int>(outputChannels_));
 
         userCallback_.store(cb, std::memory_order_relaxed);
     }
@@ -134,7 +126,7 @@ namespace audio {
         outputData_.setNumChannels(outputChannels_);
 
         if (const auto cb = userCallback_.load(std::memory_order_relaxed))
-            cb->onStart();
+            cb->onStart(static_cast<float>(getSampleRate()), static_cast<int>(inputChannels_), static_cast<int>(outputChannels_));
 
         if (!backend_->startStream(inputDeviceIndex_, outputDeviceIndex_, params)) {
             std::cerr << "Error starting stream\n";

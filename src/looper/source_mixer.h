@@ -15,7 +15,7 @@ namespace looper {
 
         SourceChannel(const std::string name);
 
-        void prepare(unsigned int nInputBuffers, unsigned int maxFramesInBuffer, unsigned int sampleRate);
+        void prepare(unsigned int nInputBuffers, unsigned int maxFramesInBuffer, float sampleRate);
         void processAdding(const float *const *in, float *const *out, unsigned int nFrames) noexcept;
 
         [[nodiscard]] dsp::parameter::ParameterTree getParameterTree() const noexcept;
@@ -48,7 +48,7 @@ namespace looper {
     public:
         static constexpr std::size_t kNumChannels = 2;
 
-        void prepare(unsigned int nInputs, unsigned int maxFramesInBuffer, unsigned int sampleRate);
+        void prepare(unsigned int nInputs, unsigned int maxFramesInBuffer, float sampleRate);
         void process(const float *const *in, float *const *out, unsigned int nFrames) noexcept;
 
         [[nodiscard]] dsp::parameter::ParameterTree getParameterTree() const noexcept;

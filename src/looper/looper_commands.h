@@ -22,12 +22,12 @@ namespace looper {
         struct CopyData
         {
             // capacity of pre-allocated buffers
-            unsigned int maxFrames;
+            FrameInt maxFrames;
             // pre-allocated buffers, buffer count should be same as kLooperTrackCount
             float **buffersL;
             float **buffersR;
             // return value
-            unsigned int *framesWritten;
+            FrameInt *framesWritten;
         };
 
         [[nodiscard]] static LooperCommand startRecording(int trackIndex, bool synced = true) noexcept;
