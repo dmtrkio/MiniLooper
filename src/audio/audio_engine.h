@@ -7,6 +7,7 @@
 
 #include "audio_device.h"
 #include "json.h"
+#include "rt_sanitizer.h"
 
 namespace audio {
     inline constexpr unsigned int kMaxFramesInBuffer = 8096;
@@ -24,7 +25,7 @@ namespace audio {
         AudioCallback(AudioCallback&&) noexcept = default;
         AudioCallback& operator=(AudioCallback&&) noexcept = default;
 
-        virtual void onProcess(const float *const *in, float *const *out, unsigned int nFrames) = 0;
+        virtual void onProcess(const float *const *in, float *const *out, unsigned int nFrames) RT_SAN = 0;
         virtual void onStart(float sampleRate, int nInputChannels, int nOutputChannels) = 0;
         virtual void onStop() = 0;
 
@@ -78,7 +79,7 @@ namespace audio {
         bool isRunning() const;
 
     private:
-        bool callback(const float *in, float *out, unsigned int nFrames);
+        bool callback(const float *in, float *out, unsigned int nFrames) RT_SAN;
 
         std::unique_ptr<AudioBackend> backend_;
 

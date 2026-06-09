@@ -7,6 +7,7 @@
 #include <optional>
 #include <stdexcept>
 #include <cstdint>
+#include <type_traits>
 
 #include "threading/atomic_wrapper.h"
 #include "dsp/dsp.h"
@@ -80,7 +81,9 @@ namespace dsp::parameter {
         {
             return std::visit([](const auto &p) -> std::optional<Range<T>> {
                 using PType = std::decay_t<decltype(p)>;
-                if constexpr (isRangedParameter<PType>() && std::is_same_v<decltype(p.defaultValue), T>) {
+                if constexpr (
+                    (std::is_same_v<PType, FloatData> || std::is_same_v<PType, IntegerData>)
+                    && std::is_same_v<decltype(p.defaultValue), T>) {
                     return p.range;
                 }
 
@@ -91,10 +94,10 @@ namespace dsp::parameter {
         template<typename T>
         bool set(T value) noexcept
         {
-            std::visit([&](auto &p) -> bool {
+            return std::visit([&](auto &p) -> bool {
                 using PType = std::decay_t<decltype(p)>;
                 const auto v = static_cast<decltype(p.defaultValue)>(value);
-                if constexpr (isRangedParameter<PType>()) {
+                if constexpr (std::is_same_v<PType, FloatData> || std::is_same_v<PType, IntegerData>) {
                     if (!p.range.contains(v)) return false;
                     p.value.store(p.range.clamp(v));
                 } else if constexpr (std::is_same_v<PType, BooleanData>) {
@@ -102,7 +105,6 @@ namespace dsp::parameter {
                 }
                 return true;
             }, data_);
-            return false;
         }
 
         void setToDefault() noexcept
@@ -158,12 +160,6 @@ namespace dsp::parameter {
             : name_(std::move(name)), data_(std::forward<T>(data))
         {}
 
-        template<typename T>
-        static constexpr bool isRangedParameter()
-        {
-            return std::is_same_v<T, FloatData> || std::is_same_v<T, IntegerData>;
-        }
-
         struct FloatData
         {
             static constexpr auto type = ParameterType::Float;
@@ -188,7 +184,7 @@ namespace dsp::parameter {
         };
 
         using ParameterVariant = std::variant<FloatData, IntegerData, BooleanData>;
-
+        
         std::string name_;
         ParameterVariant data_;
     };

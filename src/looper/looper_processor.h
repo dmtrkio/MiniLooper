@@ -9,6 +9,7 @@
 
 #include "looper_mixer.h"
 #include "dsp/dsp.h"
+#include "rt_sanitizer.h"
 
 namespace looper {
     using FrameInt = std::int32_t;
@@ -46,7 +47,7 @@ namespace looper {
 
         // lifetime callbacks
         void prepare(float sampleRate);
-        void process(float *const *data, FrameInt nFrames) noexcept;
+        void process(float *const *data, FrameInt nFrames) noexcept RT_SAN;
 
         [[nodiscard]] constexpr int getNumLooperTracks() const noexcept
         {

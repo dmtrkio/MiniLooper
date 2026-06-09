@@ -27,20 +27,29 @@
     },
 
     {
-      "name": "wayland-debug",
+      "name": "debug",
+      "displayName": "Debug",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "SDL_X11": "OFF"
+        "CMAKE_BUILD_TYPE": "Debug"
       }
     },
 
     {
-      "name": "wayland-release",
+      "name": "release",
+      "displayName": "Release",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "SDL_X11": "OFF"
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+
+    {
+      "name": "rel-with-deb-info",
+      "displayName": "RelWithDebInfo",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
     },
 
@@ -63,6 +72,15 @@
       "cacheVariables": {
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+
+    {
+      "name": "clang-rtsan",
+      "inherits": "rel-with-deb-info",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_CXX_FLAGS": "-fsanitize=realtime"
       }
     }
   ]
