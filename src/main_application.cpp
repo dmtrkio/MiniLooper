@@ -137,10 +137,10 @@ MainApplication::MainApplication(const int argc, const char* const* argv)
         }
 
         if (const auto it = settings.find("windows"); it != settings.end() && it->is_object()) {
-            const auto windows = *it;
+            const auto windowJson = *it;
             for (auto& window : windowRegistry_) {
-                if (const auto it = windows.find(window->getTitle()); it != windows.end() && it->is_object()) {
-                    if (const auto openedIt = it->find("opened"); openedIt != it->end() && openedIt->is_boolean()) {
+                if (const auto w = windowJson.find(window->getTitle()); w != windowJson.end() && w->is_object()) {
+                    if (const auto openedIt = w->find("opened"); openedIt != w->end() && openedIt->is_boolean()) {
                         window->opened = *openedIt;
                     }
                 }

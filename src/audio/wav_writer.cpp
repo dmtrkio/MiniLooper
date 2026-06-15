@@ -33,11 +33,11 @@ namespace audio {
 
     void WavWriter::writeFrames(const float *const *data, const unsigned int nFrames)
     {
-        unsigned int toWrite = nFrames;
-        unsigned int offset = 0;
+        drwav_uint64 toWrite = nFrames;
+        drwav_uint64 offset = 0;
 
         while (toWrite > 0) {
-            const auto toWriteNow = std::min(toWrite, static_cast<unsigned int>(tempBuffer_.size() / nChannels_));
+            const auto toWriteNow = std::min(toWrite, static_cast<drwav_uint64>(tempBuffer_.size() / nChannels_));
 
             for (unsigned int channel = 0; channel < nChannels_; ++channel) {
                 for (unsigned int i = 0; i < toWriteNow; ++i) {

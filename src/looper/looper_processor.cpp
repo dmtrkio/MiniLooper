@@ -456,13 +456,13 @@ namespace looper {
         if (isEmpty()) return;
 
         const float step = static_cast<float>(length) / ThumbnailSnapshot::kBuckets;
-        FrameInt start = static_cast<FrameInt>(currentBucket * step);
-        FrameInt end   = static_cast<FrameInt>((currentBucket + 1) * step);
-        if (end > length) end = length;
-        if (end <= start) end = start + 1;
+        FrameInt first = static_cast<FrameInt>(currentBucket * step);
+        FrameInt last   = static_cast<FrameInt>((currentBucket + 1) * step);
+        if (last > length) last = length;
+        if (last <= first) last = first + 1;
 
         float minV = 0.0f, maxV = 0.0f;
-        for (FrameInt i = start; i < end; ++i) {
+        for (FrameInt i = first; i < last; ++i) {
             float l = buffers[0][i];
             float r = buffers[1][i];
             float s = (std::abs(l) > std::abs(r)) ? l : r;

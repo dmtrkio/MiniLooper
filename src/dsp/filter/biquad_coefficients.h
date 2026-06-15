@@ -85,7 +85,7 @@ namespace dsp::filter {
         {
             const T sine = std::sin(cf);
             const T cosine = std::cos(cf);
-            const T alpha = sine * std::sinh((std::log(2) / 2) * bw * (cf / sine));
+            const T alpha = sine * std::sinh(static_cast<float>((std::log(2) / 2) * bw * (cf / sine)));
 
             BiquadCoefficients x;
             x.b0 = 1;

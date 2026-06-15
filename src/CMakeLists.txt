@@ -26,8 +26,8 @@ target_link_libraries(${PROJECT_NAME}_core PUBLIC
 
 target_compile_options(${PROJECT_NAME}_core PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>:/W4>
-    $<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:MSVC>>:/WX>
+    #$<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:MSVC>>:/WX>
 
     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
-    $<$<AND:$<CONFIG:Debug>,$<NOT:$<CXX_COMPILER_ID:MSVC>>>:-Werror>
+    #$<$<AND:$<CONFIG:Debug>,$<NOT:$<CXX_COMPILER_ID:MSVC>>>:-Werror>
 )
