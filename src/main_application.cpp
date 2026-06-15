@@ -57,6 +57,7 @@ namespace ui {
                 row(trackKey.c_str(), "Ctrl",        "Clear track");
                 row(trackKey.c_str(), "Alt",         "Toggle footswitch assignment");
                 row("C",              none,          "Clear all tracks");
+                row("S",              "Ctrl",        "Save Session");
 
                 ImGui::EndTable();
             }
@@ -244,6 +245,10 @@ void MainApplication::processInput()
 
     if (ImGui::Shortcut(ImGuiKey_C, ImGuiInputFlags_RouteGlobal)) {
         looper_.clearAll();
+    }
+
+    if (ImGui::Shortcut(ImGuiKey_S | ImGuiMod_Ctrl, ImGuiInputFlags_RouteGlobal)) {
+        sessionManager_.saveCurrentSessionToDisk(looper_);
     }
 }
 
