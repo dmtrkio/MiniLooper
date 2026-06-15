@@ -137,37 +137,7 @@ namespace looper {
     {
         if (!isTrackIndexValid(trackIndex)) return;
         const auto& track = tracks_[trackIndex];
-        const auto len = [&] {
-            if (track.state == State::Recording && track.length == 0) {
-                return transport_.currentFrame - track.start;
-            } else {
-                return track.length;
-            }
-        }();
-
-        if (len == 0) {
-            for (int i = 0; i < ThumbnailSnapshot::kBuckets; ++i)
-                out.buckets[i] = {0.0f, 0.0f};
-            return;
-        }
-
-        const float step = static_cast<float>(len) / ThumbnailSnapshot::kBuckets;
-        for (int b = 0; b < ThumbnailSnapshot::kBuckets; ++b) {
-            FrameInt start = static_cast<FrameInt>(b * step);
-            FrameInt end   = static_cast<FrameInt>((b + 1) * step);
-            if (end > static_cast<FrameInt>(len)) end = static_cast<FrameInt>(len);
-            if (end <= start) end = start + 1;
-
-            float minV = 0.0f, maxV = 0.0f;
-            for (FrameInt i = start; i < end; ++i) {
-                float l = track.buffers[0][i];
-                float r = track.buffers[1][i];
-                float s = (std::abs(l) > std::abs(r)) ? l : r;
-                if (s < minV) minV = s;
-                if (s > maxV) maxV = s;
-            }
-            out.buckets[b] = {minV, maxV};
-        }
+        out = track.thumbnail;
     }
 
     bool LooperProcessor::isAnyTrackCurrentlyRecording() const noexcept
@@ -275,6 +245,8 @@ namespace looper {
                 }
             }
         }
+
+        updateThumbnail();
     }
 
     void LooperProcessor::Track::startRecording(bool synced) noexcept
@@ -386,6 +358,8 @@ namespace looper {
         start = 0;
         length = 0;
 
+        clearThumbnail();
+
         return true;
     }
 
@@ -475,5 +449,35 @@ namespace looper {
         }
 
         return std::make_pair(fadeIn, fadeOut);
+    }
+
+    void LooperProcessor::Track::updateThumbnail() noexcept
+    {
+        if (isEmpty()) return;
+
+        const float step = static_cast<float>(length) / ThumbnailSnapshot::kBuckets;
+        FrameInt start = static_cast<FrameInt>(currentBucket * step);
+        FrameInt end   = static_cast<FrameInt>((currentBucket + 1) * step);
+        if (end > length) end = length;
+        if (end <= start) end = start + 1;
+
+        float minV = 0.0f, maxV = 0.0f;
+        for (FrameInt i = start; i < end; ++i) {
+            float l = buffers[0][i];
+            float r = buffers[1][i];
+            float s = (std::abs(l) > std::abs(r)) ? l : r;
+            if (s < minV) minV = s;
+            if (s > maxV) maxV = s;
+        }
+
+        thumbnail.buckets[currentBucket] = {minV, maxV};
+
+        currentBucket = (currentBucket + 1) % ThumbnailSnapshot::kBuckets;
+    }
+
+    void LooperProcessor::Track::clearThumbnail() noexcept
+    {
+        thumbnail = {};
+        currentBucket = 0;
     }
 }

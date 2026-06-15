@@ -15,8 +15,7 @@ namespace looper {
     using FrameInt = std::int32_t;
 
     inline constexpr int kLooperTrackCount = 4;
-    inline constexpr float kMaxLoopSecs = 20;
-    inline constexpr float kFadeLengthMs = 5.0f;
+    inline constexpr float kMaxLoopSecs = 40.0f;
 
     struct ThumbnailSnapshot
     {
@@ -73,6 +72,8 @@ namespace looper {
         void extractThumbnail(int trackIndex, ThumbnailSnapshot& out) const noexcept;
 
     private:
+        static constexpr float kFadeLengthMs = 5.0f;
+
         [[nodiscard]] constexpr bool isTrackIndexValid(int trackIndex) const noexcept
         {
             return trackIndex >= 0 && trackIndex < getNumLooperTracks();
@@ -118,6 +119,8 @@ namespace looper {
             void handlePendingTransition(FrameInt now) noexcept;
             [[nodiscard]] FrameInt phase(FrameInt transportFrame) const noexcept;
             [[nodiscard]] std::pair<float, float> getFadeScalars(FrameInt pos) const noexcept;
+            void updateThumbnail() noexcept;
+            void clearThumbnail() noexcept;
 
             Transport* transportPtr;
 
@@ -127,10 +130,13 @@ namespace looper {
 
             State pendingState{State::Cleared};
             bool hasPendingTransition{false};
-            FrameInt whenTransition{};
+            FrameInt whenTransition{0};
 
             FrameInt fadeLength{64};
             std::array<std::vector<float>, 2> buffers;
+
+            ThumbnailSnapshot thumbnail;
+            FrameInt currentBucket{0};
         };
 
         std::array<Track, kLooperTrackCount> tracks_{};

@@ -10,8 +10,8 @@
 namespace dsp {
     struct MinMax
     {
-        float min;
-        float max;
+        float min{0.0f};
+        float max{0.0f};
     };
 
     constexpr float linearToDb(const float value, const float minDb = -100.0f) noexcept
