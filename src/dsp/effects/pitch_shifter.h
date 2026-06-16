@@ -5,8 +5,8 @@
 #include "dsp/effects/effect_base.h"
 #include "dsp/parameter/parameter_tree.h"
 #include "dsp/parameter/parameter_view.h"
-#include "dsp/dsp.h"
 #include "dsp/delay_line.h"
+#include "dsp/simple_pitch_shifter.h"
 
 namespace dsp::effects {
     class PitchShifter : public EffectBase
@@ -24,7 +24,7 @@ namespace dsp::effects {
         void prepare(float sampleRate) override;
         void process(float *const *data, unsigned int nFrames) override;
         parameter::ParameterTree getParameterTree() const override;
-    
+
     private:
         void setOn();
 
@@ -39,16 +39,11 @@ namespace dsp::effects {
         parameter::BooleanParameterView onParam_;
         parameter::IntegerParameterView semitonesParam_;
         parameter::FloatParameterView mixParam_;
-        
-        struct PitcherState;
-        std::unique_ptr<PitcherState> pitcher_;
+
+        SimplePitchShifter shifter_;
 
         FloatSmoother semitones_;
-        StereoFloatSmoother mix_;
+        FloatSmoother mix_;
         bool on_{false};
-
-        static constexpr std::size_t kBufferSize = 8046;
-        std::array<std::vector<float>, 2> buffers_; 
-        std::array<FractionalDelayLine, 2> delay_;
     };
 }
