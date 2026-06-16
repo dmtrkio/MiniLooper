@@ -1,7 +1,6 @@
 #pragma once
 
 #include <array>
-#include <bitset>
 #include <chrono>
 
 #include "looper.h"
@@ -22,27 +21,11 @@ namespace looper {
         void update(int trackIndex)
         {
             const auto now = std::chrono::steady_clock::now();
-            if (now - lastUpdate_[trackIndex] < interval_)
-                return;
+            if (now - lastUpdate_[trackIndex] < interval_) return;
 
-            const auto& state = looper_.getTrackState(trackIndex);
-            const auto lastState = lastKnownStates_[trackIndex];
-            lastKnownStates_[trackIndex] = state.state;
             auto& entry = cachedThumbnails_[trackIndex];
-            auto fetchedBefore = fetched_[trackIndex];
+            looper_.getThumbnail(trackIndex, entry);
 
-            bool needs = !fetchedBefore;
-            needs |= (state.state == State::Recording);
-            needs |= (state.state != lastState);
-
-            if (!needs)
-                return;
-
-            ThumbnailSnapshot snap{};
-            looper_.getThumbnail(trackIndex, snap);
-
-            entry = snap;
-            fetched_[trackIndex] = true;
             lastUpdate_[trackIndex] = now;
         }
 
@@ -52,16 +35,14 @@ namespace looper {
                 assert(false && "Invalid track index");
                 return nullptr;
             }
-            return fetched_[trackIndex] ? &cachedThumbnails_[trackIndex] : nullptr;
+            return &cachedThumbnails_[trackIndex];
         }
 
     private:
         const Looper& looper_;
         const std::chrono::milliseconds interval_;
 
-        std::bitset<kLooperTrackCount> fetched_{};
         std::array<ThumbnailSnapshot, kLooperTrackCount> cachedThumbnails_{};
-        std::array<State, kLooperTrackCount> lastKnownStates_{};
         std::array<std::chrono::steady_clock::time_point, kLooperTrackCount> lastUpdate_{};
     };
 }

@@ -66,6 +66,7 @@ namespace looper {
         void onStart(float sampleRate, int nInputChannels, int nOutputChannels) override
         {
             assert(nOutputChannels >= 2);
+            (void)nOutputChannels;
 
             looperProcessor.prepare(sampleRate);
 
