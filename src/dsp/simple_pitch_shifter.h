@@ -2,6 +2,7 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
+#include <numbers>
 
 namespace dsp
 {
@@ -90,7 +91,7 @@ namespace dsp
             float x = d / size;
 
             // Hann window
-            return 0.5f - 0.5f * std::cos(2.0f * float(M_PI) * x);
+            return 0.5f - 0.5f * std::cos(2.0f * std::numbers::pi_v<float> * x);
         }
 
         float distanceToWrite(float r) const
