@@ -98,15 +98,17 @@ void SessionManager::saveCurrentSessionToDisk(const looper::Looper& looper) cons
     for (int i = 0; i < looper.getNumLooperTracks(); ++i) {
         const float *data[2] = { session->leftBuffers[i], session->rightBuffers[i] };
         if (const auto framesToWrite = session->frameCounts[i]; framesToWrite > 0) {
-            const auto filePath = currentSessionPath / std::format("loop_{}.wav", i);
-            loopList.emplace_back(filePath.string());
+            const auto fileName = std::format("loop_{}.wav", i);
+            loopList.emplace_back(fileName);
+
+            const auto filePath = currentSessionPath / fileName;
             audio::WavWriter wavWriter(filePath, audioEngine_.getSampleRate(), 2);
             wavWriter.writeFrames(data, framesToWrite);
         }
     }
 
     j["loops"] = loopList;
-    const auto filePath = currentSessionPath / "info.json";
+    const auto filePath = currentSessionPath / "session_info.json";
     saveJsonToFile(filePath.string(), j);
 
     std::cout << "Saved session at " << currentSessionPath << std::endl;
