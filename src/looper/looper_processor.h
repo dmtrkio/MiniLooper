@@ -6,6 +6,7 @@
 #include <utility>
 #include <cstdint>
 #include <concepts>
+#include <optional>
 
 #include "looper_mixer.h"
 #include "dsp/dsp.h"
@@ -61,6 +62,7 @@ namespace looper {
         [[nodiscard]] FrameInt getCurrentPosition(int trackIndex) const noexcept;
         [[nodiscard]] FrameInt getCurrentNumFrames(int trackIndex) const noexcept;
         [[nodiscard]] bool isEmpty(int trackIndex) const noexcept;
+        [[nodiscard]] std::optional<float> getApproxBpm() const noexcept;
 
         void startRecording(int trackIndex, bool synced = true) noexcept;
         void stopRecording(int trackIndex, bool synced = true) noexcept;
@@ -84,6 +86,7 @@ namespace looper {
         struct Transport
         {
             [[nodiscard]] bool isTempoSet() const noexcept;
+            [[nodiscard]] std::optional<float> getApproxBPM() const noexcept;
             void tick(FrameInt nFrames) noexcept;
             void setTempo(FrameInt firstLoopLength) noexcept;
             void reset(FrameInt maxFrameCount, float sr) noexcept;

@@ -81,6 +81,11 @@ namespace looper {
         return tracks_[trackIndex].isEmpty();
     }
 
+    std::optional<float> LooperProcessor::getApproxBpm() const noexcept
+    {
+        return transport_.getApproxBPM();
+    }
+
     void LooperProcessor::startRecording(int trackIndex, bool synced) noexcept
     {
         if (!isTrackIndexValid(trackIndex)) return;
@@ -150,6 +155,12 @@ namespace looper {
     bool LooperProcessor::Transport::isTempoSet() const noexcept
     {
         return unitLength != 0;
+    }
+
+    std::optional<float> LooperProcessor::Transport::getApproxBPM() const noexcept
+    {
+        if (!isTempoSet()) return std::nullopt;
+        return (sampleRate * 60.0f) / static_cast<float>(unitLength);
     }
 
     void LooperProcessor::Transport::tick(const FrameInt nFrames) noexcept

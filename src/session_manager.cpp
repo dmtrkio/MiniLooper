@@ -1,7 +1,9 @@
 #include "session_manager.h"
 
 #include <algorithm>
+#include <cassert>
 
+#include "json.h"
 #include "audio/wav_writer.h"
 #include "filepaths.h"
 
@@ -80,14 +82,32 @@ void SessionManager::saveCurrentSessionToDisk(const looper::Looper& looper) cons
 
     std::filesystem::create_directories(currentSessionPath);
 
+    const auto approxBpm = [&] {
+        const auto& state = looper.getLooperState();
+        assert(state.approxBPM.has_value());
+        return state.approxBPM.value_or(0.0f);
+    }();
+
+    json j;
+    auto &metadata = j["metadata"];
+    metadata["bpm"] = approxBpm;
+
+    std::vector<std::string> loopList;
+    loopList.reserve(looper.getNumLooperTracks());
+
     for (int i = 0; i < looper.getNumLooperTracks(); ++i) {
         const float *data[2] = { session->leftBuffers[i], session->rightBuffers[i] };
         if (const auto framesToWrite = session->frameCounts[i]; framesToWrite > 0) {
             const auto filePath = currentSessionPath / std::format("loop_{}.wav", i);
+            loopList.emplace_back(filePath.string());
             audio::WavWriter wavWriter(filePath, audioEngine_.getSampleRate(), 2);
             wavWriter.writeFrames(data, framesToWrite);
         }
     }
+
+    j["loops"] = loopList;
+    const auto filePath = currentSessionPath / "info.json";
+    saveJsonToFile(filePath.string(), j);
 
     std::cout << "Saved session at " << currentSessionPath << std::endl;
 }

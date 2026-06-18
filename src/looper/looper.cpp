@@ -125,6 +125,7 @@ namespace looper {
             }
 
             snapshot.maxLoopLength = looperProcessor.getMaxFramesInLoop();
+            snapshot.approxBPM = looperProcessor.getApproxBpm();
             snapshot.level = levelMeter_.getLevel();
         }
 

@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <string>
+#include <optional>
 
 #include "audio/audio_engine.h"
 #include "dsp/parameter/parameter_tree.h"
@@ -26,6 +27,7 @@ namespace looper {
     {
         std::array<TrackStateSnapshot, kLooperTrackCount> tracks;
         FrameInt maxLoopLength{};
+        std::optional<float> approxBPM{};
         std::pair<float, float> level;
     };
 
