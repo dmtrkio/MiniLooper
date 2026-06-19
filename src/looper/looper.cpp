@@ -11,7 +11,7 @@
 #include "dsp/level_meter.h"
 #include "source_mixer.h"
 
-namespace looper {
+namespace ml::looper {
     struct LooperSharedData
     {
         LooperMailbox commandMailbox{128};

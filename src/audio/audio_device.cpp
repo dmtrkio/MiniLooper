@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-namespace audio {
+namespace ml::audio {
     void AudioDevice::printInfo() const
     {
         std::cout << std::endl;

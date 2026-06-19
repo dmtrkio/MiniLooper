@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-namespace audio {
+namespace ml::audio {
     using DeviceIndex = int;
     inline constexpr DeviceIndex kNoDevice = -100;
 

@@ -11,7 +11,7 @@
 #include "midi_message.h"
 #include "json.h"
 
-namespace midi {
+namespace ml::midi {
     using MidiInputCallback = std::function<void(int, MidiMessage)>;
     using DeviceIndex = int;
     constexpr DeviceIndex kNoDevice = pmNoDevice;

@@ -6,7 +6,7 @@
 #include "looper.h"
 #include "looper/looper_processor.h"
 
-namespace looper {
+namespace ml::looper {
     class ThumbnailCache
     {
     public:

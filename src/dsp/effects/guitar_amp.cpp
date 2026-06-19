@@ -1,7 +1,7 @@
 #include "guitar_amp.h"
 #include "dsp/effects/guitar_amp.h"
 
-namespace dsp::effects {
+namespace ml::dsp::effects {
     GuitarAmp::GuitarAmp()
     {
         driveParam_.referTo(paramTree_["Drive"].asParameterUnsafe());

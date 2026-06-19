@@ -5,7 +5,7 @@
 
 #include "audio_device.h"
 
-namespace audio {
+namespace ml::audio {
     class AudioBackend
     {
     public:

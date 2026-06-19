@@ -2,7 +2,7 @@
 
 #include "imgui.h"
 
-namespace ui {
+namespace ml::ui {
     const char* WindowBase::getTitle() const { return "No Title"; }
 
     void WindowBase::draw()

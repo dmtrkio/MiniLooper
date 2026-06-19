@@ -4,7 +4,7 @@
 
 #include "imgui.h"
 
-namespace ui {
+namespace ml::ui {
     MidiSettingsUi::MidiSettingsUi(midi::MidiEngine *midiEngine)
         : midiEngine_(midiEngine)
     {}

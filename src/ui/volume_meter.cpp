@@ -4,7 +4,7 @@
 
 #include "imgui.h"
 
-namespace ui {
+namespace ml::ui {
     void volumeMeter(const float leftDb, const float rightDb)
     {
         constexpr float kMinDb = -60.0f;

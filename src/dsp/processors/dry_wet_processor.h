@@ -8,7 +8,7 @@
 
 #include "processor_chain.h"
 
-namespace dsp::processors {
+namespace ml::dsp::processors {
     template <Processor... Processors>
     struct DryWetProcessor
     {

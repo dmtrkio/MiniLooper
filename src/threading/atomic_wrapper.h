@@ -3,81 +3,83 @@
 #include <atomic>
 #include <type_traits>
 
-template<typename T, std::memory_order kReadMemoryOrder, std::memory_order kWriteMemoryOrder>
-class AtomicWrapper
-{
-    static_assert(std::is_trivially_copyable_v<T>,
-                  "T is required to be trivially copyable");
-
-    static_assert(std::atomic<T>::is_always_lock_free,
-                  "atomic<T> is required to be lock-free");
-
-public:
-    AtomicWrapper() noexcept = default;
-
-    explicit AtomicWrapper(T initial) noexcept
+namespace ml {
+    template<typename T, std::memory_order kReadMemoryOrder, std::memory_order kWriteMemoryOrder>
+    class AtomicWrapper
     {
-        value.store(initial, kWriteMemoryOrder);
-    }
+        static_assert(std::is_trivially_copyable_v<T>,
+                    "T is required to be trivially copyable");
 
-    AtomicWrapper(const AtomicWrapper& other) noexcept
-    {
-        value.store(other.value.load(kReadMemoryOrder), kWriteMemoryOrder);
-    }
+        static_assert(std::atomic<T>::is_always_lock_free,
+                    "atomic<T> is required to be lock-free");
 
-    AtomicWrapper& operator=(const AtomicWrapper& other) noexcept
-    {
-        value.store(other.value.load(kReadMemoryOrder), kWriteMemoryOrder);
-        return *this;
-    }
+    public:
+        AtomicWrapper() noexcept = default;
 
-    AtomicWrapper& operator=(T v) noexcept
-    {
-        value.store(v, kWriteMemoryOrder);
-        return *this;
-    }
+        explicit AtomicWrapper(T initial) noexcept
+        {
+            value.store(initial, kWriteMemoryOrder);
+        }
 
-    operator T() const noexcept
-    {
-        return load();
-    }
+        AtomicWrapper(const AtomicWrapper& other) noexcept
+        {
+            value.store(other.value.load(kReadMemoryOrder), kWriteMemoryOrder);
+        }
 
-    T load() const noexcept
-    {
-        return value.load(kReadMemoryOrder);
-    }
+        AtomicWrapper& operator=(const AtomicWrapper& other) noexcept
+        {
+            value.store(other.value.load(kReadMemoryOrder), kWriteMemoryOrder);
+            return *this;
+        }
 
-    void store(T v) noexcept
-    {
-        value.store(v, kWriteMemoryOrder);
-    }
+        AtomicWrapper& operator=(T v) noexcept
+        {
+            value.store(v, kWriteMemoryOrder);
+            return *this;
+        }
 
-    bool operator==(const AtomicWrapper& other) const noexcept
-    {
-        return load() == other.load();
-    }
+        operator T() const noexcept
+        {
+            return load();
+        }
 
-    bool operator!=(const AtomicWrapper& other) const noexcept
-    {
-        return load() != other.load();
-    }
+        T load() const noexcept
+        {
+            return value.load(kReadMemoryOrder);
+        }
 
-    bool operator==(T other) const noexcept
-    {
-        return load() == other;
-    }
+        void store(T v) noexcept
+        {
+            value.store(v, kWriteMemoryOrder);
+        }
 
-    bool operator!=(T other) const noexcept
-    {
-        return load() != other;
-    }
+        bool operator==(const AtomicWrapper& other) const noexcept
+        {
+            return load() == other.load();
+        }
 
-private:
-    std::atomic<T> value{T{}};
-};
+        bool operator!=(const AtomicWrapper& other) const noexcept
+        {
+            return load() != other.load();
+        }
 
-template <typename T>
-using RelaxedAtomic = AtomicWrapper<T, std::memory_order_relaxed, std::memory_order_relaxed>;
+        bool operator==(T other) const noexcept
+        {
+            return load() == other;
+        }
 
-template <typename T>
-using AcquireReleaseAtomic = AtomicWrapper<T, std::memory_order_acquire, std::memory_order_release>;
+        bool operator!=(T other) const noexcept
+        {
+            return load() != other;
+        }
+
+    private:
+        std::atomic<T> value{T{}};
+    };
+
+    template <typename T>
+    using RelaxedAtomic = AtomicWrapper<T, std::memory_order_relaxed, std::memory_order_relaxed>;
+
+    template <typename T>
+    using AcquireReleaseAtomic = AtomicWrapper<T, std::memory_order_acquire, std::memory_order_release>;
+}

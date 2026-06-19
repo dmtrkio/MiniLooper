@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-namespace dsp::filter {
+namespace ml::dsp::filter {
     class BallisticsFilter
     {
     public:

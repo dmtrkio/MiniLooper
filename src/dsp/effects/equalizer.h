@@ -7,7 +7,7 @@
 #include "../parameter/parameter_view.h"
 #include "effect_base.h"
 
-namespace dsp::effects {
+namespace ml::dsp::effects {
     class Equalizer final : public EffectBase
     {
     public:

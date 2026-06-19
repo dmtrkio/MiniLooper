@@ -1,6 +1,6 @@
 #include "theme.h"
 
-namespace ui {
+namespace ml::ui {
     void applyThemeHighContrast()
     {
         ImGuiStyle& style = ImGui::GetStyle();

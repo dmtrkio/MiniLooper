@@ -5,7 +5,9 @@
 
 #include <nlohmann/json.hpp>
 
-using json = nlohmann::ordered_json;
+namespace ml {
+    using json = nlohmann::ordered_json;
 
-bool saveJsonToFile(const std::string& filename, const json& j);
-std::optional<json> loadJsonFromFile(const std::string& filename);
+    bool saveJsonToFile(const std::string& filename, const json& j);
+    std::optional<json> loadJsonFromFile(const std::string& filename);
+}

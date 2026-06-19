@@ -7,7 +7,7 @@
 #include "dsp/effects/equalizer.h"
 #include "dsp/effects/pitch_shifter.h"
 
-namespace looper {
+namespace ml::looper {
     class ProcessingChain final : public dsp::effects::EffectBase
     {
     public:

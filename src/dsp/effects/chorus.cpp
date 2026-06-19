@@ -1,6 +1,6 @@
 #include "chorus.h"
 
-namespace dsp::effects {
+namespace ml::dsp::effects {
     Chorus::Chorus()
     {
         rateParam_.referTo(paramTree_["Rate"].asParameterUnsafe());

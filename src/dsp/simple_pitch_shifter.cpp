@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <numbers>
 
-namespace dsp {
+namespace ml::dsp {
     void SimplePitchShifter::prepare(float sampleRate)
     {
         constexpr float delayMs = 100.0f;

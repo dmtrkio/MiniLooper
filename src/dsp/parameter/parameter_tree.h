@@ -12,7 +12,7 @@
 #include "audio_parameter.h"
 #include "json.h"
 
-namespace dsp::parameter {
+namespace ml::dsp::parameter {
     class ParameterTree
     {
     public:

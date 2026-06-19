@@ -6,7 +6,7 @@
 
 #include "imgui.h"
 
-namespace ui {
+namespace ml::ui {
     enum class ImGuiTheme
     {
         HighContrast,   // Stark black & white. Maximum readability.

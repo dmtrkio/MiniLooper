@@ -6,7 +6,7 @@
 #include "dsp/parameter/parameter_tree.h"
 #include "dsp/parameter/parameter_view.h"
 
-namespace dsp::effects {
+namespace ml::dsp::effects {
     class GuitarAmp final : public EffectBase
     {
     public:

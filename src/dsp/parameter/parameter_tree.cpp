@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <utility>
 
-namespace dsp::parameter {
+namespace ml::dsp::parameter {
     ParameterTree::ParameterTree()
         : node_(nullptr) {}
 

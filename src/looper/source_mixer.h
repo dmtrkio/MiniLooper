@@ -7,7 +7,7 @@
 #include "dsp/level_meter.h"
 #include "processing_chain.h"
 
-namespace looper {
+namespace ml::looper {
     class SourceChannel
     {
     public:

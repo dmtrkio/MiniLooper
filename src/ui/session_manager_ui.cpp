@@ -2,7 +2,7 @@
 
 #include "imgui.h"
 
-namespace ui {
+namespace ml::ui {
     SessionManagerUi::SessionManagerUi(SessionManager& sessionManager, looper::Looper& looper)
         : sessionManager_(sessionManager)
         , looper_(looper)

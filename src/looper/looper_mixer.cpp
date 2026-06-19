@@ -5,7 +5,7 @@
 
 #include "audio/audio_engine.h"
 
-namespace looper {
+namespace ml::looper {
     Mixer::Mixer(const unsigned int nChannels)
         : paramTree_("LooperMixer")
     {

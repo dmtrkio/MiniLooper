@@ -7,7 +7,7 @@
 #include "looper/looper_processor.h"
 
 using Catch::Matchers::WithinAbs;
-using namespace looper;
+using namespace ml::looper;
 
 namespace test {
     constexpr float kSampleRate = 44100.0f;

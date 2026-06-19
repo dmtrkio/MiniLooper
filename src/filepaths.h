@@ -5,7 +5,7 @@
 
 #include "config.h"
 
-namespace filepaths {
+namespace ml::filepaths {
     inline std::filesystem::path homeDirPath()
     {
         const char* raw = SDL_GetUserFolder(SDL_FOLDER_HOME);

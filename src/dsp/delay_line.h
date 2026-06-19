@@ -5,7 +5,7 @@
 #include <vector>
 #include <algorithm>
 
-namespace dsp {
+namespace ml::dsp {
     class FractionalDelayLine
     {
     public:

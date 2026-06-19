@@ -2,7 +2,7 @@
 
 #include <imgui.h>
 
-namespace ui {
+namespace ml::ui {
     inline constexpr ImU32 fadeAlpha(ImU32 color, float t) noexcept
     {
         int a = (color >> 24) & 0xFF;

@@ -1,6 +1,6 @@
 #include "effect_base.h"
 
-namespace dsp::effects {
+namespace ml::dsp::effects {
     json EffectBase::getSettingsAsJson() const
     {
         auto tree = getParameterTree();

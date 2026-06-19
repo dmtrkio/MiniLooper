@@ -12,7 +12,7 @@
 #include "dsp/dsp.h"
 #include "rt_sanitizer.h"
 
-namespace looper {
+namespace ml::looper {
     using FrameInt = std::int32_t;
 
     inline constexpr int kLooperTrackCount = 4;

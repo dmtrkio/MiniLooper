@@ -18,7 +18,7 @@ SDL_Renderer *renderer;
 bool gImguiInitialized = false;
 float mainScale;
 
-std::unique_ptr<MainApplication> app;
+std::unique_ptr<ml::MainApplication> app;
 
 SDL_AppResult initializeSDL()
 {
@@ -81,7 +81,7 @@ SDL_AppResult SDL_AppInit(void **, int argc, char **argv)
     initializeImgui();
 
     try {
-        app = std::make_unique<MainApplication>(argc, argv);
+        app = std::make_unique<ml::MainApplication>(argc, argv);
     } catch (std::exception &e) {
         std::cerr << e.what() << std::endl;
         return SDL_APP_FAILURE;

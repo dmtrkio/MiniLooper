@@ -8,7 +8,7 @@
 
 #include "threading/spsc_mailbox.h"
 
-namespace midi {
+namespace ml::midi {
     class MidiMessage
     {
     public:

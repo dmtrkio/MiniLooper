@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cassert>
 
-namespace looper {
+namespace ml::looper {
     const char* stateToStr(State state)
     {
         if (state == State::Cleared) return "Cleared";

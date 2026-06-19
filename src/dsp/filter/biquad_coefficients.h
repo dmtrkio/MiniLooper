@@ -4,7 +4,7 @@
 #include <cmath>
 #include <numbers>
 
-namespace dsp::filter {
+namespace ml::dsp::filter {
     template <typename T>
     constexpr T normalizeFrequency(T sf, T f)
     {

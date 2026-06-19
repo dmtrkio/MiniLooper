@@ -2,7 +2,7 @@
 
 #include "dsp/parameter/parameter_view.h"
 
-using namespace dsp::parameter;
+using namespace ml::dsp::parameter;
 
 TEST_CASE("ParameterView view binds to parameter", "[parameterview][binding]")
 {

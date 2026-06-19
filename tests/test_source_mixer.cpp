@@ -3,7 +3,7 @@
 
 #include "looper/source_mixer.h"
 
-using namespace looper;
+using namespace ml::looper;
 
 using Catch::Matchers::WithinAbs;
 
@@ -15,27 +15,29 @@ TEST_CASE("SourceChannel parameter tree contains expected parameters", "[sourcec
     REQUIRE(paramTree.isValid());
     REQUIRE(paramTree.getName() == "TestChannel");
 
+    using ml::dsp::parameter::ParameterType;
+
     SECTION("Input1 parameters are present and have correct types") {
         const auto input1Tree = paramTree["Input1"];
         REQUIRE(input1Tree.isValid());
         REQUIRE(input1Tree["Source"].isParameter());
-        REQUIRE(input1Tree["Source"].asParameterUnsafe().getType() == dsp::parameter::ParameterType::Integer);
+        REQUIRE(input1Tree["Source"].asParameterUnsafe().getType() == ParameterType::Integer);
         REQUIRE(input1Tree["GainDb"].isParameter());
-        REQUIRE(input1Tree["GainDb"].asParameterUnsafe().getType() == dsp::parameter::ParameterType::Float);
+        REQUIRE(input1Tree["GainDb"].asParameterUnsafe().getType() == ParameterType::Float);
     }
 
     SECTION("Input2 parameters are present and have correct types") {
         const auto input2Tree = paramTree["Input2"];
         REQUIRE(input2Tree.isValid());
         REQUIRE(input2Tree["Source"].isParameter());
-        REQUIRE(input2Tree["Source"].asParameterUnsafe().getType() == dsp::parameter::ParameterType::Integer);
+        REQUIRE(input2Tree["Source"].asParameterUnsafe().getType() == ParameterType::Integer);
         REQUIRE(input2Tree["GainDb"].isParameter());
-        REQUIRE(input2Tree["GainDb"].asParameterUnsafe().getType() == dsp::parameter::ParameterType::Float);
+        REQUIRE(input2Tree["GainDb"].asParameterUnsafe().getType() == ParameterType::Float);
     }
 
     SECTION("Stereo parameter is present and has correct type") {
         REQUIRE(paramTree["Stereo"].isParameter());
-        REQUIRE(paramTree["Stereo"].asParameterUnsafe().getType() == dsp::parameter::ParameterType::Boolean);
+        REQUIRE(paramTree["Stereo"].asParameterUnsafe().getType() == ParameterType::Boolean);
     }
 
     SECTION("ProcessingChain parameters are present") {

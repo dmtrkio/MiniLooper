@@ -1,6 +1,6 @@
 #include "midi_message.h"
 
-namespace midi {
+namespace ml::midi {
     MidiMessage::MidiMessage(const PmMessage msg) : raw_(msg)
     {
         parse();

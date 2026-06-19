@@ -4,7 +4,7 @@
 
 #include "dsp/parameter/audio_parameter.h"
 
-namespace dsp::parameter {
+namespace ml::dsp::parameter {
     template <typename T>
     concept ParameterViewType = std::same_as<T, float> ||
                                 std::same_as<T, std::int32_t> ||

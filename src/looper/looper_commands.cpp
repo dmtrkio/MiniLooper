@@ -1,7 +1,7 @@
 #include "looper_commands.h"
 #include "looper_processor.h"
 
-namespace looper {
+namespace ml::looper {
     LooperCommand LooperCommand::startRecording(int trackIndex, bool synced) noexcept
     {
         return LooperCommand{ StartRecording{ trackIndex, synced } };

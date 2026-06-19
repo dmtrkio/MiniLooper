@@ -4,7 +4,7 @@
 #include "volume_meter.h"
 #include "audio_thumbnail.h"
 
-namespace ui {
+namespace ml::ui {
     MixerUi::MixerUi(looper::Looper &looper)
         : looper_(&looper)
         , thumbnailCache_(*looper_)

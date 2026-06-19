@@ -6,7 +6,7 @@
 
 #include "portaudio_backend.h"
 
-namespace audio {
+namespace ml::audio {
     using DefaultAudioBackend = audio::PortAudioBackend;
 
     AudioEngine::AudioEngine()

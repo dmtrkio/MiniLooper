@@ -3,7 +3,7 @@
 #include <cmath>
 #include <numbers>
 
-namespace dsp {
+namespace ml::dsp {
     class Oscillator
     {
     public:

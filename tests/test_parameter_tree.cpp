@@ -4,7 +4,7 @@
 
 #include "dsp/parameter/parameter_tree.h"
 
-using namespace dsp::parameter;
+using namespace ml::dsp::parameter;
 
 inline Parameter makeParam(const std::string& name)
 {

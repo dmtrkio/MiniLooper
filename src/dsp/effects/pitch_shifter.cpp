@@ -1,6 +1,6 @@
 #include "pitch_shifter.h"
 
-namespace dsp::effects {
+namespace ml::dsp::effects {
     PitchShifter::PitchShifter()
     {
         onParam_.referTo(paramTree_["On"].asParameterUnsafe());

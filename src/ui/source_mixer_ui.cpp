@@ -2,7 +2,7 @@
 
 #include "parameter_ui.h"
 
-namespace ui {
+namespace ml::ui {
     SourceMixerUi::SourceMixerUi(looper::Looper &looper)
         : looper_(&looper)
     {}

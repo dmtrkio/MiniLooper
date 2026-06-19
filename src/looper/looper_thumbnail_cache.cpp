@@ -2,7 +2,7 @@
 
 #include <cassert>
 
-namespace looper {
+namespace ml::looper {
     ThumbnailCache::ThumbnailCache(const Looper& looper, std::chrono::milliseconds interval)
         : looper_(looper)
         , interval_(interval)

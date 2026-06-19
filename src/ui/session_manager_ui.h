@@ -3,7 +3,7 @@
 #include "ui_window_base.h"
 #include "session_manager.h"
 
-namespace ui {
+namespace ml::ui {
     class SessionManagerUi final : public WindowBase
     {
     public:

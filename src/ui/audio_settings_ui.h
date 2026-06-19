@@ -3,7 +3,7 @@
 #include "ui_window_base.h"
 #include "audio/audio_engine.h"
 
-namespace ui {
+namespace ml::ui {
     class AudioSettingsUi final : public WindowBase
     {
     public:

@@ -4,7 +4,7 @@
 #include "looper/looper.h"
 #include "looper/looper_thumbnail_cache.h"
 
-namespace ui {
+namespace ml::ui {
     class MixerUi final : public WindowBase
     {
     public:

@@ -3,7 +3,7 @@
 #include "dsp/dsp.h"
 #include "dsp/filter/ballistics_filter.h"
 
-namespace dsp {
+namespace ml::dsp {
     class LevelMeter
     {
     public:

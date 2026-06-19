@@ -8,7 +8,7 @@
     #include <pa_win_wasapi.h>
 #endif
 
-namespace audio {
+namespace ml::audio {
     PortAudioBackend::PortAudioBackend(Callback audioCallback)
         : AudioBackend(std::move(audioCallback))
     {

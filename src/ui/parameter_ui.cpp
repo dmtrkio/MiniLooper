@@ -3,7 +3,7 @@
 #include "dsp/parameter/parameter_tree.h"
 #include "imgui.h"
 
-namespace ui {
+namespace ml::ui {
     void parameterUi(dsp::parameter::Parameter &param)
     {
         using namespace dsp::parameter;

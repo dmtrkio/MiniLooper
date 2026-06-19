@@ -3,7 +3,7 @@
 #include <functional>
 #include <cassert>
 
-namespace timer {
+namespace ml::timer {
     using TimerCallback = std::function<void()>;
 
     class Timer

@@ -6,7 +6,7 @@
 
 #include "imgui.h"
 
-namespace ui {
+namespace ml::ui {
     AudioSettingsUi::AudioSettingsUi(audio::AudioEngine& audioEngine)
         : WindowBase()
         , audioEngine_(audioEngine)

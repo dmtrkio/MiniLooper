@@ -2,7 +2,7 @@
 
 #include <vector>
 
-namespace dsp {
+namespace ml::dsp {
     class SimplePitchShifter
     {
     public:

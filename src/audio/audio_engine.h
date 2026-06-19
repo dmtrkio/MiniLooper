@@ -9,7 +9,7 @@
 #include "json.h"
 #include "rt_sanitizer.h"
 
-namespace audio {
+namespace ml::audio {
     inline constexpr unsigned int kMaxFramesInBuffer = 8096;
 
     class AudioBackend;

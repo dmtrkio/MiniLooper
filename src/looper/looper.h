@@ -10,7 +10,7 @@
 #include "looper_processor.h"
 #include "midi/midi_message.h"
 
-namespace looper {
+namespace ml::looper {
     inline constexpr float kHeadRoomDb = 6.0f;
 
     struct TrackStateSnapshot

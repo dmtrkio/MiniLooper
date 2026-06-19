@@ -2,7 +2,7 @@
 
 #include <cassert>
 
-namespace dsp::processors {
+namespace ml::dsp::processors {
     class PitchShifterProcessor {
     public:
         static constexpr unsigned int kNumChannels = 2;

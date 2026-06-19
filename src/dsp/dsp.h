@@ -7,7 +7,7 @@
 #include <utility>
 #include <numbers>
 
-namespace dsp {
+namespace ml::dsp {
     struct MinMax
     {
         float min{0.0f};

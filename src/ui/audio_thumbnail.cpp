@@ -4,7 +4,7 @@
 
 #include "ui/ui_utils.h"
 
-namespace ui {
+namespace ml::ui {
     bool audioThumbnail(
         const char* id,
         const dsp::MinMax* minMaxPairs,

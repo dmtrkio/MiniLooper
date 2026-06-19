@@ -5,7 +5,7 @@
 #include "midi_message.h"
 #include "timer.h"
 
-namespace midi {
+namespace ml::midi {
     // Helper to use a midi control message as a footswitch
     class FootSwitch
     {

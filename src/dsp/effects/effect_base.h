@@ -3,7 +3,7 @@
 #include "../parameter/parameter_tree.h"
 #include "rt_sanitizer.h"
 
-namespace dsp::effects {
+namespace ml::dsp::effects {
     struct EffectBase
     {
         virtual ~EffectBase() = default;

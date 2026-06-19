@@ -10,7 +10,7 @@
 #include "dsp/dsp.h"
 #include "json.h"
 
-namespace dsp::parameter {
+namespace ml::dsp::parameter {
     enum class ParameterType
     {
         Float,

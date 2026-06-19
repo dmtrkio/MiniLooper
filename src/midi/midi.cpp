@@ -3,7 +3,7 @@
 #include <iostream>
 #include <utility>
 
-namespace midi {
+namespace ml::midi {
     MidiEngine::MidiEngine(MidiInputCallback inputCallback)
         : inputCallback_(std::move(inputCallback))
         , timer_(&timerCallback, this)

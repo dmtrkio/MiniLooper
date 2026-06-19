@@ -6,7 +6,7 @@
 #include "threading/atomic_wrapper.h"
 #include "looper_processor.h"
 
-namespace looper {
+namespace ml::looper {
     class LooperProcessor;
 
     class LooperCommand

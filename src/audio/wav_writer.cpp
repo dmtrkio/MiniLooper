@@ -6,7 +6,7 @@
 #define DR_WAV_IMPLEMENTATION
 #include "dr_wav.h"
 
-namespace audio {
+namespace ml::audio {
     WavWriter::WavWriter(const std::filesystem::path& filePath, const unsigned int sampleRate, const unsigned int nChannels)
             : nChannels_(nChannels)
     {

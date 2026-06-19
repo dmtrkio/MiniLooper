@@ -8,7 +8,7 @@
 #include "dsp/parameter/parameter_tree.h"
 #include "dsp/parameter/parameter_view.h"
 
-namespace looper {
+namespace ml::looper {
     class Mixer
     {
     public:

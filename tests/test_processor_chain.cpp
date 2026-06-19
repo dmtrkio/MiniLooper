@@ -2,7 +2,7 @@
 
 #include "dsp/processors/processor_chain.h"
 
-using namespace dsp::processors;
+using namespace ml::dsp::processors;
 
 struct TestProcessor
 {

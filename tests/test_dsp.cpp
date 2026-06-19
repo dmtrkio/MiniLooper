@@ -3,7 +3,7 @@
 
 #include "dsp/dsp.h"
 
-using namespace dsp;
+using namespace ml::dsp;
 
 using Catch::Matchers::WithinAbs;
 

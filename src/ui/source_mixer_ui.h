@@ -3,7 +3,7 @@
 #include "ui_window_base.h"
 #include "looper/looper.h"
 
-namespace ui {
+namespace ml::ui {
     class SourceMixerUi final : public WindowBase
     {
     public:

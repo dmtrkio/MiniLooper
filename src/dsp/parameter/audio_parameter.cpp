@@ -4,7 +4,7 @@
 #include <iostream>
 #include <stdexcept>
 
-namespace dsp::parameter {
+namespace ml::dsp::parameter {
     Parameter Parameter::makeFloat(const std::string& name, const float defaultValue, const Range<float> range)
     {
         if (!range.contains(defaultValue))

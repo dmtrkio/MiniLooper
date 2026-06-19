@@ -2,7 +2,7 @@
 
 #include "imgui.h"
 
-namespace ui {
+namespace ml::ui {
     LooperUi::LooperUi(looper::Looper &looper, SessionManager& sessionManager) : looper_(&looper), sessionManager_(&sessionManager) {}
 
     const char* LooperUi::getTitle() const { return "Looper"; }

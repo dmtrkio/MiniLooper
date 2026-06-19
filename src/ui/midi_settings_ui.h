@@ -3,7 +3,7 @@
 #include "ui_window_base.h"
 #include "midi/midi.h"
 
-namespace ui {
+namespace ml::ui {
     class MidiSettingsUi final : public WindowBase
     {
     public:

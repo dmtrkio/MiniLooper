@@ -1,14 +1,11 @@
 #include <vector>
-#include <array>
-#include <memory>
 
 #include "dsp/effects/effect_base.h"
 #include "dsp/parameter/parameter_tree.h"
 #include "dsp/parameter/parameter_view.h"
-#include "dsp/delay_line.h"
 #include "dsp/simple_pitch_shifter.h"
 
-namespace dsp::effects {
+namespace ml::dsp::effects {
     class PitchShifter : public EffectBase
     {
     public:

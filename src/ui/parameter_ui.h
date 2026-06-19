@@ -4,7 +4,7 @@
 #include "dsp/parameter/parameter_tree.h"
 #include "ui/ui_window_base.h"
 
-namespace ui {
+namespace ml::ui {
     void parameterUi(dsp::parameter::Parameter &param);
 
     void parameterTreeUi(dsp::parameter::ParameterTree paramTree);

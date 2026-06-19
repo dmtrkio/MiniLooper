@@ -5,7 +5,7 @@
 
 #include "dsp/dsp.h"
 
-namespace looper {
+namespace ml::looper {
     SourceChannel::SourceChannel(const std::string name) : paramTree_(buildParamTree(name)) {}
 
     void SourceChannel::prepare(unsigned int nInputBuffers, unsigned int maxFramesInBuffer, float sampleRate)

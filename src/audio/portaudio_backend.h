@@ -4,7 +4,7 @@
 
 #include "audio_backend.h"
 
-namespace audio {
+namespace ml::audio {
     class PortAudioBackend final : public AudioBackend
     {
     public:

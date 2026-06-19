@@ -4,7 +4,7 @@
 #include "looper/looper.h"
 #include "session_manager.h"
 
-namespace ui {
+namespace ml::ui {
     class LooperUi final : public WindowBase
     {
     public:

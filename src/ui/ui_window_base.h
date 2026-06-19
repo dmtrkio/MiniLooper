@@ -1,6 +1,6 @@
 #pragma once
 
-namespace ui {
+namespace ml::ui {
     struct WindowBase
     {
         bool opened = false;

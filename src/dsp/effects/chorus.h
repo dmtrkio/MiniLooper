@@ -8,7 +8,7 @@
 #include "dsp/delay_line.h"
 #include "dsp/parameter/parameter_view.h"
 
-namespace dsp::effects {
+namespace ml::dsp::effects {
     class Chorus final : public EffectBase
     {
     public:

@@ -5,7 +5,7 @@
 
 #include "biquad_coefficients.h"
 
-namespace dsp::filter {
+namespace ml::dsp::filter {
     enum class FilterType
     {
         LowPass,

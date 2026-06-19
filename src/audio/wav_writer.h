@@ -5,7 +5,7 @@
 
 #include "dr_wav.h"
 
-namespace audio {
+namespace ml::audio {
     class WavWriter
     {
     public:
