@@ -13,30 +13,11 @@ namespace looper {
         static constexpr int kBuckets = ThumbnailSnapshot::kBuckets;
         static constexpr auto kDefaultInterval = std::chrono::milliseconds(200);
 
-        explicit ThumbnailCache(const Looper& looper, std::chrono::milliseconds interval = kDefaultInterval)
-            : looper_(looper)
-            , interval_(interval)
-        {}
+        explicit ThumbnailCache(const Looper& looper, std::chrono::milliseconds interval = kDefaultInterval);
 
-        void update(int trackIndex)
-        {
-            const auto now = std::chrono::steady_clock::now();
-            if (now - lastUpdate_[trackIndex] < interval_) return;
+        void update(int trackIndex);
 
-            auto& entry = cachedThumbnails_[trackIndex];
-            looper_.getThumbnail(trackIndex, entry);
-
-            lastUpdate_[trackIndex] = now;
-        }
-
-        [[nodiscard]] const ThumbnailSnapshot* get(int trackIndex) const noexcept
-        {
-            if (trackIndex < 0 || trackIndex >= kLooperTrackCount) {
-                assert(false && "Invalid track index");
-                return nullptr;
-            }
-            return &cachedThumbnails_[trackIndex];
-        }
+        [[nodiscard]] const ThumbnailSnapshot* get(int trackIndex) const noexcept;
 
     private:
         const Looper& looper_;

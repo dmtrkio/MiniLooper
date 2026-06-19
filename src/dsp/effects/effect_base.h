@@ -11,22 +11,7 @@ namespace dsp::effects {
         virtual void process(float *const *data, unsigned int nFrames) RT_SAN = 0;
         virtual parameter::ParameterTree getParameterTree() const = 0;
 
-        [[nodiscard]] json getSettingsAsJson() const
-        {
-            auto tree = getParameterTree();
-            if (tree.isValid()) {
-                return tree.toJson();
-            }
-            return nullptr;
-        }
-
-        bool loadSettingsFromJson(const json& j) noexcept
-        {
-            auto tree = getParameterTree();
-            if (tree.isValid()) {
-                return tree.copyParameterValuesFromJson(j);
-            }
-            return false;
-        }
+        [[nodiscard]] json getSettingsAsJson() const;
+        bool loadSettingsFromJson(const json& j) noexcept;
     };
 }

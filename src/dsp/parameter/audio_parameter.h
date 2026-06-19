@@ -1,11 +1,8 @@
 #pragma once
 
-#include <exception>
-#include <iostream>
 #include <string>
 #include <variant>
 #include <optional>
-#include <stdexcept>
 #include <cstdint>
 #include <type_traits>
 
@@ -34,125 +31,30 @@ namespace dsp::parameter {
     class Parameter
     {
     public:
-        static Parameter makeFloat(const std::string& name, const float defaultValue, const Range<float> range)
-        {
-            if (!range.contains(defaultValue))
-                throw std::runtime_error("defaultValue out of range");
-            return Parameter(name, FloatData{RelaxedAtomic(defaultValue), defaultValue, range});
-        }
+        static Parameter makeFloat(const std::string& name, const float defaultValue, const Range<float> range);
+        static Parameter makeInteger(const std::string& name, const std::int32_t defaultValue, const Range<std::int32_t> range);
+        static Parameter makeBoolean(const std::string& name, const bool defaultValue);
 
-        static Parameter makeInteger(const std::string& name, const std::int32_t defaultValue, const Range<std::int32_t> range)
-        {
-            if (!range.contains(defaultValue))
-                throw std::runtime_error("defaultValue out of range");
-            return Parameter(name, IntegerData{RelaxedAtomic(defaultValue), defaultValue, range});
-        }
-
-        static Parameter makeBoolean(const std::string& name, const bool defaultValue)
-        {
-            return Parameter(name, BooleanData{RelaxedAtomic(defaultValue), defaultValue});
-        }
-
-        [[nodiscard]] const std::string& getName() const noexcept { return name_; }
-
-        [[nodiscard]] ParameterType getType() const noexcept
-        {
-            return std::visit([](const auto &p) { return p.type; }, data_);
-        }
+        [[nodiscard]] const std::string& getName() const noexcept;
+        [[nodiscard]] ParameterType getType() const noexcept;
 
         template<typename T>
-        [[nodiscard]] T get() const noexcept
-        {
-            return std::visit([](const auto &p) -> T {
-                return static_cast<T>(p.value.load());
-            }, data_);
-        }
+        [[nodiscard]] T get() const noexcept;
 
         template<typename T>
-        [[nodiscard]] T getDefault() const noexcept
-        {
-            return std::visit([](const auto &p) -> T {
-                return static_cast<T>(p.defaultValue);
-            }, data_);
-        }
+        [[nodiscard]] T getDefault() const noexcept;
 
         template<typename T>
-        [[nodiscard]] std::optional<Range<T>> getRange() const noexcept
-        {
-            return std::visit([](const auto &p) -> std::optional<Range<T>> {
-                using PType = std::decay_t<decltype(p)>;
-                if constexpr (
-                    (std::is_same_v<PType, FloatData> || std::is_same_v<PType, IntegerData>)
-                    && std::is_same_v<decltype(p.defaultValue), T>) {
-                    return p.range;
-                }
-
-                return std::nullopt;
-            }, data_);
-        }
+        [[nodiscard]] std::optional<Range<T>> getRange() const noexcept;
 
         template<typename T>
-        bool set(T value) noexcept
-        {
-            return std::visit([&](auto &p) -> bool {
-                using PType = std::decay_t<decltype(p)>;
-                const auto v = static_cast<decltype(p.defaultValue)>(value);
-                if constexpr (std::is_same_v<PType, FloatData> || std::is_same_v<PType, IntegerData>) {
-                    if (!p.range.contains(v)) return false;
-                    p.value.store(p.range.clamp(v));
-                } else if constexpr (std::is_same_v<PType, BooleanData>) {
-                    p.value.store(v);
-                }
-                return true;
-            }, data_);
-        }
+        bool set(T value) noexcept;
 
-        void setToDefault() noexcept
-        {
-            std::visit([](auto &p) { p.value.store(p.defaultValue); }, data_);
-        }
+        void setToDefault() noexcept;
+        void reset() noexcept;
 
-        void reset() noexcept { setToDefault(); }
-
-        [[nodiscard]] json toJson() const
-        {
-            return std::visit([&](const auto& p) -> json {
-                using T = std::decay_t<decltype(p)>;
-
-                json j;
-                j["name"] = name_;
-                j["type"] = typeToString(p.type);
-                j["value"] = p.value.load();
-                j["defaultValue"] = p.defaultValue;
-
-                if constexpr (std::is_same_v<T, FloatData> || std::is_same_v<T, IntegerData>) {
-                    j["range"] = { {"min", p.range.min}, {"max", p.range.max} };
-                }
-
-                return j;
-            }, data_);
-        }
-        
-        [[nodiscard]] bool trySetFromJson(const json& j) noexcept
-        {
-            try {
-                if (j.at("name").get<std::string>() != name_ ||
-                    j.at("type").get<std::string>() != typeToString(getType())
-                ) return false;
-
-                const auto value = j.at("value");
-
-                std::visit([&](auto &p) -> bool {
-                    using ValueType = std::decay_t<decltype(p.value.load())>;
-                    return set(value.get<ValueType>());
-                }, data_);
-
-                return true;
-            } catch (const std::exception& e) {
-                std::cerr << "Failed to set parameter from JSON: " << e.what() << std::endl;
-                return false;
-            }
-        }
+        [[nodiscard]] json toJson() const;
+        [[nodiscard]] bool trySetFromJson(const json& j) noexcept;
 
     private:
         template<typename T>
@@ -188,4 +90,51 @@ namespace dsp::parameter {
         std::string name_;
         ParameterVariant data_;
     };
+
+    template<typename T>
+    T Parameter::get() const noexcept
+    {
+        return std::visit([](const auto &p) -> T {
+            return static_cast<T>(p.value.load());
+        }, data_);
+    }
+
+    template<typename T>
+    T Parameter::getDefault() const noexcept
+    {
+        return std::visit([](const auto &p) -> T {
+            return static_cast<T>(p.defaultValue);
+        }, data_);
+    }
+
+    template<typename T>
+    std::optional<Range<T>> Parameter::getRange() const noexcept
+    {
+        return std::visit([](const auto &p) -> std::optional<Range<T>> {
+            using PType = std::decay_t<decltype(p)>;
+            if constexpr (
+                (std::is_same_v<PType, FloatData> || std::is_same_v<PType, IntegerData>)
+                && std::is_same_v<decltype(p.defaultValue), T>) {
+                return p.range;
+            }
+
+            return std::nullopt;
+        }, data_);
+    }
+
+    template<typename T>
+    bool Parameter::set(T value) noexcept
+    {
+        return std::visit([&](auto &p) -> bool {
+            using PType = std::decay_t<decltype(p)>;
+            const auto v = static_cast<decltype(p.defaultValue)>(value);
+            if constexpr (std::is_same_v<PType, FloatData> || std::is_same_v<PType, IntegerData>) {
+                if (!p.range.contains(v)) return false;
+                p.value.store(p.range.clamp(v));
+            } else if constexpr (std::is_same_v<PType, BooleanData>) {
+                p.value.store(v);
+            }
+            return true;
+        }, data_);
+    }
 }

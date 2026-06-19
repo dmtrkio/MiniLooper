@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <iostream>
 
 #include "json.h"
 #include "audio/wav_writer.h"
