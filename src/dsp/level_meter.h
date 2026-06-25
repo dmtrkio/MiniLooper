@@ -32,8 +32,8 @@ namespace ml::dsp {
 
         void operator()(const float left, const float right)
         {
-            ballisticsL(linearToDb(rmsL(left)));
-            ballisticsR(linearToDb(rmsR(right)));
+            ballisticsL.process(linearToDb(rmsL(left)));
+            ballisticsR.process(linearToDb(rmsR(right)));
         }
 
         [[nodiscard]] std::pair<float, float> getLevel() const noexcept

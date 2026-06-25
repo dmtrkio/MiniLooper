@@ -10,6 +10,7 @@
 
 #include "looper_mixer.h"
 #include "dsp/dsp.h"
+#include "dsp/click.h"
 #include "rt_sanitizer.h"
 
 namespace ml::looper {
@@ -64,6 +65,9 @@ namespace ml::looper {
         [[nodiscard]] bool isEmpty(int trackIndex) const noexcept;
         [[nodiscard]] std::optional<float> getApproxBpm() const noexcept;
 
+        void setClickGain(float gain) noexcept;
+        void setClickEnabled(bool enabled) noexcept;
+
         void startRecording(int trackIndex, bool synced = true) noexcept;
         void stopRecording(int trackIndex, bool synced = true) noexcept;
         void clear(int trackIndex) noexcept;
@@ -87,7 +91,7 @@ namespace ml::looper {
         {
             [[nodiscard]] bool isTempoSet() const noexcept;
             [[nodiscard]] std::optional<float> getApproxBPM() const noexcept;
-            void tick(FrameInt nFrames) noexcept;
+            bool tick() noexcept;
             void setTempo(FrameInt firstLoopLength) noexcept;
             void reset(FrameInt maxFrameCount, float sr) noexcept;
 
@@ -145,6 +149,10 @@ namespace ml::looper {
         std::array<Track, kLooperTrackCount> tracks_{};
 
         Mixer mixer_;
+
+        dsp::ClickGenerator click_;
+        bool clickEnabled_{false};
+        dsp::FloatSmoother clickGain_;
     };
 
     template <typename T>
@@ -175,7 +183,7 @@ namespace ml::looper {
 
         constexpr float kMinBPM = 50.0f;
         constexpr float kMaxBPM = 240.0f;
-        constexpr float kTargetBPM = 120.0f;
+        constexpr float kTargetBPM = 140.0f;
 
         int bestK = 0;
         float bestScore = std::numeric_limits<float>::max();

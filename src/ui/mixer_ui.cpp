@@ -1,5 +1,6 @@
 #include "mixer_ui.h"
 
+#include "imgui.h"
 #include "parameter_ui.h"
 #include "volume_meter.h"
 #include "audio_thumbnail.h"

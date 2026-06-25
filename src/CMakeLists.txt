@@ -4,7 +4,9 @@ add_library(${PROJECT_NAME}_core OBJECT
     audio/audio_engine.cpp
     audio/wav_writer.cpp
 
+    dsp/click.cpp
     dsp/simple_pitch_shifter.cpp
+    dsp/filter/ballistics_filter.cpp
     dsp/effects/effect_base.cpp
     dsp/effects/chorus.cpp
     dsp/effects/guitar_amp.cpp

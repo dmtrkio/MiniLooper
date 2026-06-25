@@ -4,17 +4,19 @@
 #include "imgui.h"
 
 namespace ml::ui {
-    void parameterUi(dsp::parameter::Parameter &param)
+    void parameterUi(dsp::parameter::Parameter &param, const char* nameOverride)
     {
         using namespace dsp::parameter;
 
         ImGui::PushID(&param);
 
+        const char* name = nameOverride ? nameOverride : param.getName().c_str();
+
         switch (param.getType()) {
             case ParameterType::Float: {
                 auto value = param.get<float>();
                 const auto [min, max] = *param.getRange<float>();
-                if (ImGui::SliderFloat(param.getName().c_str(), &value, min, max)) {
+                if (ImGui::SliderFloat(name, &value, min, max)) {
                     param.set(value);
                 }
                 break;
@@ -22,14 +24,14 @@ namespace ml::ui {
             case ParameterType::Integer: {
                 auto value = param.get<std::int32_t>();
                 const auto [min, max] = *param.getRange<std::int32_t>();
-                if (ImGui::SliderInt(param.getName().c_str(), &value, min, max)) {
+                if (ImGui::SliderInt(name, &value, min, max)) {
                     param.set(value);
                 }
                 break;
             }
             case ParameterType::Boolean: {
                 bool value = param.get<bool>();
-                if (ImGui::Checkbox(param.getName().c_str(), &value)) {
+                if (ImGui::Checkbox(name, &value)) {
                     param.set(value);
                 }
                 break;

@@ -5,7 +5,7 @@
 #include "ui/ui_window_base.h"
 
 namespace ml::ui {
-    void parameterUi(dsp::parameter::Parameter &param);
+    void parameterUi(dsp::parameter::Parameter &param, const char* nameOverride = nullptr);
 
     void parameterTreeUi(dsp::parameter::ParameterTree paramTree);
 

@@ -28,6 +28,7 @@ namespace ml::looper {
         }
 
         mixer_.prepare(sampleRate);
+        click_.prepare(sampleRate);
     }
 
     void LooperProcessor::process(float *const *data, FrameInt nFrames) noexcept
@@ -44,7 +45,14 @@ namespace ml::looper {
 
         mixer_.process(data, nFrames);
 
-        transport_.tick(nFrames);
+        for (FrameInt i{}; i < nFrames; ++i) {
+            const bool beat = transport_.tick();
+            if (clickEnabled_) {
+                const auto clickSample = click_.process(beat) * clickGain_();
+                data[0][i] += clickSample;
+                data[1][i] += clickSample;
+            }
+        }
     }
 
     Mixer& LooperProcessor::getMixer() noexcept
@@ -84,6 +92,16 @@ namespace ml::looper {
     std::optional<float> LooperProcessor::getApproxBpm() const noexcept
     {
         return transport_.getApproxBPM();
+    }
+
+    void LooperProcessor::setClickGain(float gain) noexcept
+    {
+        clickGain_ = gain;
+    }
+
+    void LooperProcessor::setClickEnabled(bool enabled) noexcept
+    {
+        clickEnabled_ = enabled;
     }
 
     void LooperProcessor::startRecording(int trackIndex, bool synced) noexcept
@@ -163,9 +181,16 @@ namespace ml::looper {
         return (sampleRate * 60.0f) / static_cast<float>(unitLength);
     }
 
-    void LooperProcessor::Transport::tick(const FrameInt nFrames) noexcept
+    bool LooperProcessor::Transport::tick() noexcept
     {
-        currentFrame += nFrames;
+        const bool beat = [&]() {
+            if (!isTempoSet()) return false;
+            return (currentFrame % unitLength) == 0;
+        }();
+
+        ++currentFrame;
+
+        return beat;
     }
 
     void LooperProcessor::Transport::setTempo(FrameInt firstLoopLength) noexcept

@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "audio/audio_engine.h"
+#include "dsp/dsp.h"
 #include "looper_processor.h"
 #include "looper_commands.h"
 #include "midi/foot_switch.h"
@@ -47,6 +48,12 @@ namespace ml::looper {
 
             drainMidiQueue();
             consumeCommands();
+
+            //const float clickGain = dsp::dBtoLinear(clickParamTree["Gain"].asParameterUnsafe().get<float>());
+            looperProcessor.setClickGain(dsp::dBtoLinear(-3.0f));
+
+            const bool clickEnabled = clickParamTree["Enabled"].asParameterUnsafe().get<bool>();
+            looperProcessor.setClickEnabled(clickEnabled);
 
             sourceMixer.process(in, out, nFrames);
             looperProcessor.process(out, static_cast<FrameInt>(nFrames));
@@ -144,6 +151,11 @@ namespace ml::looper {
             {0, kLooperTrackCount - 1}
         )};
 
+        dsp::parameter::ParameterTree clickParamTree{"Click", {
+            dsp::parameter::Parameter::makeFloat("Gain", -6.0f, {-60.f, 12.0f}),
+            dsp::parameter::Parameter::makeBoolean("Enabled", true)
+        }};
+
     private:
         void rotateTrackIndex()
         {
@@ -160,6 +172,7 @@ namespace ml::looper {
         paramTree_.addSubTree(cb_->sourceMixer.getParameterTree());
         paramTree_.addSubTree(cb_->looperProcessor.getMixer().getParameterTree());
         paramTree_.addSubTree(cb_->fsTrackParam);
+        paramTree_.addSubTree(cb_->clickParamTree);
 
         audioEngine.setAudioCallback(cb_);
     }

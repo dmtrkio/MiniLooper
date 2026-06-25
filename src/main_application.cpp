@@ -6,6 +6,7 @@
 #include <imgui.h>
 
 #include "audio/audio_engine.h"
+#include "ui/parameter_ui.h"
 #include "ui/volume_meter.h"
 #include "ui/audio_settings_ui.h"
 #include "ui/looper_ui.h"
@@ -272,6 +273,11 @@ namespace ml {
                 const_cast<MainApplication*>(this)->currentTheme_ = nextTheme;
             }
             ImGui::PopID();
+        }
+
+        {
+            auto clickParams = looper_.getParameterTree()["Click"];
+            ui::parameterUi(clickParams["Enabled"].asParameterUnsafe(), "Click");
         }
 
         ImGui::EndMainMenuBar();

@@ -60,8 +60,10 @@ namespace ml::dsp {
         T min; // inclusive
         T max; // inclusive
 
-        [[nodiscard]] T clamp(T value) const { return std::clamp(value, min, max); }
-        [[nodiscard]] bool contains(T value) const { return value >= min && value <= max; }
+        [[nodiscard]] constexpr T clamp(T value) const noexcept { return std::clamp(value, min, max); }
+        [[nodiscard]] constexpr bool contains(T value) const noexcept { return value >= min && value <= max; }
+        // Linearly maps 0..1 value to min..max range, does not clamp
+        [[nodiscard]] constexpr T linmap(T value) const noexcept { return std::lerp(min, max, value); }
     };
 
     using FloatRange = Range<float>;
