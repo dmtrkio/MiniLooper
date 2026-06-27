@@ -25,7 +25,7 @@ namespace ml::dsp {
     inline float dBtoLinear(const float value) noexcept
     {
         static constexpr float scale = 1.f / 20.f;
-        return std::pow<float>(10.0f, value * scale);
+        return std::pow(10.0f, value * scale);
     }
 
     inline std::pair<float, float> equalPowerPanGains(float pan) noexcept
