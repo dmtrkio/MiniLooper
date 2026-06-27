@@ -13,6 +13,7 @@ A barebones audio looper.
 | nlohmann::json | [GitHub](https://github.com/nlohmann/json) |
 | moodycamel::readerwriterqueue | [GitHub](https://github.com/cameron314/readerwriterqueue) |
 | dr_wav | [GitHub](https://github.com/mackron/dr_libs) (vendored) |
+| Catch2 | [GitHub](https://github.com/catchorg/Catch2) (testing) |
 
 All dependencies are fetched automatically via CMake `FetchContent` (except dr_wav, which is vendored).
 
