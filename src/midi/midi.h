@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "portmidi.h"
+#include "portmidi_header.h"
 #include "porttime.h"
 
 #include "midi_message.h"
@@ -14,7 +14,7 @@
 namespace ml::midi {
     using MidiInputCallback = std::function<void(int, MidiMessage)>;
     using DeviceIndex = int;
-    constexpr DeviceIndex kNoDevice = pmNoDevice;
+    inline constexpr DeviceIndex kNoDevice = pmNoDevice;
 
     struct MidiDevice
     {

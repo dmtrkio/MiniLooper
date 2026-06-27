@@ -4,7 +4,7 @@
 #include <string_view>
 #include <optional>
 
-#include "portmidi.h"
+#include "portmidi_header.h"
 
 #include "threading/spsc_mailbox.h"
 
