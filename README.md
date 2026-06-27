@@ -18,7 +18,7 @@ All dependencies are fetched automatically via CMake `FetchContent` (except dr_w
 
 ## Prerequisites
 
-- CMake 3.30+
+- CMake 3.21+
 - C++23 compiler
 
 ## How to Build
