@@ -57,7 +57,7 @@ namespace ml::ui {
                 row(trackKey.c_str(), "Shift",       "Toggle playback");
                 row(trackKey.c_str(), "Ctrl",        "Clear track");
                 row(trackKey.c_str(), "Alt",         "Toggle footswitch assignment");
-                row("C",              none,          "Clear all tracks");
+                row("C",              "Ctrl",        "Clear all tracks");
                 row("S",              "Ctrl",        "Save Session");
 
                 ImGui::EndTable();
@@ -245,7 +245,7 @@ namespace ml {
             }
         }
 
-        if (ImGui::Shortcut(ImGuiKey_C, ImGuiInputFlags_RouteGlobal)) {
+        if (ImGui::Shortcut(ImGuiKey_C | ImGuiMod_Ctrl, ImGuiInputFlags_RouteGlobal)) {
             looper_.clearAll();
         }
 
