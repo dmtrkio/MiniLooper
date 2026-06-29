@@ -1,10 +1,7 @@
 #pragma once
 
-#include <cstdint>
 #include <optional>
 #include <string_view>
-
-#include "imgui.h"
 
 namespace ml::ui {
     enum class ImGuiTheme
@@ -36,15 +33,5 @@ namespace ml::ui {
         if (str == "Neon") return ImGuiTheme::Neon;
         if (str == "Warm Neutral") return ImGuiTheme::WarmNeutral;
         throw std::nullopt;
-    }
-
-    inline constexpr ImVec4 hexToImVec4(std::uint32_t rgb, float alpha = 1.0f)
-    {
-        return ImVec4(
-            ((rgb >> 16) & 0xFF) / 255.0f,
-            ((rgb >> 8)  & 0xFF) / 255.0f,
-            ((rgb >> 0)  & 0xFF) / 255.0f,
-            alpha
-        );
     }
 }

@@ -1,6 +1,8 @@
 #include "parameter_ui.h"
 
 #include "dsp/parameter/parameter_tree.h"
+#include "toggle_widget.h"
+
 #include "imgui.h"
 
 namespace ml::ui {
@@ -31,7 +33,7 @@ namespace ml::ui {
             }
             case ParameterType::Boolean: {
                 bool value = param.get<bool>();
-                if (ImGui::Checkbox(name, &value)) {
+                if (toggle(name, value)) {
                     param.set(value);
                 }
                 break;

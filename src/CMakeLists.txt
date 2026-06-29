@@ -29,6 +29,7 @@ add_library(${PROJECT_NAME}_core OBJECT
 
     ui/ui_window_base.cpp
     ui/theme.cpp
+    ui/toggle_widget.cpp
     ui/parameter_ui.cpp
     ui/audio_settings_ui.cpp
     ui/midi_settings_ui.cpp

@@ -1,5 +1,9 @@
 #include "theme.h"
 
+#include "imgui.h"
+
+#include "ui_utils.h"
+
 namespace ml::ui {
     void applyThemeHighContrast()
     {

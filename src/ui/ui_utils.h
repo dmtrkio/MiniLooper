@@ -1,6 +1,7 @@
 #pragma once
 
 #include <imgui.h>
+#include <cstdint>
 
 namespace ml::ui {
     inline constexpr ImU32 fadeAlpha(ImU32 color, float t) noexcept
@@ -26,5 +27,15 @@ namespace ml::ui {
         if (b > 255) b = 255; else if (b < 0) b = 0;
 
         return (r | (g << 8) | (b << 16) | (a << 24));
+    }
+
+    inline constexpr ImVec4 hexToImVec4(std::uint32_t rgb, float alpha = 1.0f) noexcept
+    {
+        return ImVec4(
+            ((rgb >> 16) & 0xFF) / 255.0f,
+            ((rgb >> 8)  & 0xFF) / 255.0f,
+            ((rgb >> 0)  & 0xFF) / 255.0f,
+            alpha
+        );
     }
 }
