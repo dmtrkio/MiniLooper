@@ -6,7 +6,10 @@
 #include "dsp/dsp.h"
 
 namespace ml::looper {
-    SourceChannel::SourceChannel(const std::string name) : paramTree_(buildParamTree(name)) {}
+    SourceChannel::SourceChannel(const std::string name)
+        : processingChain_(name + "_FX")
+        , paramTree_(buildParamTree(name))
+    {}
 
     void SourceChannel::prepare(unsigned int nInputBuffers, unsigned int maxFramesInBuffer, float sampleRate)
     {

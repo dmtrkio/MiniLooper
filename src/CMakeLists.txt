@@ -8,6 +8,9 @@ add_library(${PROJECT_NAME}_core OBJECT
     dsp/simple_pitch_shifter.cpp
     dsp/filter/ballistics_filter.cpp
     dsp/effects/effect_base.cpp
+    dsp/effects/equalizer.cpp
+    dsp/effects/gain_effect.cpp
+    dsp/effects/panner_effect.cpp
     dsp/effects/chorus.cpp
     dsp/effects/guitar_amp.cpp
     dsp/effects/pitch_shifter.cpp

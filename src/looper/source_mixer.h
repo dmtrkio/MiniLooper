@@ -5,7 +5,13 @@
 
 #include "dsp/parameter/parameter_tree.h"
 #include "dsp/level_meter.h"
-#include "processing_chain.h"
+#include "dsp/effects/effect_chain.h"
+#include "dsp/effects/gain_effect.h"
+#include "dsp/effects/panner_effect.h"
+#include "dsp/effects/pitch_shifter.h"
+#include "dsp/effects/guitar_amp.h"
+#include "dsp/effects/chorus.h"
+#include "dsp/effects/equalizer.h"
 
 namespace ml::looper {
     class SourceChannel
@@ -38,7 +44,16 @@ namespace ml::looper {
         std::array<int, 2> inputs_{kNoInput, kNoInput};
         std::array<float, 2> inputGains_{1.0f, 1.0f};
         std::array<std::vector<float>, 2> buffers_{};
-        ProcessingChain processingChain_;
+
+        dsp::effects::EffectChain<
+            dsp::effects::PitchShifter,
+            dsp::effects::GuitarAmp,
+            dsp::effects::Chorus,
+            dsp::effects::Equalizer,
+            dsp::effects::GainEffect,
+            dsp::effects::PannerEffect
+        > processingChain_;
+
         ParamTree paramTree_;
         dsp::LevelMeter levelMeter_;
     };

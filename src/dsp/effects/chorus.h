@@ -13,13 +13,12 @@ namespace ml::dsp::effects {
     {
     public:
         Chorus();
-
         void prepare(float sampleRate) override;
-        void process(float *const *data, const unsigned int nFrames) override;
-        dsp::parameter::ParameterTree getParameterTree() const override;
         
+    protected:
+        void processInner(float *const *data, const unsigned int nFrames) noexcept override;
+
     private:
-        void applyParams();
         std::pair<float, float> processFrame(std::pair<float, float> input) noexcept;
 
         struct Voice
@@ -41,18 +40,6 @@ namespace ml::dsp::effects {
         FloatSmoother feedback_;
 
         std::array<Voice, 4> voices_;
-
-        using Param = parameter::Parameter;
-        using ParamTree = parameter::ParameterTree;
-
-        ParamTree paramTree_{"Chorus",
-            {
-                Param::makeFloat("Rate", 1.0f, {0.2f, 3.0f}),
-                Param::makeFloat("Depth", 0.5f, {0.0f, 1.0f}),
-                Param::makeFloat("Feedback", 0.0f, {0.0f, 1.0f}),
-                Param::makeFloat("Mix", 0.0f, {0.0f, 1.0f}),
-            }
-        };
 
         parameter::FloatParameterView rateParam_;
         parameter::FloatParameterView depthParam_;

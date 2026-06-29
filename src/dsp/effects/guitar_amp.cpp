@@ -2,12 +2,21 @@
 #include "dsp/effects/guitar_amp.h"
 
 namespace ml::dsp::effects {
-    GuitarAmp::GuitarAmp()
+    GuitarAmp::GuitarAmp() : EffectBase("GuitarAmp")
     {
-        driveParam_.referTo(paramTree_["Drive"].asParameterUnsafe());
-        toneParam_.referTo(paramTree_["Tone"].asParameterUnsafe());
-        levelParam_.referTo(paramTree_["Level"].asParameterUnsafe());
-        dryWetParam_.referTo(paramTree_["DryWet"].asParameterUnsafe());
+        std::vector<ParamTree> params = {
+            ParamTree{Param::makeFloat("Drive", 0.0f, dsp::Range{0.0f, 1.0f})},
+            ParamTree{Param::makeFloat("Tone", 0.5f, dsp::Range{0.0f, 1.0f})},
+            ParamTree{Param::makeFloat("Level", 0.5f, dsp::Range{0.0f, 1.0f})},
+            ParamTree{Param::makeFloat("DryWet", 1.0f, dsp::Range{0.0f, 1.0f})},
+        };
+
+        attachParameters(params);
+
+        driveParam_.referTo(params[0].asParameterUnsafe());
+        toneParam_.referTo(params[1].asParameterUnsafe());
+        levelParam_.referTo(params[2].asParameterUnsafe());
+        dryWetParam_.referTo(params[3].asParameterUnsafe());
     }
 
     void GuitarAmp::prepare(float sampleRate)
@@ -30,9 +39,12 @@ namespace ml::dsp::effects {
         cabinet.prepare(sampleRate);
     }
 
-    void GuitarAmp::process(float *const *data, const unsigned int nFrames)
+    void GuitarAmp::processInner(float *const *data, const unsigned int nFrames) noexcept
     {
-        applyParams();
+        drive = driveParam_.get();
+        tone = toneParam_.get();
+        level = levelParam_.get();
+        dryWet = dryWetParam_.get();
 
         auto powerAmpDrive = [](float sample, float drive) -> float {
             return std::tanh(sample * (1.0f + drive * 10.0f));
@@ -51,19 +63,6 @@ namespace ml::dsp::effects {
                 data[channel][frame] = std::lerp(inputSample, processedSample, dryWet.get<channel>());
             }
         });
-    }
-
-    dsp::parameter::ParameterTree GuitarAmp::getParameterTree() const
-    {
-        return paramTree_;
-    }
-
-    void GuitarAmp::applyParams() noexcept
-    {
-        drive = driveParam_.get();
-        tone = toneParam_.get();
-        level = levelParam_.get();
-        dryWet = dryWetParam_.get();
     }
 
     GuitarAmp::Preamp::Preamp()

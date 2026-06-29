@@ -1,12 +1,21 @@
 #include "chorus.h"
 
 namespace ml::dsp::effects {
-    Chorus::Chorus()
+    Chorus::Chorus() : EffectBase("Chorus")
     {
-        rateParam_.referTo(paramTree_["Rate"].asParameterUnsafe());
-        depthParam_.referTo(paramTree_["Depth"].asParameterUnsafe());
-        feedbackParam_.referTo(paramTree_["Feedback"].asParameterUnsafe());
-        mixParam_.referTo(paramTree_["Mix"].asParameterUnsafe());
+        std::vector<ParamTree> params = {
+            ParamTree{Param::makeFloat("Rate", 1.0f, {0.2f, 3.0f})},
+            ParamTree{Param::makeFloat("Depth", 0.5f, {0.0f, 1.0f})},
+            ParamTree{Param::makeFloat("Feedback", 0.0f, {0.0f, 1.0f})},
+            ParamTree{Param::makeFloat("Mix", 0.5f, {0.0f, 1.0f})},
+        };
+
+        attachParameters(params);
+
+        rateParam_.referTo(params[0].asParameterUnsafe());
+        depthParam_.referTo(params[1].asParameterUnsafe());
+        feedbackParam_.referTo(params[2].asParameterUnsafe());
+        mixParam_.referTo(params[3].asParameterUnsafe());
     }
 
     void Chorus::prepare(float sampleRate)
@@ -49,9 +58,12 @@ namespace ml::dsp::effects {
         }
     }
 
-    void Chorus::process(float *const *data, const unsigned int nFrames)
+    void Chorus::processInner(float *const *data, const unsigned int nFrames) noexcept
     {
-        applyParams();
+        rate_.setTarget(rateParam_.get());
+        depth_.setTarget(depthParam_.get());
+        feedback_.setTarget(feedbackParam_.get());
+        mix_.setTarget(mixParam_.get());
 
         for (std::size_t i{}; i < nFrames; ++i) {
             const auto input = std::make_pair(data[0][i], data[1][i]);
@@ -60,19 +72,6 @@ namespace ml::dsp::effects {
             data[0][i] = std::lerp(input.first, processed.first, mix);
             data[1][i] = std::lerp(input.second, processed.second, mix);
         }
-    }
-
-    dsp::parameter::ParameterTree Chorus::getParameterTree() const
-    {
-        return paramTree_;
-    }
-
-    void Chorus::applyParams()
-    {
-        rate_.setTarget(rateParam_.get());
-        depth_.setTarget(depthParam_.get());
-        feedback_.setTarget(feedbackParam_.get());
-        mix_.setTarget(mixParam_.get());
     }
 
     std::pair<float, float> Chorus::processFrame(std::pair<float, float> input) noexcept

@@ -1,17 +1,18 @@
 #include "pitch_shifter.h"
 
 namespace ml::dsp::effects {
-    PitchShifter::PitchShifter()
+    PitchShifter::PitchShifter() : EffectBase("PitchShifter")
     {
-        onParam_.referTo(paramTree_["On"].asParameterUnsafe());
-        semitonesParam_.referTo(paramTree_["Semitones"].asParameterUnsafe());
-        mixParam_.referTo(paramTree_["Mix"].asParameterUnsafe());
+        std::vector<ParamTree> params = {
+            ParamTree{Param::makeInteger("Semitones", 0, {-12, 12})},
+            ParamTree{Param::makeFloat("Mix", 1.0f, {0.0f, 1.0f})},
+        };
+
+        attachParameters(params);
+
+        semitonesParam_.referTo(params[0].asParameterUnsafe());
+        mixParam_.referTo(params[1].asParameterUnsafe());
     }
-
-    PitchShifter::~PitchShifter() = default;
-
-    PitchShifter::PitchShifter(PitchShifter&&) noexcept = default;
-    PitchShifter& PitchShifter::operator=(PitchShifter&&) noexcept = default;
 
     void PitchShifter::prepare(float sampleRate)
     {
@@ -25,17 +26,12 @@ namespace ml::dsp::effects {
         mix_.init(mixParam_.get());
 
         shifter_.prepare(sampleRate);
-
-        setOn();
     }
 
-    void PitchShifter::process(float *const *data, unsigned int nFrames)
+    void PitchShifter::processInner(float *const *data, unsigned int nFrames) noexcept
     {
         semitones_.setTarget(static_cast<float>(semitonesParam_.get()));
         mix_.setTarget(mixParam_.get());
-
-        setOn();
-        if (!on_) return;
 
         for (std::size_t i{0u}; i < nFrames; ++i) {
             shifter_.setSemitones(semitones_());
@@ -46,17 +42,8 @@ namespace ml::dsp::effects {
         }
     }
 
-    parameter::ParameterTree PitchShifter::getParameterTree() const
+    void PitchShifter::reset() noexcept
     {
-        return paramTree_;
-    }
-
-    void PitchShifter::setOn()
-    {
-        const auto on = onParam_.get();
-        if (!on && on_) {
-            shifter_.clearState();
-        }
-        on_ = on;
+        shifter_.clearState();
     }
 }
