@@ -16,7 +16,7 @@ namespace ml::dsp::effects {
         virtual ~EffectBase() = default;
 
         virtual void prepare(float sampleRate);
-        void process(float *const *data, unsigned int nFrames) RT_SAN noexcept;
+        void process(float *const *data, unsigned int nFrames) noexcept RT_SAN;
 
         [[nodiscard]] ParamTree getParameterTree() const noexcept;
 
@@ -26,11 +26,11 @@ namespace ml::dsp::effects {
         void setEnabled(bool enabled) noexcept;
 
         // implement reset of dsp state in the derived class if needed, should be realtime safe (no allocations, locks etc)
-        virtual void reset() RT_SAN noexcept;
+        virtual void reset() noexcept RT_SAN;
 
     protected:
         // implement actual processing in the derived class
-        virtual void processInner(float *const *data, unsigned int nFrames) RT_SAN noexcept = 0;
+        virtual void processInner(float *const *data, unsigned int nFrames) noexcept RT_SAN = 0;
 
         // call this in the derived class constructor to attach internal parameters of the derived class to the base class parameter tree
         void attachParameters(const std::vector<ParamTree>& params) noexcept;

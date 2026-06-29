@@ -16,7 +16,7 @@ namespace ml::dsp::effects {
         (void)(sampleRate);
     }
 
-    void EffectBase::process(float *const *data, unsigned int nFrames) RT_SAN noexcept
+    void EffectBase::process(float *const *data, unsigned int nFrames) noexcept
     {
         if (!enabledParam_.get()) {
             // If the effect was disabled, reset its state
