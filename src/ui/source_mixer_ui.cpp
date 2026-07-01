@@ -80,12 +80,14 @@ namespace ml::ui {
             assert(fx.isValid());
             parameterTreeUiWindowed(params["FX"], fxWindowOpened_[i].value, label + ": ");
 
+            // Input Selector window
             if (inputSelectorWindowOpened_[i].value) {
                 const auto inputsLabel = std::format("{} ports", label);
                 ImGui::PushID(inputsLabel.c_str());
                 ImGui::Begin(inputsLabel.c_str(), &inputSelectorWindowOpened_[i].value);
 
-                const auto inputPicker = [&](dsp::parameter::Parameter& sourceParam, int sourceIndex) {
+                const auto inputPicker = [&](const dsp::parameter::ParameterTree& inputParam, int sourceIndex) {
+                    auto sourceParam = inputParam["Source"].asParameterUnsafe();
                     const auto paramRange = sourceParam.getRange<int>().value();
                     const auto minPort = paramRange.min;
                     const auto maxPort = std::min(nInputs - 1, paramRange.max);
@@ -114,10 +116,12 @@ namespace ml::ui {
 
                         ImGui::EndCombo();
                     }
+
+                    parameterUi(inputParam["GainDb"].asParameterUnsafe(), "Volume");
                 };
 
-                inputPicker(params["Input1"]["Source"].asParameterUnsafe(), 1);
-                inputPicker(params["Input2"]["Source"].asParameterUnsafe(), 2);
+                inputPicker(params["Input1"], 1);
+                inputPicker(params["Input2"], 2);
 
                 parameterUi(params["Stereo"].asParameterUnsafe());
 
