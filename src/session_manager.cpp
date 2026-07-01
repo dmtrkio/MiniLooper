@@ -93,6 +93,7 @@ namespace ml {
         json j;
         auto &metadata = j["metadata"];
         metadata["bpm"] = approxBpm;
+        metadata["sampleRate"] = audioEngine_.getSampleRate();
 
         std::vector<std::string> loopList;
         loopList.reserve(looper.getNumLooperTracks());
