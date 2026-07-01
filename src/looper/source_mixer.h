@@ -46,13 +46,16 @@ namespace ml::looper {
         std::array<std::vector<float>, 2> buffers_{};
 
         dsp::effects::EffectChain<
+            dsp::effects::GainEffect,
+            dsp::effects::PannerEffect
+        > mix_{"Mix"};
+
+        dsp::effects::EffectChain<
             dsp::effects::PitchShifter,
             dsp::effects::GuitarAmp,
             dsp::effects::Chorus,
-            dsp::effects::Equalizer,
-            dsp::effects::GainEffect,
-            dsp::effects::PannerEffect
-        > processingChain_;
+            dsp::effects::Equalizer
+        > fx_{"FX"};
 
         ParamTree paramTree_;
         dsp::LevelMeter levelMeter_;

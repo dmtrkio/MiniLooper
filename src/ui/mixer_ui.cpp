@@ -1,18 +1,16 @@
 #include "mixer_ui.h"
 
 #include "imgui.h"
+#include "imgui_internal.h"
+
 #include "parameter_ui.h"
 #include "volume_meter.h"
-#include "audio_thumbnail.h"
 
 namespace ml::ui {
     MixerUi::MixerUi(looper::Looper &looper)
         : looper_(&looper)
-        , thumbnailCache_(*looper_)
-        , paramTree_(looper_->getParameterTree()) 
     {
-        assert(paramTree_.isValid());
-        eqOpened_.assign(looper_->getNumLooperTracks(), {});
+        fxWindowOpened_.assign(looper_->getNumLooperTracks(), {});
     }
 
     const char* MixerUi::getTitle() const { return "Mixer"; }
@@ -21,7 +19,16 @@ namespace ml::ui {
     {
         for (auto i{0}; i < looper_->getNumLooperTracks(); ++i) {
             drawTrack(i);
+            ImGui::SameLine();
+            ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
+            ImGui::SameLine();
         }
+
+        ImGui::BeginGroup();
+        const auto [leftDb, rightDb] = looper_->getLooperState().level;
+        volumeMeter(leftDb, rightDb);
+        ImGui::TextUnformatted("Output");
+        ImGui::EndGroup();
     }
 
     void MixerUi::drawTrack(const int trackIndex)
@@ -38,7 +45,13 @@ namespace ml::ui {
         volumeMeter(left, right);
 
         const auto id = std::format("Track {}", trackIndex + 1);
-        auto params = paramTree_["LooperMixer"][id];
+        ImGui::TextUnformatted(id.c_str());
+
+        auto looperParamTree = looper_->getParameterTree();
+        assert(looperParamTree.isValid());
+
+        auto params = looperParamTree["LooperMixer"][id];
+        assert(params.isValid());
 
         ImGui::Dummy(ImVec2(0, 2.0f));
         parameterUi(params["GainDb"].asParameterUnsafe());
@@ -46,54 +59,8 @@ namespace ml::ui {
         ImGui::Dummy(ImVec2(0, 2.0f));
         parameterUi(params["Pan"].asParameterUnsafe());
 
-        if (ImGui::Button("Show EQ")) {
-            eqOpened_[trackIndex].value = !eqOpened_[trackIndex].value;
-        }
-
-        ImGui::Text("State: %s", looper::stateToStr(track.state));
-
-        thumbnailCache_.update(trackIndex);
-
-        const auto *thumb = thumbnailCache_.get(trackIndex);
-        const auto progress = (track.nFrames > 0) ? (static_cast<float>(track.position) / static_cast<float>(track.nFrames)) : 0.0f;
-        const bool drawPlayhead = (track.state == looper::State::Recording && track.nFrames > 0) || (track.state == looper::State::Playback);
-        const ImU32 waveformColor = [&] {
-            if (track.state == looper::State::Recording) {
-                return IM_COL32(230, 20, 20, 255);
-            }
-            return ImGui::GetColorU32(ImGuiCol_PlotHistogram);
-        }();
-
-        ui::audioThumbnail(
-            std::format("##thumbnail{}", trackIndex).c_str(),
-            thumb ? thumb->buckets : nullptr,
-            looper::ThumbnailCache::kBuckets,
-            progress,
-            drawPlayhead,
-            ImVec2(0, 0),
-            waveformColor
-        );
-
-        if (ImGui::Button((track.state == looper::State::Recording) ? "Stop" : "Record")) {
-            looper_->toggleRecording(trackIndex, false);
-        }
-
-        if (ImGui::Button((track.state == looper::State::Paused) ? "Resume" : "Pause")) {
-            looper_->togglePlay(trackIndex, false);
-        }
-
-        if (track.state != looper::State::Cleared) {
-            if (ImGui::Button("Clear")) {
-                looper_->clear(trackIndex);
-            }
-        }
-
-        auto& fsParam = paramTree_["FootSwitchTrackIndex"].asParameterUnsafe();
-        bool isFsTrack = (fsParam.get<int>() == trackIndex);
-        if (ImGui::Checkbox("Footswitch", &isFsTrack)) {
-            if (isFsTrack) {
-                fsParam.set(trackIndex);
-            }
+        if (ImGui::Button("FX")) {
+            fxWindowOpened_[trackIndex].value = !fxWindowOpened_[trackIndex].value;
         }
 
         ImGui::PopItemWidth();
@@ -105,7 +72,7 @@ namespace ml::ui {
             ImGui::SameLine();
         }
 
-        parameterTreeUiWindowed(params["Equalizer"], &(eqOpened_[trackIndex].value), id);
+        parameterTreeUiWindowed(params["FX"], fxWindowOpened_[trackIndex].value, id + ": ");
 
         ImGui::PopID();
     }

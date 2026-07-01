@@ -8,6 +8,7 @@
 #include "dsp/parameter/parameter_tree.h"
 #include "looper_commands.h"
 #include "looper_processor.h"
+#include "source_mixer.h"
 #include "midi/midi_message.h"
 
 namespace ml::looper {
@@ -28,7 +29,8 @@ namespace ml::looper {
         std::array<TrackStateSnapshot, kLooperTrackCount> tracks;
         FrameInt maxLoopLength{};
         std::optional<float> approxBPM{};
-        std::pair<float, float> level;
+        std::pair<float, float> level{};
+        std::array<std::pair<float, float>, SourceMixer::kNumChannels> sourceChannelLevels{};
     };
 
     struct LooperSessionData

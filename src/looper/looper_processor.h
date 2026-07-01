@@ -27,7 +27,7 @@ namespace ml::looper {
         ThumbnailSnapshot(ThumbnailSnapshot&&) = default;
         ThumbnailSnapshot& operator=(ThumbnailSnapshot&&) = default;
 
-        static constexpr int kBuckets = 200;
+        static constexpr int kBuckets = 400;
         dsp::MinMax buckets[kBuckets];
     };
 

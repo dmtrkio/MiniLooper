@@ -4,6 +4,10 @@
 
 #include "dsp/dsp.h"
 #include "dsp/level_meter.h"
+#include "dsp/effects/effect_chain.h"
+#include "dsp/effects/pitch_shifter.h"
+#include "dsp/effects/guitar_amp.h"
+#include "dsp/effects/chorus.h"
 #include "dsp/effects/equalizer.h"
 #include "dsp/parameter/parameter_tree.h"
 #include "dsp/parameter/parameter_view.h"
@@ -28,7 +32,13 @@ namespace ml::looper {
             dsp::FloatSmoother gain;
             dsp::FloatSmoother pan;
             dsp::LevelMeter meter;
-            dsp::effects::Equalizer eq;
+
+            dsp::effects::EffectChain<
+                dsp::effects::PitchShifter,
+                dsp::effects::GuitarAmp,
+                dsp::effects::Chorus,
+                dsp::effects::Equalizer
+            > fx{"FX"};
 
             dsp::parameter::FloatParameterView gainParam;
             dsp::parameter::FloatParameterView panParam;

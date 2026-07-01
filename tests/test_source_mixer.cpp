@@ -40,9 +40,14 @@ TEST_CASE("SourceChannel parameter tree contains expected parameters", "[sourcec
         REQUIRE(paramTree["Stereo"].asParameterUnsafe().getType() == ParameterType::Boolean);
     }
 
-    SECTION("ProcessingChain parameters are present") {
-        const auto processingChainTree = paramTree["ProcessingChain"];
-        REQUIRE(processingChainTree.isValid());
+    SECTION("Mix parameters are present") {
+        const auto t = paramTree["Mix"];
+        REQUIRE(t.isValid());
+    }
+
+    SECTION("FX parameters are present") {
+        const auto t = paramTree["FX"];
+        REQUIRE(t.isValid());
     }
 }
 

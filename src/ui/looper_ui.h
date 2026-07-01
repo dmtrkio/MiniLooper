@@ -2,6 +2,7 @@
 
 #include "ui_window_base.h"
 #include "looper/looper.h"
+#include "looper/looper_thumbnail_cache.h"
 #include "session_manager.h"
 
 namespace ml::ui {
@@ -19,6 +20,7 @@ namespace ml::ui {
         void drawTrack(const int trackIndex);
 
         looper::Looper *looper_;
+        looper::ThumbnailCache thumbnailCache_;
         SessionManager *sessionManager_;
     };
 }

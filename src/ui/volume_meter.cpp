@@ -85,16 +85,4 @@ namespace ml::ui {
             );
         }
     }
-
-    VolumeMeterWindow::VolumeMeterWindow(looper::Looper &looper)
-        : looper_(&looper)
-    {}
-
-    const char* VolumeMeterWindow::getTitle() const { return "Volume Meter"; }
-
-    void VolumeMeterWindow::drawContent()
-    {
-        const auto [leftDb, rightDb] = looper_->getLooperState().level;
-        volumeMeter(leftDb, rightDb);
-    }
 }

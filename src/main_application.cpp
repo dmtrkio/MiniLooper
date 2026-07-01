@@ -7,7 +7,6 @@
 
 #include "audio/audio_engine.h"
 #include "ui/parameter_ui.h"
-#include "ui/volume_meter.h"
 #include "ui/audio_settings_ui.h"
 #include "ui/looper_ui.h"
 #include "ui/midi_settings_ui.h"
@@ -15,59 +14,10 @@
 #include "ui/source_mixer_ui.h"
 #include "ui/session_manager_ui.h"
 #include "ui/theme.h"
+#include "ui/controls_ui.h"
 #include "filepaths.h"
 #include "fonts/Inter-Regular.h"
 #include "json.h"
-
-namespace ml::ui {
-    class ControlsHelpWindow : public WindowBase
-    {
-    public:
-        explicit ControlsHelpWindow(std::size_t numTracks) : numTracks_(numTracks) {}
-
-        [[nodiscard]] const char* getTitle() const override { return "Controls Help"; }
-
-    protected:
-        void drawContent() override
-        {
-            ImGui::TextUnformatted("Keyboard shortcuts for the looper.");
-            ImGui::Spacing();
-
-            if (ImGui::BeginTable("ShortcutsTable", 3,
-                                ImGuiTableFlags_Borders |
-                                ImGuiTableFlags_RowBg |
-                                ImGuiTableFlags_SizingStretchProp))
-            {
-                ImGui::TableSetupColumn("Key", ImGuiTableColumnFlags_WidthFixed, 120.0f);
-                ImGui::TableSetupColumn("Modifier", ImGuiTableColumnFlags_WidthFixed, 100.0f);
-                ImGui::TableSetupColumn("Action", ImGuiTableColumnFlags_WidthStretch);
-                ImGui::TableHeadersRow();
-
-                const std::string trackKey = "1 - " + std::to_string(numTracks_);
-                const char* none = "";
-
-                const auto row = [](const char* key, const char* mod, const char* action) {
-                    ImGui::TableNextRow();
-                    ImGui::TableNextColumn(); ImGui::TextUnformatted(key);
-                    ImGui::TableNextColumn(); ImGui::TextUnformatted(mod);
-                    ImGui::TableNextColumn(); ImGui::TextUnformatted(action);
-                };
-
-                row(trackKey.c_str(), none,          "Toggle recording");
-                row(trackKey.c_str(), "Shift",       "Toggle playback");
-                row(trackKey.c_str(), "Ctrl",        "Clear track");
-                row(trackKey.c_str(), "Alt",         "Toggle footswitch assignment");
-                row("C",              "Ctrl",        "Clear all tracks");
-                row("S",              "Ctrl",        "Save Session");
-
-                ImGui::EndTable();
-            }
-        }
-
-    private:
-        std::size_t numTracks_;
-    };
-}
 
 namespace ml {
     static std::unique_ptr<midi::MidiEngine> makeMidiEngine(looper::Looper &looper)
@@ -102,8 +52,7 @@ namespace ml {
         windowRegistry_.emplace_back(std::make_unique<ui::MidiSettingsUi>(midiEngine_.get()));
         windowRegistry_.emplace_back(std::make_unique<ui::LooperUi>(looper_, sessionManager_));
         windowRegistry_.emplace_back(std::make_unique<ui::MixerUi>(looper_));
-        windowRegistry_.emplace_back(std::make_unique<ui::SourceMixerUi>(looper_));
-        windowRegistry_.emplace_back(std::make_unique<ui::VolumeMeterWindow>(looper_))->opened = true;
+        windowRegistry_.emplace_back(std::make_unique<ui::SourceMixerUi>(*audioEngine_, looper_));
         windowRegistry_.emplace_back(std::make_unique<ui::ControlsHelpWindow>(looper_.getNumLooperTracks()));
 
         if (const auto j = loadJsonFromFile(filepaths::settingsPath().string()); j.has_value()) {

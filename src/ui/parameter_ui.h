@@ -5,11 +5,20 @@
 #include "ui/ui_window_base.h"
 
 namespace ml::ui {
-    void parameterUi(dsp::parameter::Parameter &param, const char* nameOverride = nullptr);
+    enum ParameterUiFlags : std::uint32_t {
+        kParameterUiFlags_None = 0,
+        kParameterUiFlags_DragForRanged = 1 << 0,
+    };
+
+    void parameterUi(
+        dsp::parameter::Parameter &param,
+        const char* nameOverride = nullptr,
+        ParameterUiFlags flags = kParameterUiFlags_None
+    );
 
     void parameterTreeUi(dsp::parameter::ParameterTree paramTree);
 
-    void parameterTreeUiWindowed(dsp::parameter::ParameterTree paramTree, bool *opened = nullptr, const std::string &prefix = "");
+    void parameterTreeUiWindowed(dsp::parameter::ParameterTree paramTree, bool &opened, const std::string &prefix = "");
 
     class ParameterTreeUi final : public WindowBase
     {

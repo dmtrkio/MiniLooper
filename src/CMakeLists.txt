@@ -28,6 +28,7 @@ add_library(${PROJECT_NAME}_core OBJECT
     looper/looper_thumbnail_cache.cpp
 
     ui/ui_window_base.cpp
+    ui/controls_ui.cpp
     ui/theme.cpp
     ui/toggle_widget.cpp
     ui/parameter_ui.cpp

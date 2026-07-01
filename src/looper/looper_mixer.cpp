@@ -22,7 +22,7 @@ namespace ml::looper {
             auto channelSubTree =  paramTree_.addSubTree({name, {
                 ParamTree(Param::makeFloat("GainDb", 0.0f, dsp::Range{-60.0f, 12.0f})),
                 ParamTree(Param::makeFloat("Pan", 0.0f, dsp::Range{-1.0f, 1.0f})),
-                channel.eq.getParameterTree(),
+                channel.fx.getParameterTree(),
             }});
 
             channel.gainParam.referTo(channelSubTree["GainDb"].asParameterUnsafe());
@@ -46,7 +46,7 @@ namespace ml::looper {
             channel.bufferL.assign(audio::kMaxFramesInBuffer, 0.0f);
             channel.bufferR.assign(audio::kMaxFramesInBuffer, 0.0f);
 
-            channel.eq.prepare(sampleRate);
+            channel.fx.prepare(sampleRate);
         }
     }
 
@@ -56,7 +56,7 @@ namespace ml::looper {
 
         for (auto& channel : channels_) {
             float *const bufs[2] = {channel.bufferL.data(), channel.bufferR.data()};
-            channel.eq.process(bufs, nFrames);
+            channel.fx.process(bufs, nFrames);
 
             for (auto i{0u}; i < nFrames; ++i) {
                 auto [leftGain, rightGain] = dsp::equalPowerPanGains(channel.pan());

@@ -7,8 +7,7 @@
 
 namespace ml::looper {
     SourceChannel::SourceChannel(const std::string name)
-        : processingChain_(name + "_FX")
-        , paramTree_(buildParamTree(name))
+        : paramTree_(buildParamTree(name))
     {}
 
     void SourceChannel::prepare(unsigned int nInputBuffers, unsigned int maxFramesInBuffer, float sampleRate)
@@ -27,7 +26,8 @@ namespace ml::looper {
             }
         }
 
-        processingChain_.prepare(sampleRate);
+        fx_.prepare(sampleRate);
+        mix_.prepare(sampleRate);
         levelMeter_.prepare(sampleRate);
     }
 
@@ -110,7 +110,8 @@ namespace ml::looper {
                 Param::makeFloat("GainDb", 0.0f, {-60.0f, 12.0f}),
             }},
             ParamTree{Param::makeBoolean("Stereo", false)},
-            processingChain_.getParameterTree(),
+            mix_.getParameterTree(),
+            fx_.getParameterTree()
         }};
     }
 
@@ -147,7 +148,8 @@ namespace ml::looper {
         }
 
         float *channelData[2] = {buffers_[0].data(), buffers_[1].data()};
-        processingChain_.process(channelData, nFrames);
+        fx_.process(channelData, nFrames);
+        mix_.process(channelData, nFrames);
         levelMeter_(channelData[0], channelData[1], nFrames);
     }
 

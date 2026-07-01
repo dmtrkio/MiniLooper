@@ -134,6 +134,7 @@ namespace ml::looper {
             snapshot.maxLoopLength = looperProcessor.getMaxFramesInLoop();
             snapshot.approxBPM = looperProcessor.getApproxBpm();
             snapshot.level = levelMeter_.getLevel();
+            snapshot.sourceChannelLevels = sourceMixer.getLevels();
         }
 
         LooperProcessor looperProcessor;
