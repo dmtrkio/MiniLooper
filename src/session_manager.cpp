@@ -71,7 +71,7 @@ namespace ml {
 
     void SessionManager::saveCurrentSessionToDisk(const looper::Looper& looper) const
     {
-        const auto session = looper.getSessionData(audioEngine_.isRunning());
+        const auto session = looper.getSessionData();
 
         if (std::ranges::all_of(session->frameCounts, [](const auto fc) { return fc == 0; })) {
             return;

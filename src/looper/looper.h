@@ -81,13 +81,14 @@ namespace ml::looper {
         void clearAll() const;
         void getThumbnail(int trackIndex, ThumbnailSnapshot& out) const noexcept;
 
-        [[nodiscard]] std::unique_ptr<LooperSessionData> getSessionData(bool isAudioThreadRunning = true) const;
+        [[nodiscard]] std::unique_ptr<LooperSessionData> getSessionData() const;
 
         [[nodiscard]] bool sendMidiMessage(const midi::MidiMessage& message) const;
 
     private:
         [[nodiscard]] LooperMailbox& getCommandMailbox() const noexcept;
 
+        audio::AudioEngine* audioEngine_;
         class LooperCallback;
         std::shared_ptr<LooperCallback> cb_;
         LooperStateSnapshot snapshot_{};

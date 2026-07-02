@@ -16,8 +16,6 @@ namespace ml::ui {
 
     void AudioSettingsUi::drawContent()
     {
-        //ImGui::BeginGroup();
-
         using namespace audio;
         static constexpr auto kNoDeviceString = "No device";
 
@@ -122,7 +120,5 @@ namespace ml::ui {
         if (ImGui::Button("Rescan audio devices")) {
             audioEngine_.rescanDevices();
         }
-
-        //ImGui::EndGroup();
     }
 }

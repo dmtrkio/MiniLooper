@@ -167,7 +167,8 @@ namespace ml::looper {
     };
 
     Looper::Looper(audio::AudioEngine &audioEngine)
-        : cb_(std::make_shared<LooperCallback>())
+        : audioEngine_(&audioEngine)
+        , cb_(std::make_shared<LooperCallback>())
         , paramTree_("Looper")
     {
         paramTree_.addSubTree(cb_->sourceMixer.getParameterTree());
@@ -279,11 +280,16 @@ namespace ml::looper {
     {
         LooperCommand::CompletionFlag completionFlag;
         const auto cmd = LooperCommand::getThumbnail(trackIndex, out, completionFlag);
-        getCommandMailbox().waitPush(cmd);
-        while (!completionFlag.complete) {}
+
+        if (audioEngine_->isRunning()) {
+            getCommandMailbox().waitPush(cmd);
+            while (!completionFlag.complete) {}
+        } else {
+            cmd.apply(cb_->looperProcessor);
+        }
     }
 
-    std::unique_ptr<LooperSessionData> Looper::getSessionData(bool isAudioThreadRunning) const
+    std::unique_ptr<LooperSessionData> Looper::getSessionData() const
     {
         const auto maxFrames = cb_->looperProcessor.getMaxFramesInLoop();
 
@@ -299,11 +305,9 @@ namespace ml::looper {
         LooperCommand::CompletionFlag completionFlag;
         const auto cmd = LooperCommand::copyLoops(copyData, completionFlag);
 
-        if (isAudioThreadRunning) {
+        if (audioEngine_->isRunning()) {
             getCommandMailbox().waitPush(cmd);
-            while (!completionFlag.complete) {
-                //std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            }
+            while (!completionFlag.complete) {}
         } else {
             cmd.apply(cb_->looperProcessor);
         }
