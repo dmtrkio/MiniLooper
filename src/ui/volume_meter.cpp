@@ -1,5 +1,6 @@
 #include "volume_meter.h"
 
+#include <cstdio>
 #include <algorithm>
 
 #include "imgui.h"
@@ -77,7 +78,7 @@ namespace ml::ui {
 
             char label[8];
             snprintf(label, sizeof(label), "%.0f", db);
-            
+
             draw->AddText(
                 ImVec2(t1.x + 4, y - ImGui::GetFontSize() * 0.5f),
                 ImGui::GetColorU32(ImGuiCol_Text),
