@@ -38,5 +38,4 @@ namespace ml::audio {
     protected:
         Callback audioCallback_;
     };
-
 }

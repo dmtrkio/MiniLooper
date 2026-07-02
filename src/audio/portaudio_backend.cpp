@@ -122,7 +122,7 @@ namespace ml::audio {
     bool PortAudioBackend::stopStream()
     {
         if (!isStreamRunning()) {
-            std::cerr << "PortAudio stream is already not running" << std::endl;
+            //std::cerr << "PortAudio stream is already not running" << std::endl;
             return true;
         }
 
@@ -136,6 +136,7 @@ namespace ml::audio {
             return false;
         }
 
+        stream_ = nullptr;
         return true;
     }
 
