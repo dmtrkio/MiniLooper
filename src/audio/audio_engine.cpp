@@ -11,19 +11,12 @@ namespace ml::audio {
 
     AudioEngine::AudioEngine()
     {
-        try {
-            backend_ = std::make_unique<DefaultAudioBackend>([this](const float *in, float *out, unsigned int nFrames) {
-                return this->callback(in, out, nFrames);
-            });
-        } catch (std::exception &e) {
-            std::cerr << "Error creating audio backend: " << e.what() << std::endl;
-        }
+        backend_ = std::make_unique<DefaultAudioBackend>([this](const float *in, float *out, int nFrames) {
+            return this->callback(in, out, nFrames);
+        });
     }
 
-    AudioEngine::~AudioEngine()
-    {
-        backend_.reset();
-    }
+    AudioEngine::~AudioEngine() = default;
 
     json AudioEngine::getSettingsAsJson() const
     {
@@ -70,27 +63,27 @@ namespace ml::audio {
         }
 
         if (j.contains("sampleRate") && j["sampleRate"].is_number()) {
-            const auto rate = j["sampleRate"].get<unsigned int>();
+            const auto rate = j["sampleRate"].get<int>();
             setSampleRate(rate);
         }
 
         if (j.contains("bufferSize") && j["bufferSize"].is_number()) {
-            const auto size = j["bufferSize"].get<unsigned int>();
+            const auto size = j["bufferSize"].get<int>();
             setBufferSize(size);
         }
     }
 
-    unsigned int AudioEngine::getNumInputChannels() const noexcept { return inputChannels_; }
-    unsigned int AudioEngine::getNumOutputChannels() const noexcept { return outputChannels_; }
-    unsigned int AudioEngine::getSampleRate() const noexcept { return sampleRate_.load(std::memory_order_relaxed); }
-    unsigned int AudioEngine::getBufferSize() const noexcept { return bufferSize_.load(std::memory_order_relaxed); }
+    int AudioEngine::getNumInputChannels() const noexcept { return inputChannels_; }
+    int AudioEngine::getNumOutputChannels() const noexcept { return outputChannels_; }
+    int AudioEngine::getSampleRate() const noexcept { return sampleRate_.load(std::memory_order_relaxed); }
+    int AudioEngine::getBufferSize() const noexcept { return bufferSize_.load(std::memory_order_relaxed); }
 
-    void AudioEngine::setSampleRate(unsigned int sampleRate)
+    void AudioEngine::setSampleRate(int sampleRate)
     {
         sampleRate_.store(sampleRate, std::memory_order_relaxed);
     }
 
-    void AudioEngine::setBufferSize(unsigned int bufferSize)
+    void AudioEngine::setBufferSize(int bufferSize)
     {
         bufferSize_.store(bufferSize, std::memory_order_relaxed);
     }
@@ -106,7 +99,7 @@ namespace ml::audio {
         userCallback_.store(cb, std::memory_order_relaxed);
     }
 
-    bool AudioEngine::start()
+    std::expected<void, std::string> AudioEngine::start()
     {
         std::lock_guard<std::mutex> lock(streamMutex_);
 
@@ -128,32 +121,29 @@ namespace ml::audio {
         if (const auto cb = userCallback_.load(std::memory_order_relaxed))
             cb->onStart(static_cast<float>(getSampleRate()), static_cast<int>(inputChannels_), static_cast<int>(outputChannels_));
 
-        if (!backend_->startStream(inputDeviceIndex_, outputDeviceIndex_, params)) {
-            std::cerr << "Error starting stream\n";
-            return false;
-        }
-
-        return true;
+        return backend_->startStream(inputDeviceIndex_, outputDeviceIndex_, params);
     }
 
-    bool AudioEngine::stop()
+    std::expected<void, std::string> AudioEngine::stop()
     {
         std::lock_guard<std::mutex> lock(streamMutex_);
 
-        if (!backend_->stopStream()) {
-            std::cerr << "Error closing stream\n";
-            return false;
+        if (const auto r = backend_->stopStream(); !r) {
+            return std::unexpected{std::move(r.error())};
         }
 
-        if (const auto cb = userCallback_.load(std::memory_order_relaxed))
+        if (const auto cb = userCallback_.load(std::memory_order_relaxed)) {
             cb->onStop();
+        }
 
-        return true;
+        return {};
     }
 
-    bool AudioEngine::restart()
+    std::expected<void, std::string> AudioEngine::restart()
     {
-        return stop() && start();
+        return stop().and_then([this] {
+            return start();
+        });
     }
 
     bool AudioEngine::isRunning() const
@@ -162,9 +152,11 @@ namespace ml::audio {
         return backend_->isStreamRunning();
     }
 
-    void AudioEngine::rescanDevices()
+    std::expected<void, std::string> AudioEngine::rescanDevices()
     {
-        stop();
+        if (const auto r = stop(); !r) {
+            return std::unexpected(r.error());
+        }
 
         inputDevices_.clear();
         outputDevices_.clear();
@@ -178,6 +170,8 @@ namespace ml::audio {
                 outputDevices_.push_back(device);
             }
         }
+
+        return {};
     }
 
     const std::vector<AudioDevice>& AudioEngine::getInputDevices() const
@@ -255,7 +249,7 @@ namespace ml::audio {
         outputDeviceIndex_ = outputDeviceIndex;
     }
 
-    bool AudioEngine::callback(const float *in, float *out, unsigned int nFrames)
+    bool AudioEngine::callback(const float *in, float *out, int nFrames)
     {
         if (const auto cb = userCallback_.load(std::memory_order_relaxed)) {
             inputData_.deinterleave(in, nFrames);
@@ -266,7 +260,7 @@ namespace ml::audio {
         return true;
     }
 
-    void AudioEngine::PlanarAudioData::setNumChannels(unsigned int numChannels)
+    void AudioEngine::PlanarAudioData::setNumChannels(int numChannels)
     {
         planar.clear();
         buffers.clear();
@@ -274,33 +268,33 @@ namespace ml::audio {
         planar.resize(numChannels);
         buffers.resize(numChannels);
 
-        for (auto i{0u}; i < numChannels; ++i) {
+        for (int i{0}; i < numChannels; ++i) {
             buffers[i].resize(kMaxFramesInBuffer);
             planar[i] = buffers[i].data();
         }
     }
 
-    void AudioEngine::PlanarAudioData::deinterleave(const float *data, unsigned int nFrames)
+    void AudioEngine::PlanarAudioData::deinterleave(const float *data, int nFrames)
     {
         assert(nFrames <= kMaxFramesInBuffer);
 
         const auto nChannels = buffers.size();
         for (auto c{0u}; c < nChannels; ++c) {
             auto& channel = buffers[c];
-            for (auto i{0u}; i < nFrames; ++i) {
+            for (int i{0}; i < nFrames; ++i) {
                 channel[i] = data[i * nChannels + c];
             }
         }
     }
 
-    void AudioEngine::PlanarAudioData::interleave(float *data, unsigned int nFrames)
+    void AudioEngine::PlanarAudioData::interleave(float *data, int nFrames)
     {
         assert(nFrames <= kMaxFramesInBuffer);
 
         const auto nChannels = buffers.size();
         for (auto c{0u}; c < nChannels; ++c) {
             auto& channel = buffers[c];
-            for (auto i{0u}; i < nFrames; ++i) {
+            for (int i{0}; i < nFrames; ++i) {
                 data[i * nChannels + c] = channel[i];
                 channel[i] = 0.0f;
             }

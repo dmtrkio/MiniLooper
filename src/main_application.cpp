@@ -45,7 +45,9 @@ namespace ml {
         (void)argc;
         (void)argv;
 
-        audioEngine_->rescanDevices();
+        if (const auto r = audioEngine_->rescanDevices(); !r) {
+            std::cerr << r.error() << std::endl;
+        }
 
         windowRegistry_.emplace_back(std::make_unique<ui::SessionManagerUi>(sessionManager_, looper_));
         windowRegistry_.emplace_back(std::make_unique<ui::AudioSettingsUi>(*audioEngine_));
@@ -101,8 +103,8 @@ namespace ml {
             std::cout << "Settings loaded from " << filepaths::settingsPath() << std::endl;
         }
 
-        if (!audioEngine_->start() || !audioEngine_->isRunning()) {
-            throw std::runtime_error("Failed to start audio engine.");
+        if (const auto r = audioEngine_->start(); !r) {
+            throw std::runtime_error("Failed to start audio engine: " + r.error());
         }
 
         std::cout << "Audio engine started\n";

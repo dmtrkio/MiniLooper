@@ -24,6 +24,8 @@ namespace ml::looper {
         transport_.reset(maxFrames_, sampleRate);
 
         for (auto& track : tracks_) {
+            track.clear();
+            track.clearThumbnail();
             track.init(&transport_, maxFrames_, sampleRate);
         }
 

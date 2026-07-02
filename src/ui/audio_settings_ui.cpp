@@ -22,7 +22,7 @@ namespace ml::ui {
         const auto &inputDevices = audioEngine_.getInputDevices();
         const auto &outputDevices = audioEngine_.getOutputDevices();
 
-        std::vector<unsigned int> sampleRates;
+        std::vector<int> sampleRates;
 
         const auto displayDeviceSettings = [&](const bool input) {
             ImGui::PushID(input ? "input device" : "output device");
@@ -118,7 +118,9 @@ namespace ml::ui {
         }
 
         if (ImGui::Button("Rescan audio devices")) {
-            audioEngine_.rescanDevices();
+            if (const auto r = audioEngine_.rescanDevices(); !r) {
+                std::cerr << r.error() << std::endl;
+            }
         }
     }
 }

@@ -1,6 +1,9 @@
 #include "portaudio_backend.h"
+#include "portaudio.h"
 
+#include <string_view>
 #include <iostream>
+#include <format>
 #include <algorithm>
 #include <utility>
 
@@ -9,12 +12,22 @@
 #endif
 
 namespace ml::audio {
+    static std::string errorStr(std::string_view e)
+    {
+        return std::format("PortAudio error: {}", e);
+    }
+
+    static std::string errorStr(const PaError e)
+    {
+        return errorStr(Pa_GetErrorText(e));
+    }
+
     PortAudioBackend::PortAudioBackend(Callback audioCallback)
         : AudioBackend(std::move(audioCallback))
     {
         if (const auto err = Pa_Initialize(); err != paNoError) {
             Pa_Terminate();
-            throw std::runtime_error(Pa_GetErrorText(err));
+            throw std::runtime_error(errorStr(err));
         }
 
         scanDevices();
@@ -31,16 +44,18 @@ namespace ml::audio {
         return devices_;
     }
 
-    bool PortAudioBackend::startStream(DeviceIndex &inputDeviceIndex, DeviceIndex &outputDeviceIndex, StreamParams &params)
+    std::expected<void, std::string> PortAudioBackend::startStream(
+        DeviceIndex &inputDeviceIndex,
+        DeviceIndex &outputDeviceIndex,
+        StreamParams &params
+    )
     {
         if (isStreamRunning()) {
-            std::cerr << "Stream is already running" << std::endl;
-            return false;
+            return std::unexpected(errorStr("Stream is already running"));
         }
 
         if (const int numDevices = Pa_GetDeviceCount(); numDevices <= 0) {
-            std::cerr << "No Devices available" << std::endl;
-            return false;
+            return std::unexpected(errorStr("No Devices available"));
         }
 
         PaDeviceIndex inputDevice = inputDeviceIndex;
@@ -51,7 +66,7 @@ namespace ml::audio {
             outputDevice = Pa_GetDefaultOutputDevice();
             inputDeviceIndex = inputDevice;
             outputDeviceIndex = outputDevice;
-            std::cerr << "Failed to use given devices. Default devices picked" << std::endl;
+            std::cout << "Failed to use given devices. Default devices picked" << std::endl;
         }
 
         constexpr PaSampleFormat sampleFormat = paFloat32;
@@ -63,9 +78,7 @@ namespace ml::audio {
         inputParameters.sampleFormat = sampleFormat;
         inputParameters.suggestedLatency = inputDeviceInfo->defaultLowInputLatency;
         inputParameters.hostApiSpecificStreamInfo = nullptr;
-        std::cout << "Input device name: " << inputDeviceInfo->name << std::endl;
         const auto inputHostApiInfo = Pa_GetHostApiInfo(inputDeviceInfo->hostApi);
-        std::cout << "Input Host Api: " << inputHostApiInfo->name << std::endl;
 
         PaStreamParameters outputParameters;
         outputParameters.device = outputDevice;
@@ -74,17 +87,19 @@ namespace ml::audio {
         outputParameters.sampleFormat = sampleFormat;
         outputParameters.suggestedLatency = outputDeviceInfo->defaultLowOutputLatency;
         outputParameters.hostApiSpecificStreamInfo = nullptr;
-        std::cout << "Output device name: " << outputDeviceInfo->name << std::endl;
         const auto outputHostApiInfo = Pa_GetHostApiInfo(outputDeviceInfo->hostApi);
+
+        std::cout << "Input device name: " << inputDeviceInfo->name << std::endl;
+        std::cout << "Input Host Api: " << inputHostApiInfo->name << std::endl;
+        std::cout << "Output device name: " << outputDeviceInfo->name << std::endl;
         std::cout << "Output Host Api: " << outputHostApiInfo->name << std::endl;
 
         if ((inputHostApiInfo->type == paWASAPI) || (outputHostApiInfo->type == paWASAPI)) {
-            params.sampleRate = static_cast<unsigned int>(outputDeviceInfo->defaultSampleRate);
+            params.sampleRate = static_cast<int>(outputDeviceInfo->defaultSampleRate);
         }
 
         if (Pa_IsFormatSupported(&inputParameters, &outputParameters, params.sampleRate) != paFormatIsSupported) {
-            std::cerr << "Format not supported by devices used" << std::endl;
-            return false;
+            return std::unexpected(errorStr("Format not supported by devices used"));
         }
 
         {
@@ -98,8 +113,6 @@ namespace ml::audio {
                                                     this);
 
             if (err != paNoError) {
-                std::cerr << "PortAudio error opening stream: " << Pa_GetErrorText(err) << std::endl;
-
                 if ((inputDevice != Pa_GetDefaultInputDevice()) && (outputDevice != Pa_GetDefaultOutputDevice())) {
                     inputDeviceIndex = Pa_GetDefaultInputDevice();
                     outputDeviceIndex = Pa_GetDefaultOutputDevice();
@@ -107,37 +120,34 @@ namespace ml::audio {
                     return startStream(inputDeviceIndex, outputDeviceIndex, params);
                 }
 
-                return false;
+                return std::unexpected(errorStr(err));
             }
         }
 
         if (const auto err = Pa_StartStream(stream_); err != paNoError) {
-            std::cerr << "PortAudio error starting stream: " << Pa_GetErrorText(err) << std::endl;
-            return false;
+            return std::unexpected(errorStr(err));
         }
 
-        return true;
+        return {};
     }
 
-    bool PortAudioBackend::stopStream()
+    std::expected<void, std::string> PortAudioBackend::stopStream()
     {
         if (!isStreamRunning()) {
             //std::cerr << "PortAudio stream is already not running" << std::endl;
-            return true;
+            return {};
         }
 
         if (const auto err = Pa_StopStream(stream_); err != paNoError) {
-            std::cerr << "PortAudio error stopping stream: " << Pa_GetErrorText(err) << std::endl;
-            return false;
+            return std::unexpected(errorStr(err));
         }
 
         if (const auto err = Pa_CloseStream(stream_); err != paNoError) {
-            std::cerr << "PortAudio error closing stream: " << Pa_GetErrorText(err) << std::endl;
-            return false;
+            return std::unexpected(errorStr(err));
         }
 
         stream_ = nullptr;
-        return true;
+        return {};
     }
 
     bool PortAudioBackend::isStreamRunning() const
@@ -224,11 +234,11 @@ namespace ml::audio {
                 const auto ip = iParams.channelCount > 0 ? &iParams : nullptr;
                 const auto op = oParams.channelCount > 0 ? &oParams : nullptr;
 
-                std::vector<unsigned int> supportedSampleRates;
+                std::vector<int> supportedSampleRates;
 
                 for (const auto sr : {22050, 32000, 44100, 48000, 88200, 96000, 192000}) {
                     if (const auto err = Pa_IsFormatSupported(ip, op, sr); err == paFormatIsSupported) {
-                        supportedSampleRates.push_back(static_cast<unsigned int>(sr));
+                        supportedSampleRates.push_back(static_cast<int>(sr));
                     /*} else {
                         std::cout << Pa_GetErrorText(err) << std::endl;*/
                     }

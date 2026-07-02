@@ -12,9 +12,9 @@ namespace ml::audio {
         DeviceIndex deviceIndex;
         std::string deviceName;
         std::string hostApiName;
-        unsigned int maxInputChannels{2};
-        unsigned int maxOutputChannels{2};
-        std::vector<unsigned int> supportedSampleRates;
+        int maxInputChannels{2};
+        int maxOutputChannels{2};
+        std::vector<int> supportedSampleRates;
 
         void printInfo() const;
     };

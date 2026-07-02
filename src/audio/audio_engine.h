@@ -4,13 +4,15 @@
 #include <vector>
 #include <mutex>
 #include <memory>
+#include <string>
+#include <expected>
 
 #include "audio_device.h"
 #include "json.h"
 #include "rt_sanitizer.h"
 
 namespace ml::audio {
-    inline constexpr unsigned int kMaxFramesInBuffer = 8096;
+    inline constexpr int kMaxFramesInBuffer = 8096;
 
     class AudioBackend;
 
@@ -25,7 +27,7 @@ namespace ml::audio {
         AudioCallback(AudioCallback&&) noexcept = default;
         AudioCallback& operator=(AudioCallback&&) noexcept = default;
 
-        virtual void onProcess(const float *const *in, float *const *out, unsigned int nFrames) RT_SAN = 0;
+        virtual void onProcess(const float *const *in, float *const *out, int nFrames) RT_SAN = 0;
         virtual void onStart(float sampleRate, int nInputChannels, int nOutputChannels) = 0;
         virtual void onStop() = 0;
 
@@ -49,37 +51,38 @@ namespace ml::audio {
         void loadSettingsFromJson(const json& j);
 
         // -- Only these are safe to be called from an audio callback --
-        unsigned int getNumInputChannels() const noexcept;
-        unsigned int getNumOutputChannels() const noexcept;
-        unsigned int getSampleRate() const noexcept;
-        unsigned int getBufferSize() const noexcept;
+        int getNumInputChannels() const noexcept;
+        int getNumOutputChannels() const noexcept;
+        int getSampleRate() const noexcept;
+        int getBufferSize() const noexcept;
         // -------------------------------------------------------------
 
         // rescanning will stop ongoing audio stream
-        void rescanDevices();
+        [[nodiscard]] std::expected<void, std::string> rescanDevices();
         [[nodiscard]] const std::vector<AudioDevice>& getInputDevices() const;
         [[nodiscard]] const std::vector<AudioDevice>& getOutputDevices() const;
         [[nodiscard]] DeviceIndex getCurrentInputDevice() const;
         [[nodiscard]] DeviceIndex getCurrentOutputDevice() const;
 
         // these won't take effect until starting a new stream with fresh settings
-        void setSampleRate(unsigned int sampleRate);
-        void setBufferSize(unsigned int bufferSize);
+        void setSampleRate(int sampleRate);
+        void setBufferSize(int bufferSize);
         void setInputDevice(DeviceIndex inputDeviceIndex);
         void setOutputDevice(DeviceIndex outputDeviceIndex);
-        const AudioDevice* getInputAudioDeviceByIndex(DeviceIndex inputDeviceIndex) const;
-        const AudioDevice* getOutputAudioDeviceByIndex(DeviceIndex outputDeviceIndex) const;
+        [[nodiscard]] const AudioDevice* getInputAudioDeviceByIndex(DeviceIndex inputDeviceIndex) const;
+        [[nodiscard]] const AudioDevice* getOutputAudioDeviceByIndex(DeviceIndex outputDeviceIndex) const;
         void pickDevices();
 
         void setAudioCallback(std::shared_ptr<AudioCallback> cb);
 
-        bool start();
-        bool stop();
-        bool restart();
+        [[nodiscard]] std::expected<void, std::string> start();
+        [[nodiscard]] std::expected<void, std::string> stop();
+        [[nodiscard]] std::expected<void, std::string> restart();
+
         bool isRunning() const;
 
     private:
-        bool callback(const float *in, float *out, unsigned int nFrames) RT_SAN;
+        bool callback(const float *in, float *out, int nFrames) RT_SAN;
 
         std::unique_ptr<AudioBackend> backend_;
 
@@ -87,23 +90,23 @@ namespace ml::audio {
 
         mutable std::mutex streamMutex_;
 
-        std::atomic<unsigned int> sampleRate_{48000};
-        std::atomic<unsigned int> bufferSize_{128};
+        std::atomic<int> sampleRate_{48000};
+        std::atomic<int> bufferSize_{128};
 
         DeviceIndex inputDeviceIndex_{kNoDevice};
         DeviceIndex outputDeviceIndex_{kNoDevice};
 
-        unsigned int inputChannels_{2};
-        unsigned int outputChannels_{2};
+        int inputChannels_{2};
+        int outputChannels_{2};
 
         std::vector<AudioDevice> inputDevices_;
         std::vector<AudioDevice> outputDevices_;
 
         struct PlanarAudioData
         {
-            void setNumChannels(unsigned int numChannels);
-            void deinterleave(const float *data, unsigned int nFrames);
-            void interleave(float *data, unsigned int nFrames);
+            void setNumChannels(int numChannels);
+            void deinterleave(const float *data, int nFrames);
+            void interleave(float *data, int nFrames);
 
             std::vector<float*> planar;
             std::vector<std::vector<float>> buffers;

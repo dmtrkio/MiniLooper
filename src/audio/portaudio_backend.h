@@ -12,8 +12,14 @@ namespace ml::audio {
         ~PortAudioBackend() override;
 
         std::vector<AudioDevice> getAvailableDevices() override;
-        bool startStream(DeviceIndex &inputDeviceIndex, DeviceIndex &outputDeviceIndex, StreamParams &params) override;
-        bool stopStream() override;
+
+        [[nodiscard]] std::expected<void, std::string> startStream(
+            DeviceIndex &inputDeviceIndex,
+            DeviceIndex &outputDeviceIndex,
+            StreamParams &params
+        ) override;
+
+        [[nodiscard]] std::expected<void, std::string> stopStream() override;
         [[nodiscard]] bool isStreamRunning() const override;
 
     private:

@@ -38,11 +38,11 @@ namespace ml::looper {
     class Looper::LooperCallback final : public audio::AudioCallback
     {
     public:
-        void onProcess(const float *const *in, float *const *out, const unsigned int nFrames) override
+        void onProcess(const float *const *in, float *const *out, const int nFrames) override
         {
             fsTrackIndex_ = fsTrackParam.asParameterUnsafe().get<int>();
 
-            for (auto i{0u}; i < nFrames; ++i) {
+            for (int i{0}; i < nFrames; ++i) {
                 footSwitch.tick();
             }
 
@@ -62,7 +62,7 @@ namespace ml::looper {
 
             const auto headroomScalar = dsp::dBtoLinear(-kHeadRoomDb);
             for (auto ch{0u}; ch < 2; ++ch) {
-                for (auto i{0u}; i < nFrames; ++i) {
+                for (int i{0}; i < nFrames; ++i) {
                     out[ch][i] = std::tanh(out[ch][i] * headroomScalar);
                 }
             }
@@ -79,7 +79,6 @@ namespace ml::looper {
 
             // ensure mailbox is clear from stale messages
             consumeCommands();
-            looperProcessor.clearAll();
             updateSnapshot();
 
             footSwitch.setOnSinglePressed([&] {

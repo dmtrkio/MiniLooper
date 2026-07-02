@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <vector>
+#include <expected>
 
 #include "audio_device.h"
 
@@ -9,14 +10,14 @@ namespace ml::audio {
     class AudioBackend
     {
     public:
-        using Callback = std::function<bool(const float *in, float *out, unsigned int nFrames)>;
+        using Callback = std::function<bool(const float *in, float *out, int nFrames)>;
 
         struct StreamParams
         {
-            unsigned int sampleRate{44100};
-            unsigned int bufferSize{512};
-            unsigned int numInputChannels{2};
-            unsigned int numOutputChannels{2};
+            int sampleRate{44100};
+            int bufferSize{512};
+            int numInputChannels{2};
+            int numOutputChannels{2};
         };
 
         explicit AudioBackend(Callback audioCallback) : audioCallback_(std::move(audioCallback)) {}
@@ -31,8 +32,14 @@ namespace ml::audio {
 
         [[nodiscard]] virtual std::vector<AudioDevice> getAvailableDevices() = 0;
 
-        virtual bool startStream(DeviceIndex &inputDeviceIndex, DeviceIndex &outputDeviceIndex, StreamParams &params) = 0;
-        virtual bool stopStream() = 0;
+        [[nodiscard]] virtual std::expected<void, std::string> startStream(
+            DeviceIndex &inputDeviceIndex,
+            DeviceIndex &outputDeviceIndex,
+            StreamParams &params
+        ) = 0;
+
+        [[nodiscard]] virtual std::expected<void, std::string> stopStream() = 0;
+
         [[nodiscard]] virtual bool isStreamRunning() const = 0;
 
     protected:
