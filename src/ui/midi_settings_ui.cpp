@@ -5,8 +5,8 @@
 #include "imgui.h"
 
 namespace ml::ui {
-    MidiSettingsUi::MidiSettingsUi(midi::MidiEngine *midiEngine)
-        : midiEngine_(midiEngine)
+    MidiSettingsUi::MidiSettingsUi(midi::MidiEngine &midiEngine)
+        : midiEngine_(&midiEngine)
     {}
 
     const char* MidiSettingsUi::getTitle() const { return "Midi Settings"; }

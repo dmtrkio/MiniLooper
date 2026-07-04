@@ -1,14 +1,12 @@
 #pragma once
 
 #include <memory>
-#include <vector>
 
 #include "audio/audio_engine.h"
 #include "session_manager.h"
 #include "looper/looper.h"
 #include "midi/midi.h"
-#include "ui/ui_window_base.h"
-#include "ui/theme.h"
+#include "ui/main_ui.h"
 
 namespace ml {
     class MainApplication
@@ -26,15 +24,15 @@ namespace ml {
         void onFrame();
 
     private:
+        void loadJsonSettings();
+        void saveJsonSettings() const;
         void processInput();
-        void drawTopBarMenu();
 
         std::unique_ptr<audio::AudioEngine> audioEngine_;
         SessionManager sessionManager_;
         looper::Looper looper_;
         std::unique_ptr<midi::MidiEngine> midiEngine_;
 
-        ui::ImGuiTheme currentTheme_ = ui::ImGuiTheme::WarmNeutral;
-        std::vector<std::unique_ptr<ui::WindowBase>> windowRegistry_;
+        ui::MainUi ui_;
     };
 }
