@@ -1,7 +1,5 @@
 #include "looper_ui.h"
 
-#include <iostream>
-
 #include "dsp/dsp.h"
 #include "imgui.h"
 
@@ -35,7 +33,7 @@ namespace ml::ui {
 
         if (ImGui::Button("Save to disk")) {
             if (const auto r = sessionManager_->saveCurrentSession(*looper_); !r) {
-                std::cerr << r.error() << std::endl;
+                showErrorPopup(r.error());
             }
         }
     }

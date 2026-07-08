@@ -2,6 +2,8 @@
 
 #include "imgui.h"
 
+#include "popup_manager.h"
+
 namespace ml::ui {
     const char* WindowBase::getTitle() const { return "No Title"; }
 
@@ -15,5 +17,10 @@ namespace ml::ui {
             ImGui::End();
             ImGui::PopID();
         }
+    }
+
+    void WindowBase::showErrorPopup(std::string text, std::function<void()> onOk)
+    {
+        PopupManager::getInstance().errorPopup(std::move(text), std::move(onOk));
     }
 }

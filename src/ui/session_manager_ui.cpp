@@ -16,6 +16,7 @@ namespace ml::ui {
     {
         if (const auto r = sessionManager_.pollPendingSessionToLoad(looper_); !r) {
             std::cerr << r.error() << std::endl;
+            showErrorPopup(r.error());
         }
     }
 
@@ -44,6 +45,7 @@ namespace ml::ui {
             if (ImGui::Button("Save Current Session")) {
                 if (const auto r = sessionManager_.saveCurrentSession(looper_); !r) {
                     std::cerr << r.error() << std::endl;
+                    showErrorPopup(r.error());
                 }
             }
         }

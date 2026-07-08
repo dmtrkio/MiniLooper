@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <vector>
-#include <iostream>
 
 #include "imgui.h"
 
@@ -110,16 +109,14 @@ namespace ml::ui {
         ImGui::Separator();
 
         if (ImGui::Button("Restart Audio Stream")) {
-            if (audioEngine_.restart()) {
-                std::cout << "Audio Engine restarted" << std::endl;
-            } else {
-                std::cerr << "Failed to restart" << std::endl;
+            if (const auto r = audioEngine_.restart(); !r) {
+                showErrorPopup(r.error());
             }
         }
 
         if (ImGui::Button("Rescan audio devices")) {
             if (const auto r = audioEngine_.rescanDevices(); !r) {
-                std::cerr << r.error() << std::endl;
+                showErrorPopup(r.error());
             }
         }
     }

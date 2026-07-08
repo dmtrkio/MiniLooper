@@ -1,7 +1,5 @@
 #include "midi_settings_ui.h"
 
-#include <iostream>
-
 #include "imgui.h"
 
 namespace ml::ui {
@@ -39,10 +37,8 @@ namespace ml::ui {
 
                 const auto label = std::format("({}) ", device.apiName) + device.deviceName;
                 if (ImGui::Selectable(label.c_str(), isSelected)) {
-                    if (engine.setMidiInputDevice(device.deviceIndex)) {
-                        std::cout << "Midi input device set\n";
-                    } else {
-                        std::cerr << "Failed to set midi input device\n";
+                    if (!engine.setMidiInputDevice(device.deviceIndex)) {
+                        showErrorPopup("Failed to set midi input device");
                     }
                 }
 

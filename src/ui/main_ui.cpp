@@ -2,6 +2,7 @@
 
 #include "imgui.h"
 
+#include "ui/popup_manager.h"
 #include "ui/parameter_ui.h"
 #include "ui/audio_settings_ui.h"
 #include "ui/looper_ui.h"
@@ -88,6 +89,8 @@ namespace ml::ui {
         for (const auto& window : windowRegistry_) {
             window->draw();
         }
+
+        PopupManager::getInstance().draw();
     }
 
     void MainUi::drawTopBarMenu()
