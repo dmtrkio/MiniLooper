@@ -1,35 +1,44 @@
 #include "json.h"
 
-#include <iostream>
 #include <fstream>
 
 namespace ml {
-    bool saveJsonToFile(const std::string& filename, const json& j)
+    std::expected<void, std::string> saveJsonToFile(const std::string& filename, const json& j) noexcept
     {
         try {
             std::ofstream file(filename);
             if (!file.is_open()) {
-                std::cerr << "Cound not open " << filename << std::endl;
-                return false;
+                const auto err = std::format("Failed to open file for writing {}", filename);
+                return std::unexpected(std::move(err));
             }
 
             file << j.dump(4);
-            return true;
+            return {};
         } catch (const std::exception& e) {
-            std::cerr << e.what() << std::endl;
-            return false;
+            return std::unexpected(e.what());
         }
     }
 
-    std::optional<json> loadJsonFromFile(const std::string& filename)
+    std::expected<json, std::string> loadJsonFromFile(const std::string& filename) noexcept
     {
         try {
             std::ifstream file(filename);
-            if (!file.is_open())
-                return std::nullopt;
-            return json::parse(file);
+            if (!file.is_open()) {
+                const auto err = std::format("Failed to open file for reading {}", filename);
+                return std::unexpected(std::move(err));
+            } else {
+                return json::parse(file);
+            }
         } catch (const std::exception& e) {
-            std::cerr << e.what() << std::endl;
+            return std::unexpected(e.what());
+        }
+    }
+
+    std::optional<json> findByKey(const json& j, std::string_view key) noexcept
+    {
+        if (const auto it = j.find(key); it != j.end()) {
+            return *it;
+        } else {
             return std::nullopt;
         }
     }

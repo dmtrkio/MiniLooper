@@ -75,7 +75,13 @@ namespace ml::looper {
             assert(nOutputChannels >= 2);
             (void)nOutputChannels;
 
-            looperProcessor.prepare(sampleRate);
+            if (sessionToLoad) {
+                looperProcessor.prepare(sampleRate, &sessionToLoad.value());
+            } else {
+                looperProcessor.prepare(sampleRate);
+            }
+
+            sessionToLoad.reset();
 
             // ensure mailbox is clear from stale messages
             consumeCommands();
@@ -123,15 +129,16 @@ namespace ml::looper {
             auto &snapshot = writer.data();
 
             for (auto i{0}; i < looperProcessor.getNumLooperTracks(); ++i) {
-                auto& [nFrames, position, state, level] = snapshot.tracks[i];
+                auto& [nFrames, position, offset, state, level] = snapshot.tracks[i];
                 nFrames = looperProcessor.getCurrentNumFrames(i);
                 position = looperProcessor.getCurrentPosition(i);
+                offset = looperProcessor.getRelativeOffset(i);
                 state = looperProcessor.getState(i);
                 level = looperProcessor.getMixer().getLevel(i);
             }
 
             snapshot.maxLoopLength = looperProcessor.getMaxFramesInLoop();
-            snapshot.approxBPM = looperProcessor.getApproxBpm();
+            snapshot.beatLength = looperProcessor.getBeatLength();
             snapshot.level = levelMeter_.getLevel();
             snapshot.sourceChannelLevels = sourceMixer.getLevels();
         }
@@ -155,6 +162,8 @@ namespace ml::looper {
             dsp::parameter::Parameter::makeFloat("Gain", -6.0f, {-60.f, 12.0f}),
             dsp::parameter::Parameter::makeBoolean("Enabled", true)
         }};
+
+        std::optional<LooperSession> sessionToLoad;
 
     private:
         void rotateTrackIndex()
@@ -215,6 +224,11 @@ namespace ml::looper {
     bool Looper::loadSettingsFromJson(const json& j)
     {
         return paramTree_.copyParameterValuesFromJson(j);
+    }
+
+    void Looper::loadSession(LooperSession&& session)
+    {
+        cb_->sessionToLoad = std::move(session);
     }
 
     bool Looper::toggleRecording(int trackIndex, bool synced) const

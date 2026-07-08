@@ -19,6 +19,16 @@ namespace ml::looper {
     inline constexpr int kLooperTrackCount = 4;
     inline constexpr float kMaxLoopSecs = 40.0f;
 
+    struct LooperSession
+    {
+        using StereoPair = std::array<std::vector<float>, 2>;
+        std::array<StereoPair, kLooperTrackCount> buffers{};
+        std::array<FrameInt, kLooperTrackCount> frameCounts{};
+        std::array<FrameInt, kLooperTrackCount> offsets{};
+
+        FrameInt framesInBeat{};
+    };
+
     struct ThumbnailSnapshot
     {
         ThumbnailSnapshot() = default;
@@ -45,9 +55,14 @@ namespace ml::looper {
     {
     public:
         LooperProcessor();
+        ~LooperProcessor() = default;
+        LooperProcessor(const LooperProcessor &) = delete;
+        LooperProcessor& operator=(const LooperProcessor &) = delete;
+        LooperProcessor(const LooperProcessor &&) = delete;
+        LooperProcessor& operator=(LooperProcessor &&) = delete;
 
         // lifetime callbacks
-        void prepare(float sampleRate);
+        void prepare(float sampleRate, const LooperSession* session = nullptr);
         void process(float *const *data, FrameInt nFrames) noexcept RT_SAN;
 
         [[nodiscard]] constexpr int getNumLooperTracks() const noexcept
@@ -61,9 +76,10 @@ namespace ml::looper {
         [[nodiscard]] State getState(int trackIndex) const noexcept;
         [[nodiscard]] FrameInt getMaxFramesInLoop() const noexcept;
         [[nodiscard]] FrameInt getCurrentPosition(int trackIndex) const noexcept;
+        [[nodiscard]] FrameInt getRelativeOffset(int trackIndex) const noexcept;
         [[nodiscard]] FrameInt getCurrentNumFrames(int trackIndex) const noexcept;
         [[nodiscard]] bool isEmpty(int trackIndex) const noexcept;
-        [[nodiscard]] std::optional<float> getApproxBpm() const noexcept;
+        [[nodiscard]] std::optional<FrameInt> getBeatLength() const noexcept;
 
         void setClickGain(float gain) noexcept;
         void setClickEnabled(bool enabled) noexcept;
@@ -78,7 +94,7 @@ namespace ml::looper {
         void extractThumbnail(int trackIndex, ThumbnailSnapshot& out) const noexcept;
 
     private:
-        static constexpr float kFadeLengthMs = 5.0f;
+        void loadSession(const LooperSession& session) noexcept;
 
         [[nodiscard]] constexpr bool isTrackIndexValid(int trackIndex) const noexcept
         {
@@ -87,12 +103,15 @@ namespace ml::looper {
 
         [[nodiscard]] bool isAnyTrackCurrentlyRecording() const noexcept;
 
+        static constexpr float kFadeLengthMs = 5.0f;
+
         struct Transport
         {
             [[nodiscard]] bool isTempoSet() const noexcept;
             [[nodiscard]] std::optional<float> getApproxBPM() const noexcept;
             bool tick() noexcept;
-            void setTempo(FrameInt firstLoopLength) noexcept;
+            void setTempoWithFirstLoop(FrameInt firstLoopLength) noexcept;
+            void setTempoWithQuarterNote(FrameInt quarterNoteLength) noexcept;
             void reset(FrameInt maxFrameCount, float sr) noexcept;
 
             float sampleRate;

@@ -12,6 +12,7 @@ namespace ml::ui {
         [[nodiscard]] const char* getTitle() const override;
 
     protected:
+        void onFrame() override;
         void drawContent() override;
 
     private:

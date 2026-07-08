@@ -18,6 +18,7 @@ namespace ml::looper {
     {
         FrameInt nFrames;
         FrameInt position;
+        FrameInt offset;
         State state;
         std::pair<float, float> level;
 
@@ -28,7 +29,7 @@ namespace ml::looper {
     {
         std::array<TrackStateSnapshot, kLooperTrackCount> tracks;
         FrameInt maxLoopLength{};
-        std::optional<float> approxBPM{};
+        std::optional<FrameInt> beatLength{};
         std::pair<float, float> level{};
         std::array<std::pair<float, float>, SourceMixer::kNumChannels> sourceChannelLevels{};
     };
@@ -70,6 +71,8 @@ namespace ml::looper {
 
         [[nodiscard]] json getSettingsAsJson() const;
         bool loadSettingsFromJson(const json& j);
+
+        void loadSession(LooperSession&& session);
 
         bool toggleRecording(int trackIndex, bool synced = true) const;
         bool togglePlay(int trackIndex, bool synced = true) const;

@@ -1,5 +1,7 @@
 #include "session_manager_ui.h"
 
+#include <iostream>
+
 #include "imgui.h"
 
 namespace ml::ui {
@@ -9,6 +11,13 @@ namespace ml::ui {
     {}
 
     const char* SessionManagerUi::getTitle() const { return "Session Manager"; }
+
+    void SessionManagerUi::onFrame()
+    {
+        if (const auto r = sessionManager_.pollPendingSessionToLoad(looper_); !r) {
+            std::cerr << r.error() << std::endl;
+        }
+    }
 
     void SessionManagerUi::drawContent()
     {
@@ -21,13 +30,21 @@ namespace ml::ui {
             if (ImGui::Button("Change Path")) {
                 sessionManager_.openSessionsPathDialog();
             }
+
+            ImGui::SameLine();
+
+            if (ImGui::Button("Open Session")) {
+                sessionManager_.openLoadSessionDialog();
+            }
         }
 
         ImGui::Separator();
 
         {
             if (ImGui::Button("Save Current Session")) {
-                sessionManager_.saveCurrentSessionToDisk(looper_);
+                if (const auto r = sessionManager_.saveCurrentSession(looper_); !r) {
+                    std::cerr << r.error() << std::endl;
+                }
             }
         }
     }

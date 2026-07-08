@@ -2,7 +2,7 @@ add_library(${PROJECT_NAME}_core OBJECT
     audio/audio_device.cpp
     audio/portaudio_backend.cpp
     audio/audio_engine.cpp
-    audio/wav_writer.cpp
+    audio/wav.cpp
 
     dsp/click.cpp
     dsp/simple_pitch_shifter.cpp

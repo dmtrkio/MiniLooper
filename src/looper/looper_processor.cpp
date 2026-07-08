@@ -13,9 +13,11 @@ namespace ml::looper {
         return "Unknown State";
     }
 
-    LooperProcessor::LooperProcessor() : mixer_(kLooperTrackCount) {}
+    LooperProcessor::LooperProcessor()
+        : mixer_(kLooperTrackCount)
+    {}
 
-    void LooperProcessor::prepare(float sampleRate)
+    void LooperProcessor::prepare(float sampleRate, const LooperSession* session)
     {
         sampleRate_ = sampleRate;
         maxFrames_ = static_cast<FrameInt>(sampleRate * kMaxLoopSecs);
@@ -31,6 +33,10 @@ namespace ml::looper {
 
         mixer_.prepare(sampleRate);
         click_.prepare(sampleRate);
+
+        if (session) {
+            loadSession(*session);
+        }
     }
 
     void LooperProcessor::process(float *const *data, FrameInt nFrames) noexcept
@@ -57,6 +63,27 @@ namespace ml::looper {
         }
     }
 
+    void LooperProcessor::loadSession(const LooperSession& session) noexcept
+    {
+        for (int i = 0; i < getNumLooperTracks(); ++i) {
+            const auto& [l, r] = session.buffers[i];
+            const FrameInt length = session.frameCounts[i];
+            if (length <= 0) continue;
+
+            const FrameInt offset = session.offsets[i];
+            auto& track = tracks_[i];
+
+            std::copy_n(l.begin(), length, track.buffers[0].begin());
+            std::copy_n(r.begin(), length, track.buffers[1].begin());
+
+            track.start = offset;
+            track.length = length;
+            track.state = State::Playback;
+        }
+
+        transport_.setTempoWithQuarterNote(session.framesInBeat);
+    }
+
     Mixer& LooperProcessor::getMixer() noexcept
     {
         return mixer_;
@@ -79,6 +106,12 @@ namespace ml::looper {
         return tracks_[trackIndex].getPosition();
     }
 
+    FrameInt LooperProcessor::getRelativeOffset(int trackIndex) const noexcept
+    {
+        if (!isTrackIndexValid(trackIndex)) return 0;
+        return tracks_[trackIndex].phase(0);
+    }
+
     FrameInt LooperProcessor::getCurrentNumFrames(int trackIndex) const noexcept
     {
         if (!isTrackIndexValid(trackIndex)) return 0;
@@ -91,9 +124,10 @@ namespace ml::looper {
         return tracks_[trackIndex].isEmpty();
     }
 
-    std::optional<float> LooperProcessor::getApproxBpm() const noexcept
+    std::optional<FrameInt> LooperProcessor::getBeatLength() const noexcept
     {
-        return transport_.getApproxBPM();
+        if (transport_.isTempoSet()) return transport_.unitLength;
+        else return std::nullopt;
     }
 
     void LooperProcessor::setClickGain(float gain) noexcept
@@ -195,9 +229,14 @@ namespace ml::looper {
         return beat;
     }
 
-    void LooperProcessor::Transport::setTempo(FrameInt firstLoopLength) noexcept
+    void LooperProcessor::Transport::setTempoWithFirstLoop(FrameInt firstLoopLength) noexcept
     {
-        unitLength = estimateQuarterNoteUnit(firstLoopLength, sampleRate);
+        setTempoWithQuarterNote(estimateQuarterNoteUnit(firstLoopLength, sampleRate));
+    }
+
+    void LooperProcessor::Transport::setTempoWithQuarterNote(FrameInt quarterNoteLength) noexcept
+    {
+        unitLength = quarterNoteLength;
 
         if (unitLength == 0) {
             largestPossibleLoopLength = maxFrames;
@@ -276,7 +315,7 @@ namespace ml::looper {
                     length = transport.largestPossibleLoopLength;
                     // if no tempo set, set it to the length of the first recorded loop
                     if (!transport.isTempoSet()) {
-                        transport.setTempo(length);
+                        transport.setTempoWithFirstLoop(length);
                         // only stop recording if it is the first loop, otherwise start overdubbing automatically
                         state = State::Playback;
                     }
@@ -331,7 +370,7 @@ namespace ml::looper {
                         if (currentLength > 0) {
                             length = currentLength;
                             state = State::Playback;
-                            transport.setTempo(length);
+                            transport.setTempoWithFirstLoop(length);
                         }
                     } else {
                         const FrameInt lengthAfterSnap = snapForwardSquareGrid(currentLength, transport.unitLength);

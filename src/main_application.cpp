@@ -1,7 +1,6 @@
 #include "main_application.h"
 
 #include <iostream>
-#include <optional>
 
 #include <imgui.h>
 
@@ -110,14 +109,19 @@ namespace ml {
             j["midi"] = midiEngine_->getSettingsAsJson();
         }
 
-        sessionManager_.saveCurrentSessionToDisk(looper_);
+        if (const auto r = sessionManager_.saveCurrentSession(looper_); !r) {
+            std::cerr << r.error() << std::endl;
+        }
+
         j["sessionsPath"] = sessionManager_.getSessionsPath();
 
         j["looper"] = looper_.getSettingsAsJson();
 
         j["ui"] = ui_.serializeToJson();
 
-        if (saveJsonToFile(filepaths::settingsPath().string(), j)) {
+        if (const auto r = saveJsonToFile(filepaths::settingsPath().string(), j); !r) {
+            std::cerr << r.error() << std::endl;
+        } else {
             std::cout << "Settings saved to " << filepaths::settingsPath() << std::endl;
         }
     }
@@ -157,7 +161,9 @@ namespace ml {
         }
 
         if (ImGui::Shortcut(ImGuiKey_S | ImGuiMod_Ctrl, ImGuiInputFlags_RouteGlobal)) {
-            sessionManager_.saveCurrentSessionToDisk(looper_);
+            if (const auto r = sessionManager_.saveCurrentSession(looper_); !r) {
+                std::cerr << r.error() << std::endl;
+            }
         }
     }
 }
