@@ -1,9 +1,11 @@
 #include "main_application.h"
 
 #include <iostream>
+#include <format>
 
 #include <imgui.h>
 
+#include "ui/popup_manager.h"
 #include "audio/audio_engine.h"
 #include "filepaths.h"
 #include "json.h"
@@ -19,8 +21,10 @@ namespace ml {
             std::cout << "Midi engine started" << std::endl;
             return midiEngine;
         } catch (const std::exception& e) {
-            std::cerr << e.what() << std::endl;
-            std::cerr << "Failed to start midi engine. Proceeding without it.\n";
+            ui::PopupManager::getInstance().errorPopup(std::format(
+                "Error starting midi engine: {}\nProceeding without it.",
+                e.what()
+            ));
             return nullptr;
         }
     }
@@ -36,13 +40,13 @@ namespace ml {
         (void)argv;
 
         if (const auto r = audioEngine_->rescanDevices(); !r) {
-            std::cerr << r.error() << std::endl;
+            ui::PopupManager::getInstance().errorPopup(r.error());
         }
 
         loadJsonSettings();
 
         if (const auto r = audioEngine_->start(); !r) {
-            throw std::runtime_error("Failed to start audio engine: " + r.error());
+            ui::PopupManager::getInstance().errorPopup("Failed to start audio engine: " + r.error());
         }
 
         std::cout << "Audio engine started\n";
@@ -162,7 +166,7 @@ namespace ml {
 
         if (ImGui::Shortcut(ImGuiKey_S | ImGuiMod_Ctrl, ImGuiInputFlags_RouteGlobal)) {
             if (const auto r = sessionManager_.saveCurrentSession(looper_); !r) {
-                std::cerr << r.error() << std::endl;
+                ui::PopupManager::getInstance().errorPopup(r.error());
             }
         }
     }
