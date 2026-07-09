@@ -29,8 +29,6 @@ namespace ml::audio {
             Pa_Terminate();
             throw std::runtime_error(errorStr(err));
         }
-
-        scanDevices();
     }
 
     PortAudioBackend::~PortAudioBackend()
