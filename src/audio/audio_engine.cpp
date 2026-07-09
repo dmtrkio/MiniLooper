@@ -75,42 +75,32 @@ namespace ml::audio {
 
     int AudioEngine::getNumInputChannels() const noexcept { return inputChannels_; }
     int AudioEngine::getNumOutputChannels() const noexcept { return outputChannels_; }
-    int AudioEngine::getSampleRate() const noexcept { return sampleRate_.load(std::memory_order_relaxed); }
-    int AudioEngine::getBufferSize() const noexcept { return bufferSize_.load(std::memory_order_relaxed); }
+    int AudioEngine::getSampleRate() const noexcept { return sampleRate_; }
+    int AudioEngine::getBufferSize() const noexcept { return bufferSize_; }
 
     void AudioEngine::setSampleRate(int sampleRate)
     {
-        sampleRate_.store(sampleRate, std::memory_order_relaxed);
+        sampleRate_ = sampleRate;
     }
 
     void AudioEngine::setBufferSize(int bufferSize)
     {
-        bufferSize_.store(bufferSize, std::memory_order_relaxed);
+        bufferSize_ = bufferSize;
     }
 
     void AudioEngine::setAudioCallback(std::shared_ptr<AudioCallback> cb)
     {
-        if ((!cb) || (cb == userCallback_.load(std::memory_order_relaxed)))
-            return;
-
-        if (isRunning())
-            cb->onStart(static_cast<float>(getSampleRate()), static_cast<int>(inputChannels_), static_cast<int>(outputChannels_));
-
-        userCallback_.store(cb, std::memory_order_relaxed);
+        if ((!cb) || (cb == userCallback_)) return;
+        userCallback_ = std::move(cb);
     }
 
     std::expected<void, std::string> AudioEngine::start()
     {
-        std::lock_guard<std::mutex> lock(streamMutex_);
-
         AudioBackend::StreamParams params;
-        params.sampleRate = sampleRate_.load(std::memory_order_relaxed);
-        params.bufferSize = bufferSize_.load(std::memory_order_relaxed);
+        params.sampleRate = sampleRate_;
+        params.bufferSize = bufferSize_;
         params.numInputChannels = inputChannels_;
         params.numOutputChannels = outputChannels_;
-
-        sampleRate_.store(params.sampleRate, std::memory_order_relaxed);
-        bufferSize_.store(params.bufferSize, std::memory_order_relaxed);
 
         inputChannels_ = params.numInputChannels;
         outputChannels_ = params.numOutputChannels;
@@ -118,22 +108,25 @@ namespace ml::audio {
         inputData_.setNumChannels(inputChannels_);
         outputData_.setNumChannels(outputChannels_);
 
-        if (const auto cb = userCallback_.load(std::memory_order_relaxed))
-            cb->onStart(static_cast<float>(getSampleRate()), static_cast<int>(inputChannels_), static_cast<int>(outputChannels_));
+        if (userCallback_) {
+            userCallback_->onStart(
+                static_cast<float>(getSampleRate()),
+                inputChannels_,
+                outputChannels_
+            );
+        }
 
         return backend_->startStream(inputDeviceIndex_, outputDeviceIndex_, params);
     }
 
     std::expected<void, std::string> AudioEngine::stop()
     {
-        std::lock_guard<std::mutex> lock(streamMutex_);
-
         if (const auto r = backend_->stopStream(); !r) {
-            return std::unexpected{std::move(r.error())};
+            return std::unexpected{r.error()};
         }
 
-        if (const auto cb = userCallback_.load(std::memory_order_relaxed)) {
-            cb->onStop();
+        if (userCallback_) {
+            userCallback_->onStop();
         }
 
         return {};
@@ -148,7 +141,6 @@ namespace ml::audio {
 
     bool AudioEngine::isRunning() const
     {
-        std::lock_guard<std::mutex> lock(streamMutex_);
         return backend_->isStreamRunning();
     }
 
@@ -251,9 +243,9 @@ namespace ml::audio {
 
     bool AudioEngine::callback(const float *in, float *out, int nFrames)
     {
-        if (const auto cb = userCallback_.load(std::memory_order_relaxed)) {
+        if (userCallback_) {
             inputData_.deinterleave(in, nFrames);
-            cb->onProcess(inputData_.planar.data(), outputData_.planar.data(), nFrames);
+            userCallback_->onProcess(inputData_.planar.data(), outputData_.planar.data(), nFrames);
             outputData_.interleave(out, nFrames);
         }
 

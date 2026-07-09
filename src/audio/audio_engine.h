@@ -1,8 +1,6 @@
 #pragma once
 
-#include <atomic>
 #include <vector>
-#include <mutex>
 #include <memory>
 #include <string>
 #include <expected>
@@ -35,6 +33,7 @@ namespace ml::audio {
         AudioCallback() = default;
     };
 
+    // None of the methods in this class are thread-safe
     class AudioEngine
     {
     public:
@@ -50,17 +49,18 @@ namespace ml::audio {
         [[nodiscard]] json getSettingsAsJson() const;
         void loadSettingsFromJson(const json& j);
 
-        // -- Only these are safe to be called from an audio callback --
         int getNumInputChannels() const noexcept;
         int getNumOutputChannels() const noexcept;
         int getSampleRate() const noexcept;
         int getBufferSize() const noexcept;
-        // -------------------------------------------------------------
 
-        // rescanning will stop ongoing audio stream
+        // Always rescan after construction.
+        // Rescanning will stop ongoing audio stream.
         [[nodiscard]] std::expected<void, std::string> rescanDevices();
+
         [[nodiscard]] const std::vector<AudioDevice>& getInputDevices() const;
         [[nodiscard]] const std::vector<AudioDevice>& getOutputDevices() const;
+
         [[nodiscard]] DeviceIndex getCurrentInputDevice() const;
         [[nodiscard]] DeviceIndex getCurrentOutputDevice() const;
 
@@ -73,6 +73,7 @@ namespace ml::audio {
         [[nodiscard]] const AudioDevice* getOutputAudioDeviceByIndex(DeviceIndex outputDeviceIndex) const;
         void pickDevices();
 
+        // only call when audio is not running
         void setAudioCallback(std::shared_ptr<AudioCallback> cb);
 
         [[nodiscard]] std::expected<void, std::string> start();
@@ -86,12 +87,10 @@ namespace ml::audio {
 
         std::unique_ptr<AudioBackend> backend_;
 
-        std::atomic<std::shared_ptr<AudioCallback>> userCallback_;
+        std::shared_ptr<AudioCallback> userCallback_;
 
-        mutable std::mutex streamMutex_;
-
-        std::atomic<int> sampleRate_{48000};
-        std::atomic<int> bufferSize_{128};
+        int sampleRate_{48000};
+        int bufferSize_{128};
 
         DeviceIndex inputDeviceIndex_{kNoDevice};
         DeviceIndex outputDeviceIndex_{kNoDevice};
