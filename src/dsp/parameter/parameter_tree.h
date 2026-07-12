@@ -31,6 +31,7 @@ namespace ml::dsp::parameter {
         ParameterTree& operator=(ParameterTree&&) noexcept = default;
 
         [[nodiscard]] const std::string& getName() const;
+        void setName(std::string_view newName);
 
         // refers to a valid node (Parameter or a tree)
         [[nodiscard]] bool isValid() const noexcept;

@@ -26,6 +26,11 @@ namespace ml::dsp::parameter {
 
     const std::string& Parameter::getName() const noexcept { return name_; }
 
+    void Parameter::setName(std::string_view newName)
+    {
+        name_ = newName;
+    }
+
     ParameterType Parameter::getType() const noexcept
     {
         return std::visit([](const auto &p) { return p.type; }, data_);

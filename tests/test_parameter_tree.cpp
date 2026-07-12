@@ -206,3 +206,25 @@ TEST_CASE("ParameterTree forEachChild", "[parametertree][iterate]")
         REQUIRE(count == 0);
     }
 }
+
+TEST_CASE("ParameterTree renaming", "[parametertree][rename]")
+{
+    const auto oldName = "oldname";
+    const auto newName = "newname";
+
+    SECTION("setName changes name of subtree node") {
+        ParameterTree tree(oldName);
+        REQUIRE(oldName == tree.getName());
+
+        tree.setName(newName);
+        REQUIRE(newName == tree.getName());
+    }
+
+    SECTION("setName changes name of underlying parameter") {
+        ParameterTree tree(makeParam(oldName));
+        REQUIRE(oldName == tree.getName());
+
+        tree.setName(newName);
+        REQUIRE(newName == tree.asParameterUnsafe().getName());
+    }
+}

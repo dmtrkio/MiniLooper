@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <variant>
 #include <optional>
 #include <cstdint>
@@ -36,6 +37,8 @@ namespace ml::dsp::parameter {
         static Parameter makeBoolean(const std::string& name, const bool defaultValue);
 
         [[nodiscard]] const std::string& getName() const noexcept;
+        void setName(std::string_view newName);
+
         [[nodiscard]] ParameterType getType() const noexcept;
 
         template<typename T>

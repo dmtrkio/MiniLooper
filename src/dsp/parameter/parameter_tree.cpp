@@ -30,9 +30,20 @@ namespace ml::dsp::parameter {
     const std::string& ParameterTree::getName() const
     {
         if (!isValid()) throwInvalidTreeException();
-        if (isParameter())
+        if (isParameter()) {
             return std::get<Parameter>(node_->data).getName();
+        }
         return node_->name;
+    }
+
+    void ParameterTree::setName(std::string_view newName)
+    {
+        if (!isValid()) throwInvalidTreeException();
+        if (isParameter()) {
+            std::get<Parameter>(node_->data).setName(newName);
+        } else {
+            node_->name = newName;
+        }
     }
 
     Parameter& ParameterTree::asParameterUnsafe()
