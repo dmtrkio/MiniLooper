@@ -227,4 +227,12 @@ TEST_CASE("ParameterTree renaming", "[parametertree][rename]")
         tree.setName(newName);
         REQUIRE(newName == tree.asParameterUnsafe().getName());
     }
+
+    SECTION("setName throws if parent already contains has child with a given name") {
+        ParameterTree parent("parent");
+        const auto child1 = parent.addSubTree(ParameterTree{"child1"});
+        auto child2 = parent.addSubTree(ParameterTree{"child2"});
+
+        REQUIRE_THROWS(child2.setName(child1.getName()));
+    }
 }

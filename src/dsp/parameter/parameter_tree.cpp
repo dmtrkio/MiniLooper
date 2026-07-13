@@ -39,6 +39,11 @@ namespace ml::dsp::parameter {
     void ParameterTree::setName(std::string_view newName)
     {
         if (!isValid()) throwInvalidTreeException();
+        if (node_->name == newName) return;
+        if (parent_ && parent_->containsSubTreeWithName(newName)) {
+            throwDuplicateNameException();
+        }
+
         if (isParameter()) {
             std::get<Parameter>(node_->data).setName(newName);
         } else {
@@ -88,19 +93,25 @@ namespace ml::dsp::parameter {
         return (it != children.end()) ? *it : ParameterTree{};
     }
 
+    bool ParameterTree::containsSubTreeWithName(std::string_view name) const
+    {
+        if (!isSubTree()) return false;
+        const auto& children = std::get<Vec>(node_->data);
+        return vecContainsSubTreeNamed(children, name);
+    }
+
     ParameterTree ParameterTree::addSubTree(ParameterTree subtree)
     {
         if (!isSubTree() || !subtree.isValid()) return ParameterTree{};
 
         auto& children = std::get<Vec>(node_->data);
 
-        const auto it = std::ranges::find_if(children, [&](const ParameterTree& node) {
-            return node.getName() == subtree.getName();
-        });
+        if (vecContainsSubTreeNamed(children, subtree.getName())) {
+            throwDuplicateNameException();
+        }
 
-        if (it != children.end()) throwDuplicateNameException();
-
-        children.push_back(std::move(subtree));
+        children.emplace_back(std::move(subtree));
+        children.back().parent_ = this;
         return children.back();
     }
 
@@ -110,13 +121,12 @@ namespace ml::dsp::parameter {
 
         auto& children = std::get<Vec>(node_->data);
 
-        const auto it = std::ranges::find_if(children, [&](const ParameterTree& node) {
-            return node.getName() == parameter.getName();
-        });
-
-        if (it != children.end()) throwDuplicateNameException();
+        if (vecContainsSubTreeNamed(children, parameter.getName())) {
+            throwDuplicateNameException();
+        }
 
         children.emplace_back(std::move(parameter));
+        children.back().parent_ = this;
         return children.back();
     }
 
@@ -182,5 +192,15 @@ namespace ml::dsp::parameter {
     void ParameterTree::throwInvalidTreeException()
     {
         throw std::runtime_error{"Parameter Tree is invalid"};
+    }
+
+    bool ParameterTree::vecContainsSubTreeNamed(const std::vector<ParameterTree>& v, std::string_view name)
+    {
+        const auto it = std::ranges::find_if(v, [&](const ParameterTree& node) {
+            return node.getName() == name;
+        });
+
+        if (it != v.end()) return true;
+        return false;
     }
 }

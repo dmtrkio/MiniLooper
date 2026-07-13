@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 
 #include "rt_sanitizer.h"
 #include "dsp/parameter/parameter_tree.h"
@@ -14,6 +15,8 @@ namespace ml::dsp::effects {
 
         EffectBase(const std::string& name);
         virtual ~EffectBase() = default;
+
+        void rename(std::string_view newName);
 
         virtual void prepare(float sampleRate);
         void process(float *const *data, unsigned int nFrames) noexcept RT_SAN;

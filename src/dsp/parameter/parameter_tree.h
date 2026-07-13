@@ -25,6 +25,7 @@ namespace ml::dsp::parameter {
         // creates a tree with given subtrees
         ParameterTree(std::string name, std::vector<ParameterTree> children);
 
+        ~ParameterTree() = default;
         ParameterTree(const ParameterTree&) = default;
         ParameterTree& operator=(const ParameterTree&) = default;
         ParameterTree(ParameterTree&&) noexcept = default;
@@ -48,6 +49,8 @@ namespace ml::dsp::parameter {
 
         [[nodiscard]] ParameterTree operator[](std::string_view key) const noexcept;
 
+        [[nodiscard]] bool containsSubTreeWithName(std::string_view name) const;
+
         template <typename Fn>
         requires std::invocable<Fn, ParameterTree&>
         void forEachChild(Fn&& fn);
@@ -69,6 +72,7 @@ namespace ml::dsp::parameter {
     private:
         static void throwDuplicateNameException();
         static void throwInvalidTreeException();
+        static bool vecContainsSubTreeNamed(const std::vector<ParameterTree>& v, std::string_view name);
 
         using Vec = std::vector<ParameterTree>;
         using Variant = std::variant<Vec, Parameter>;
@@ -86,6 +90,7 @@ namespace ml::dsp::parameter {
         };
 
         std::shared_ptr<Node> node_;
+        ParameterTree* parent_ = nullptr;
 
         ParameterTree();
     };

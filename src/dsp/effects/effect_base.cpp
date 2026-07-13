@@ -11,6 +11,11 @@ namespace ml::dsp::effects {
         enabledParam_.referTo(pt_["Enabled"].asParameterUnsafe());
     }
 
+    void EffectBase::rename(std::string_view newName)
+    {
+        pt_.setName(newName);
+    }
+
     void EffectBase::prepare(float sampleRate)
     {
         (void)(sampleRate);
