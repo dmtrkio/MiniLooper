@@ -12,7 +12,7 @@ namespace ml::dsp::effects {
         panParam_.referTo(params[0].asParameterUnsafe());
     }
 
-    void PannerEffect::prepare(float sampleRate)
+    void PannerEffect::prepareInner(float sampleRate)
     {
         static constexpr float kSmoothingMs = 1.0f;
         const auto smoothFrames = kSmoothingMs * sampleRate * 0.001f;

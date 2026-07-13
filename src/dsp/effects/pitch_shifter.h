@@ -9,11 +9,11 @@ namespace ml::dsp::effects {
     {
     public:
         PitchShifter();
-        void prepare(float sampleRate) override;
-        void reset() noexcept override;
 
     protected:
+        void prepareInner(float sampleRate) override;
         void processInner(float *const *data, unsigned int nFrames) noexcept override;
+        void resetInner() noexcept override;
 
     private:
         parameter::IntegerParameterView semitonesParam_;

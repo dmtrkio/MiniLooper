@@ -20,22 +20,22 @@ namespace ml::dsp::effects {
             attachParameters(params);
         }
 
-        void prepare(float sampleRate) override
+    protected:
+        void prepareInner(float sampleRate) override
         {
             chain_.prepare(sampleRate);
         }
 
-        void reset() noexcept override
+        void processInner(float *const *data, const unsigned int nFrames) noexcept override
+        {
+            chain_.process(data, nFrames);
+        }
+
+        void resetInner() noexcept override
         {
             std::apply([](auto&... e) {
                 (e.reset(), ...);
             }, chain_.chain);
-        }
-
-    protected:
-        void processInner(float *const *data, const unsigned int nFrames) noexcept override
-        {
-            chain_.process(data, nFrames);
         }
 
     private:

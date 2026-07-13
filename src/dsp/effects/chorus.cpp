@@ -18,7 +18,7 @@ namespace ml::dsp::effects {
         mixParam_.referTo(params[3].asParameterUnsafe());
     }
 
-    void Chorus::prepare(float sampleRate)
+    void Chorus::prepareInner(float sampleRate)
     {
         static constexpr float kSmoothingMs = 1.0f;
         const auto smoothFrames = kSmoothingMs * sampleRate * 0.001f;

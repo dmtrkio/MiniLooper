@@ -12,7 +12,7 @@ namespace ml::dsp::effects {
         gainDbParam_.referTo(params[0].asParameterUnsafe());
     }
 
-    void GainEffect::prepare(float sampleRate)
+    void GainEffect::prepareInner(float sampleRate)
     {
         static constexpr float kSmoothingMs = 1.0f;
         const auto smoothFrames = kSmoothingMs * sampleRate * 0.001f;

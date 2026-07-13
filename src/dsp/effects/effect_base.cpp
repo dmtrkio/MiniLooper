@@ -18,7 +18,11 @@ namespace ml::dsp::effects {
 
     void EffectBase::prepare(float sampleRate)
     {
-        (void)(sampleRate);
+        for (auto& step : processingSteps_) {
+            step->prepare(sampleRate);
+        }
+
+        prepareInner(sampleRate);
     }
 
     void EffectBase::process(float *const *data, unsigned int nFrames) noexcept
@@ -31,8 +35,12 @@ namespace ml::dsp::effects {
             }
             return;
         }
-
         prevEnabled_ = true;
+
+        for (auto& step : processingSteps_) {
+            step->process(data, nFrames);
+        }
+
         processInner(data, nFrames);
     }
 
@@ -64,14 +72,31 @@ namespace ml::dsp::effects {
         enabledParam_.set(enabled);
     }
 
-    void EffectBase::reset() noexcept {}
+    void EffectBase::reset() noexcept
+    {
+        for (auto& step : processingSteps_) {
+            step->reset();
+        }
+        resetInner();
+    }
 
-    void EffectBase::attachParameters(const std::vector<ParamTree>& params) noexcept
+    void EffectBase::prepareInner(float) {}
+    void EffectBase::resetInner() noexcept {}
+
+    void EffectBase::attachParameters(const std::vector<ParamTree>& params)
     {
         for (const auto& paramTree : params) {
             if (paramTree.isValid()) {
                 pt_.addSubTree(paramTree);
             }
         }
+    }
+
+    EffectBase& EffectBase::addProcessingStep(std::unique_ptr<EffectBase> effect)
+    {
+        processingSteps_.emplace_back(std::move(effect));
+        const auto paramTree = processingSteps_.back()->getParameterTree();
+        attachParameters({std::move(paramTree)});
+        return *processingSteps_.back();
     }
 }

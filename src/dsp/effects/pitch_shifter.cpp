@@ -14,7 +14,7 @@ namespace ml::dsp::effects {
         mixParam_.referTo(params[1].asParameterUnsafe());
     }
 
-    void PitchShifter::prepare(float sampleRate)
+    void PitchShifter::prepareInner(float sampleRate)
     {
         static constexpr float kSmoothingMs = 1.0f;
         const auto smoothFrames = kSmoothingMs * sampleRate * 0.001f;
@@ -42,7 +42,7 @@ namespace ml::dsp::effects {
         }
     }
 
-    void PitchShifter::reset() noexcept
+    void PitchShifter::resetInner() noexcept
     {
         shifter_.clearState();
     }

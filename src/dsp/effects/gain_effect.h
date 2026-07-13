@@ -9,9 +9,9 @@ namespace ml::dsp::effects {
     {
     public:
         GainEffect();
-        void prepare(float sampleRate) override;
 
     protected:
+        void prepareInner(float sampleRate) override;
         void processInner(float *const *data, const unsigned int nFrames) noexcept override;
 
     private:

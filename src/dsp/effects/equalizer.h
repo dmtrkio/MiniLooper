@@ -13,9 +13,9 @@ namespace ml::dsp::effects {
         static constexpr std::size_t kBands = 6;
 
         Equalizer();
-        void prepare(const float sampleRate) override;
 
     protected:
+        void prepareInner(const float sampleRate) override;
         void processInner(float *const *data, const unsigned int nFrames) noexcept override;
 
     private:

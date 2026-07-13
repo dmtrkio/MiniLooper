@@ -50,7 +50,7 @@ namespace ml::dsp::effects {
         }
     }
 
-    void Equalizer::prepare(const float sampleRate)
+    void Equalizer::prepareInner(const float sampleRate)
     {
         sampleRate_ = sampleRate;
         for (auto i{0u}; i < bands_.size(); ++i) {

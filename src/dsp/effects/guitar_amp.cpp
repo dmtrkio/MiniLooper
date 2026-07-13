@@ -19,7 +19,7 @@ namespace ml::dsp::effects {
         dryWetParam_.referTo(params[3].asParameterUnsafe());
     }
 
-    void GuitarAmp::prepare(float sampleRate)
+    void GuitarAmp::prepareInner(float sampleRate)
     {
         static constexpr float kSmoothingMs = 1.0f;
         const auto smoothFrames = kSmoothingMs * sampleRate * 0.001f;
