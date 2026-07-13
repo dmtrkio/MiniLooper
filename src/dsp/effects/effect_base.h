@@ -16,8 +16,13 @@ namespace ml::dsp::effects {
         using Param = parameter::Parameter;
         using ParamTree = parameter::ParameterTree;
 
-        EffectBase(const std::string& name);
+        explicit EffectBase(const std::string& name);
+
         virtual ~EffectBase() = default;
+        EffectBase(const EffectBase&) = delete;
+        EffectBase& operator=(const EffectBase&) = delete;
+        EffectBase(EffectBase&&) noexcept = default;
+        EffectBase& operator=(EffectBase&&) noexcept = default;
 
         void rename(std::string_view newName);
 
@@ -38,7 +43,7 @@ namespace ml::dsp::effects {
         virtual void prepareInner(float sampleRate);
 
         // implement actual processing in the derived class
-        virtual void processInner(float *const *data, unsigned int nFrames) noexcept RT_SAN = 0;
+        virtual void processInner(float *const *data, unsigned int nFrames) noexcept RT_SAN;
 
         // implement reset of dsp state in the derived class if needed, should be realtime safe (no allocations, locks etc)
         virtual void resetInner() noexcept RT_SAN;

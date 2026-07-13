@@ -81,6 +81,7 @@ namespace ml::dsp::effects {
     }
 
     void EffectBase::prepareInner(float) {}
+    void EffectBase::processInner(float *const *, unsigned int) noexcept {}
     void EffectBase::resetInner() noexcept {}
 
     void EffectBase::attachParameters(const std::vector<ParamTree>& params)
