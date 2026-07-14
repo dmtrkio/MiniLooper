@@ -27,17 +27,15 @@ namespace ml::dsp {
 
         int getMaxDelaySamples() const noexcept { return static_cast<int>(buffer_.size()); }
 
-        void setDelay(float delaySamples)
+        void setDelay(float delaySamples) noexcept
         {
             delaySamples = std::max(0.0f, std::min(delaySamples, static_cast<float>(getMaxDelaySamples() - 1)));
             delayInt_ = static_cast<int>(delaySamples);
             delayFrac_ = delaySamples - static_cast<float>(delayInt_);
         }
 
-        float process(const float input) noexcept
+        float read() const noexcept
         {
-            buffer_[writeIndex_] = input;
-
             const auto size = getMaxDelaySamples();
 
             int readIndex = writeIndex_ - delayInt_;
@@ -49,9 +47,37 @@ namespace ml::dsp {
             const float s1 = buffer_[nextIndex];
 
             const float output = s0 + delayFrac_ * (s1 - s0);
+            return output;
+        }
 
+        void write(const float input) noexcept
+        {
+            buffer_[writeIndex_] = input;
+            const auto size = getMaxDelaySamples();
             if (++writeIndex_ >= size) writeIndex_ = 0;
+        }
 
+        float process(const float input) noexcept
+        {
+            const auto output = read();
+            write(input);
+            return output; 
+        }
+
+        // Comb filter: delay with feedback
+        float processWithFeedback(const float input, const float feedback) noexcept
+        {
+            const float output = read();
+            write(input + output * feedback);
+            return output;
+        }
+
+        // All-pass filter: delay with feedforward and feedback
+        float processAllPass(const float input, const float gain) noexcept
+        {
+            const float delayed = read();
+            const float output = delayed - gain * input;
+            write(input + gain * delayed);
             return output;
         }
 

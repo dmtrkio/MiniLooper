@@ -10,6 +10,7 @@
 #include "dsp/effects/guitar_amp.h"
 #include "dsp/effects/chorus.h"
 #include "dsp/effects/equalizer.h"
+#include "dsp/effects/reverb.h"
 #include "dsp/parameter/parameter_view.h"
 
 #include "audio/audio_engine.h"
@@ -57,7 +58,9 @@ namespace ml::looper {
             channel->panParam.referTo(channelSubTree["Pan"].asParameterUnsafe());
         }
 
-        outputFx_ = dsp::effects::createEffectSequence("FX", true);
+        outputFx_ = dsp::effects::createEffectSequence("FX", true,
+            std::make_unique<dsp::effects::Reverb>()
+        );
         paramTree_.addSubTree(outputFx_->getParameterTree());
     }
 
