@@ -11,6 +11,7 @@
 namespace ml::dsp::effects {
     struct EffectBase;
 
+    // Helper factory function to create sequence of effects without deriving from EffectBase
     template<typename... Args>
     std::unique_ptr<EffectBase> createEffectSequence(
         std::string_view name,
@@ -60,7 +61,7 @@ namespace ml::dsp::effects {
         // call this in the derived class constructor to attach internal parameters of the derived class to the base class parameter tree
         void attachParameters(const std::vector<ParamTree>& params);
 
-        // Allow for easy creation of sequence of effects.
+        // Allows for easy creation of sequences of effects.
         // Callbacks will be called in order of creation.
         // Call in the constructor of derived class
         EffectBase& addProcessingStep(std::unique_ptr<EffectBase> effect);
