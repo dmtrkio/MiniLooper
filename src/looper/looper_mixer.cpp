@@ -56,6 +56,9 @@ namespace ml::looper {
             channel->gainParam.referTo(channelSubTree["GainDb"].asParameterUnsafe());
             channel->panParam.referTo(channelSubTree["Pan"].asParameterUnsafe());
         }
+
+        outputFx_ = dsp::effects::createEffectSequence("FX", true);
+        paramTree_.addSubTree(outputFx_->getParameterTree());
     }
 
     Mixer::~Mixer() = default;
@@ -80,6 +83,8 @@ namespace ml::looper {
 
             channel->fx.prepare(sampleRate);
         }
+
+        outputFx_->prepare(sampleRate);
     }
 
     void Mixer::process(float *const *data, const unsigned int nFrames)
@@ -103,6 +108,8 @@ namespace ml::looper {
                 data[1][i] += rightSample;
             }
         }
+
+        outputFx_->process(data, nFrames);
     }
 
     dsp::parameter::ParameterTree Mixer::getParameterTree() const noexcept { return paramTree_; }

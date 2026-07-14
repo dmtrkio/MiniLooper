@@ -10,7 +10,7 @@ namespace ml::ui {
     MixerUi::MixerUi(looper::Looper &looper)
         : looper_(&looper)
     {
-        fxWindowOpened_.assign(looper_->getNumLooperTracks(), {});
+        fxWindowOpened_.assign(looper_->getNumLooperTracks() + 1, {});
     }
 
     const char* MixerUi::getTitle() const { return "Mixer"; }
@@ -32,14 +32,22 @@ namespace ml::ui {
         volumeMeter(leftDb, rightDb);
         ImGui::TextUnformatted("Output");
 
+        auto paramTree = looper_->getParameterTree();
+
         parameterUi(
-            looper_->getParameterTree()["MasterGain"]["GainDb"].asParameterUnsafe(),
-            "Master"
+            paramTree["MasterGain"]["GainDb"].asParameterUnsafe(),
+            "Volume"
         );
+
+        if (ImGui::Button("FX")) {
+            fxWindowOpened_.back().value = !fxWindowOpened_.back().value;
+        }
 
         ImGui::EndGroup();
 
         ImGui::PopItemWidth();
+
+        parameterTreeUiWindowed(paramTree["LooperMixer"]["FX"], fxWindowOpened_.back().value, "Output: ");
     }
 
     void MixerUi::drawTrack(const int trackIndex)

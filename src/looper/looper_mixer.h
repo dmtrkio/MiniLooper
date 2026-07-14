@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 
+#include "dsp/effects/effect_base.h"
 #include "dsp/parameter/parameter_tree.h"
 
 namespace ml::looper {
@@ -30,5 +31,6 @@ namespace ml::looper {
         std::vector<std::unique_ptr<Channel>> channels_;
 
         dsp::parameter::ParameterTree paramTree_;
+        std::unique_ptr<dsp::effects::EffectBase> outputFx_;
     };
 }
