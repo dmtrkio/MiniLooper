@@ -17,6 +17,8 @@ namespace ml::ui {
 
     void MixerUi::drawContent()
     {
+        ImGui::PushItemWidth(100.0f);
+
         for (auto i{0}; i < looper_->getNumLooperTracks(); ++i) {
             drawTrack(i);
             ImGui::SameLine();
@@ -25,10 +27,19 @@ namespace ml::ui {
         }
 
         ImGui::BeginGroup();
+
         const auto [leftDb, rightDb] = looper_->getLooperState().level;
         volumeMeter(leftDb, rightDb);
         ImGui::TextUnformatted("Output");
+
+        parameterUi(
+            looper_->getParameterTree()["MasterGain"]["GainDb"].asParameterUnsafe(),
+            "Master"
+        );
+
         ImGui::EndGroup();
+
+        ImGui::PopItemWidth();
     }
 
     void MixerUi::drawTrack(const int trackIndex)
@@ -36,9 +47,6 @@ namespace ml::ui {
         ImGui::PushID(trackIndex);
 
         ImGui::BeginGroup();
-
-        constexpr float sliderWidth = 100.0f;
-        ImGui::PushItemWidth(sliderWidth);
 
         const auto &track = looper_->getTrackState(trackIndex);
         const auto [left, right] = track.level;
@@ -63,7 +71,6 @@ namespace ml::ui {
             fxWindowOpened_[trackIndex].value = !fxWindowOpened_[trackIndex].value;
         }
 
-        ImGui::PopItemWidth();
         ImGui::EndGroup();
 
         if (trackIndex < looper_->getNumLooperTracks() - 1) {

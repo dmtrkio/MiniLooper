@@ -5,6 +5,7 @@
 
 #include "audio/audio_engine.h"
 #include "dsp/dsp.h"
+#include "dsp/effects/gain_effect.h"
 #include "looper_processor.h"
 #include "looper_commands.h"
 #include "midi/foot_switch.h"
@@ -38,6 +39,11 @@ namespace ml::looper {
     class Looper::LooperCallback final : public audio::AudioCallback
     {
     public:
+        LooperCallback()
+        {
+            masterGain.rename("MasterGain");
+        }
+
         void onProcess(const float *const *in, float *const *out, const int nFrames) override
         {
             fsTrackIndex_ = fsTrackParam.asParameterUnsafe().get<int>();
@@ -57,6 +63,7 @@ namespace ml::looper {
 
             sourceMixer.process(in, out, nFrames);
             looperProcessor.process(out, static_cast<FrameInt>(nFrames));
+            masterGain.process(out, nFrames);
 
             levelMeter_(out[0], out[1], nFrames);
 
@@ -105,6 +112,8 @@ namespace ml::looper {
 
             sourceMixer.prepare(nInputChannels, audio::kMaxFramesInBuffer, sampleRate);
             levelMeter_.prepare(sampleRate);
+            masterGain.prepare(sampleRate);
+            masterGain.setEnabled(true);
         }
 
         void onStop() override {}
@@ -163,6 +172,8 @@ namespace ml::looper {
             dsp::parameter::Parameter::makeBoolean("Enabled", true)
         }};
 
+        dsp::effects::GainEffect masterGain;
+
         std::optional<LooperSession> sessionToLoad;
 
     private:
@@ -183,6 +194,7 @@ namespace ml::looper {
         paramTree_.addSubTree(cb_->looperProcessor.getMixer().getParameterTree());
         paramTree_.addSubTree(cb_->fsTrackParam);
         paramTree_.addSubTree(cb_->clickParamTree);
+        paramTree_.addSubTree(cb_->masterGain.getParameterTree());
 
         audioEngine.setAudioCallback(cb_);
     }
