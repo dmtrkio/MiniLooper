@@ -1,6 +1,5 @@
 #pragma once
 
-#include <string>
 #include <string_view>
 #include <vector>
 #include <memory>
@@ -10,13 +9,23 @@
 #include "dsp/parameter/parameter_view.h"
 
 namespace ml::dsp::effects {
+    struct EffectBase;
+
+    template<typename... Args>
+    std::unique_ptr<EffectBase> createEffectSequence(
+        std::string_view name,
+        bool enabled,
+        Args&&... steps
+    );
+
     // Base Class for stereo DSP effects
     struct EffectBase
     {
         using Param = parameter::Parameter;
         using ParamTree = parameter::ParameterTree;
 
-        explicit EffectBase(const std::string& name);
+        explicit EffectBase(std::string_view name, bool enabled = false);
+        explicit EffectBase(std::string_view name, std::vector<std::unique_ptr<EffectBase>> steps, bool enabled = false);
 
         virtual ~EffectBase() = default;
         EffectBase(const EffectBase&) = delete;
@@ -62,4 +71,18 @@ namespace ml::dsp::effects {
         parameter::ParameterView<bool> enabledParam_;
         bool prevEnabled_{false};
     };
+
+    template<typename... Args>
+    inline std::unique_ptr<EffectBase> createEffectSequence(
+        std::string_view name,
+        bool enabled,
+        Args&&... steps
+    )
+    {
+        std::vector<std::unique_ptr<EffectBase>> vec;
+        vec.reserve(sizeof...(steps));
+        (vec.emplace_back(std::forward<Args>(steps)), ...);
+        
+        return std::make_unique<EffectBase>(name, std::move(vec), enabled);
+    }
 }

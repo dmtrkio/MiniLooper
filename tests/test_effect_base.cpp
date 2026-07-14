@@ -15,7 +15,7 @@ class TestEffectStep : public EffectBase
 {
 public:
     explicit TestEffectStep(const std::string& name, int numberToAdd)
-        : EffectBase(name)
+        : EffectBase(name, true)
         , number(numberToAdd)
     {
         attachParameters({ParameterTree{Parameter::makeInteger("Number", number, {INT_MIN, INT_MAX})}});
@@ -45,16 +45,15 @@ static std::unique_ptr<EffectBase> makeTestEffectStep(int numberToAdd)
     return std::make_unique<TestEffectStep>(std::format("Step {}", numberToAdd), numberToAdd);
 }
 
-class TestEffectMultistep : public TestEffectStep 
+class TestEffectMultistep : public EffectBase 
 {
 public:
-    TestEffectMultistep(const std::vector<int>& numbers) : TestEffectStep("Test", 0)
+    TestEffectMultistep(const std::vector<int>& numbers) : EffectBase("Test", true)
     {
         gCounter = 0;
         for (const int& n : numbers) {
-            addProcessingStep(makeTestEffectStep(n)).setEnabled(true);
+            addProcessingStep(makeTestEffectStep(n));
         }
-        setEnabled(true);
     }
 };
 
@@ -94,5 +93,26 @@ TEST_CASE("EffectBase internal processing chain works", "[EffectBase][internalch
             REQUIRE(param.isParameter());
             REQUIRE(param.asParameterUnsafe().get<int>() == n);
         }
+    }
+}
+
+TEST_CASE("EffectBase createEffectSequence factory", "[EffectBase][createEffectSequence]")
+{
+    const auto testSeq = createEffectSequence("test", true,
+        makeTestEffectStep(30),
+        makeTestEffectStep(55)
+    );
+
+    SECTION("prepare is called for each step") {
+        gCounter = 0;
+        testSeq->prepare(44100);
+        REQUIRE(gCounter == (30 + 55));
+    }
+
+    SECTION("parameter tree contains each step's internal tree") {
+        const auto& paramTree = testSeq->getParameterTree();
+        REQUIRE(paramTree.isValid());
+        REQUIRE(paramTree["Step 30"].isValid());
+        REQUIRE(paramTree["Step 55"].isValid());
     }
 }

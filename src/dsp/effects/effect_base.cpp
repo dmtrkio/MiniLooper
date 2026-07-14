@@ -4,11 +4,20 @@
 #include <cassert>
 
 namespace ml::dsp::effects {
-    EffectBase::EffectBase(const std::string& name)
-        : pt_(name)
+    EffectBase::EffectBase(std::string_view name, bool enabled)
+        : pt_(std::string(name))
     {
         pt_.addParameter(Param::makeBoolean("Enabled", false));
         enabledParam_.referTo(pt_["Enabled"].asParameterUnsafe());
+        setEnabled(enabled);
+    }
+
+    EffectBase::EffectBase(std::string_view name, std::vector<std::unique_ptr<EffectBase>> steps, bool enabled)
+        : EffectBase(name, enabled)
+    {
+        for (auto& effect : steps) {
+            addProcessingStep(std::move(effect));
+        }
     }
 
     void EffectBase::rename(std::string_view newName)
