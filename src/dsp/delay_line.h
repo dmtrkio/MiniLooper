@@ -9,10 +9,9 @@ namespace ml::dsp {
     class FractionalDelayLine
     {
     public:
-        explicit FractionalDelayLine()
+        explicit FractionalDelayLine(float maxDelaySamples = 16000.0f)
         {
-            const auto defaultMaxDelaySamples = 16000.0f;
-            prepare(defaultMaxDelaySamples);
+            prepare(maxDelaySamples);
         }
 
         void prepare(const float maxDelaySamples)
@@ -69,15 +68,6 @@ namespace ml::dsp {
         {
             const float output = read();
             write(input + output * feedback);
-            return output;
-        }
-
-        // All-pass filter: delay with feedforward and feedback
-        float processAllPass(const float input, const float gain) noexcept
-        {
-            const float delayed = read();
-            const float output = delayed - gain * input;
-            write(input + gain * delayed);
             return output;
         }
 
