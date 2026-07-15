@@ -1,6 +1,8 @@
 #include "reverb.h"
 
 #include "dsp/delay_line.h"
+#include "dsp/dsp.h"
+#include "dsp/parameter/parameter_view.h"
 
 namespace ml::dsp::effects {
     class SchroederReverb final : public EffectBase
@@ -8,11 +10,25 @@ namespace ml::dsp::effects {
     public:
         explicit SchroederReverb(bool enabled = false)
             : EffectBase("Schroeder Reverb", enabled)
-        {}
+        {
+            std::vector<ParamTree> params = {
+                ParamTree{Param::makeFloat("Mix", 0.5f, dsp::Range{0.0f, 1.0f})},
+            };
+
+            attachParameters(params);
+
+            mixParam_.referTo(params[0].asParameterUnsafe());
+        }
 
     protected:
         void prepareInner(float sampleRate) override
         {
+            static constexpr float kSmoothingMs = 1.0f;
+            const auto smoothFrames = kSmoothingMs * sampleRate * 0.001f;
+
+            mix_.init(dsp::dBtoLinear(mixParam_.get()));
+            mix_.setSmoothingFrames(smoothFrames);
+
             constexpr std::array<float, kAllPassCount> allPassDelays = { 347.0f, 113.0f, 37.0f };
             constexpr float allPassGain = 0.7f;
 
@@ -36,6 +52,8 @@ namespace ml::dsp::effects {
 
         void processInner(float *const *data, unsigned int nFrames) noexcept override
         {
+            mix_.setTarget(mixParam_.get());
+
             float* left = data[0];
             float* right = data[1];
 
@@ -66,7 +84,7 @@ namespace ml::dsp::effects {
                 const float wetL = outA + dryL * 0.25f;
                 const float wetR = outC + dryR * 0.25f;
 
-                const float mix = 0.5f;
+                const float mix = mix_();
                 left[n] = std::lerp(dryL, wetL, mix);
                 right[n] = std::lerp(dryR, wetR, mix);
             }
@@ -99,6 +117,9 @@ namespace ml::dsp::effects {
 
         std::array<FractionalDelayLine, kCombCount> combs_;
         std::array<float, kCombCount> combFeedback_{};
+
+        parameter::FloatParameterView mixParam_;
+        FloatSmoother mix_;
     };
 
     Reverb::Reverb() : EffectBase("Reverb")
