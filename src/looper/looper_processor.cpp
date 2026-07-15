@@ -109,7 +109,7 @@ namespace ml::looper {
     FrameInt LooperProcessor::getRelativeOffset(int trackIndex) const noexcept
     {
         if (!isTrackIndexValid(trackIndex)) return 0;
-        return tracks_[trackIndex].phase(0);
+        return tracks_[trackIndex].start;
     }
 
     FrameInt LooperProcessor::getCurrentNumFrames(int trackIndex) const noexcept
