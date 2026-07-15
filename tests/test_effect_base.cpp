@@ -1,5 +1,6 @@
 #include <format>
 #include <algorithm>
+#include <climits>
 
 #include <catch2/catch_test_macros.hpp>
 
