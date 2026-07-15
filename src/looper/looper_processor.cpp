@@ -503,13 +503,18 @@ namespace ml::looper {
 
     FrameInt LooperProcessor::Track::phase(const FrameInt transportFrame) const noexcept
     {
-        if (state == State::Recording && length == 0)
-            return transportFrame - start;
+        if (isEmpty()) {
+            if (state == State::Recording) {
+                return transportFrame - start;
+            } else {
+                return 0;
+            }
+        }
 
-        if (length == 0)
-            return 0;
-
-        return (transportFrame - start) % length;
+        const FrameInt diff = transportFrame - start;
+        FrameInt mod = diff % length;
+        if (mod < 0) mod += length;
+        return mod;
     }
 
     std::pair<float, float> LooperProcessor::Track::getFadeScalars(const FrameInt pos) const noexcept
