@@ -113,6 +113,10 @@ namespace ml::dsp::effects {
             std::swap(minDelays[0], minDelays[1]);
             std::swap(maxDelays[0], maxDelays[1]);
         }
+
+        for (std::size_t i{}; i < delayLines.size(); ++i) {
+            delayLines[i].prepare(maxDelays[i]);
+        }
     }
 
     std::pair<float, float> Chorus::Voice::processFrame(std::pair<float, float> input, float rate, float depth, float feedback, float sampleRate) noexcept

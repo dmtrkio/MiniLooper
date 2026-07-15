@@ -9,11 +9,13 @@ namespace ml::dsp {
     class FractionalDelayLine
     {
     public:
-        explicit FractionalDelayLine(float maxDelaySamples = 16000.0f)
+        explicit FractionalDelayLine(float maxDelaySamples = 500.0f)
         {
             prepare(maxDelaySamples);
         }
 
+        // Don't forget to call this to specify the maximum delay before using the delay line
+        // Otherwise delay will be clamped to default max delay, which is deliberately small to save memory
         void prepare(const float maxDelaySamples)
         {
             const std::size_t maxDelaySamplesInt = static_cast<int>(std::ceil(maxDelaySamples));

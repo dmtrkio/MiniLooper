@@ -40,12 +40,16 @@ namespace ml::dsp::effects {
             };
 
             for (std::size_t i = 0; i < allPasses_.size(); ++i) {
-                allPasses_[i].setDelay(convertSr(allPassDelays[i]));
+                const float delay = convertSr(allPassDelays[i]);
+                allPasses_[i].prepare(delay);
+                allPasses_[i].setDelay(delay);
             }
             allPassGain_ = allPassGain;
 
             for (std::size_t i = 0; i < combs_.size(); ++i) {
-                combs_[i].setDelay(convertSr(combDelays[i]));
+                const float delay = convertSr(combDelays[i]);
+                combs_[i].prepare(delay);
+                combs_[i].setDelay(delay);
                 combFeedback_[i] = combFeedback[i];
             }
         }
