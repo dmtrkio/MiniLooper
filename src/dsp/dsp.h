@@ -205,4 +205,14 @@ namespace ml::dsp {
 
     using FloatSmoother = Smoother<float>;
     using StereoFloatSmoother = MultiSmoother<float, 2>;
+
+    inline float biasedTanh(float x, float bias, float biasTanh) noexcept
+    {
+        return std::tanh(x + bias) - biasTanh;
+    }
+
+    inline float biasedTanh(float x, float bias) noexcept
+    {
+        return biasedTanh(x, bias, std::tanh(bias));
+    }
 }

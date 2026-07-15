@@ -33,12 +33,12 @@ namespace ml::dsp::effects {
             void setDrive(float d) noexcept;
 
             template<std::size_t Index>
-            float processSample(float sample) noexcept
+            float processSample(float sample, float bias, float biasTanh) noexcept
             {
                 float processed = hp.processSample<Index>(sample);
                 processed = presenceBoost.processSample<Index>(processed);
                 processed = lowShelf.processSample<Index>(processed);
-                processed = std::tanh(processed * drive);
+                processed = biasedTanh(processed * drive, bias, biasTanh);
                 processed = lp.processSample<Index>(processed);
                 return processed;
             }
@@ -93,5 +93,8 @@ namespace ml::dsp::effects {
         parameter::FloatParameterView toneParam_;
         parameter::FloatParameterView levelParam_;
         parameter::FloatParameterView dryWetParam_;
+
+        float bias_;
+        float biasTanh_;
     };
 }

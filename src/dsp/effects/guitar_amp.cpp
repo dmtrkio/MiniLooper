@@ -1,4 +1,5 @@
 #include "guitar_amp.h"
+#include "dsp/dsp.h"
 #include "dsp/effects/guitar_amp.h"
 
 namespace ml::dsp::effects {
@@ -37,6 +38,9 @@ namespace ml::dsp::effects {
         preamp.prepare(sampleRate);
         toneStack.prepare(sampleRate);
         cabinet.prepare(sampleRate);
+
+        bias_ = 0.18f;
+        biasTanh_ = std::tanh(bias_);
     }
 
     void GuitarAmp::processInner(float *const *data, const unsigned int nFrames) noexcept
@@ -46,8 +50,9 @@ namespace ml::dsp::effects {
         level = levelParam_.get();
         dryWet = dryWetParam_.get();
 
-        auto powerAmpDrive = [](float sample, float drive) -> float {
-            return std::tanh(sample * (1.0f + drive * 10.0f));
+        const auto powerAmpDrive = [bias = bias_, biasTanh = biasTanh_](float sample, float drive) -> float {
+            const float gain = (1.0f + drive * 10.0f);
+            return biasedTanh(sample * gain, bias, biasTanh);
         };
 
         staticFor<2>([&](auto channel) {
@@ -55,7 +60,7 @@ namespace ml::dsp::effects {
                 const auto inputSample = data[channel][frame];
                 preamp.setDrive(drive.get<channel>());
                 toneStack.setTone(tone.get<channel>());
-                const auto preampOutput = preamp.processSample<channel>(inputSample);
+                const auto preampOutput = preamp.processSample<channel>(inputSample, bias_, biasTanh_);
                 const auto toneStackOutput = toneStack.processSample<channel>(preampOutput);
                 const auto powerAmpOutput = powerAmpDrive(toneStackOutput, drive.get<channel>());
                 const auto cabinetOutput = cabinet.processSample<channel>(powerAmpOutput);
