@@ -8,14 +8,22 @@ namespace ml::dsp::effects {
     class SchroederAllPass : public FractionalDelayLine
     {
     public:
-        [[nodiscard]] float process(float input, float gain = 0.7f) noexcept
+        void setGain(float gain) noexcept
+        {
+            gain_ = gain;
+        }
+
+        [[nodiscard]] float process(float input) noexcept
         {
             const float delayed = read();
-            const float w = input - gain * delayed;
+            const float w = input - gain_ * delayed;
             write(w);
-            const float output = w * gain + delayed;
+            const float output = w * gain_ + delayed;
             return output;
         }
+
+    private:
+        float gain_ = 0.7f;
     };
 
     class CombFilter : public FractionalDelayLine
@@ -73,8 +81,8 @@ namespace ml::dsp::effects {
                 const float delay = convertSr(allPassDelays[i]);
                 allPasses_[i].prepare(delay);
                 allPasses_[i].setDelay(delay);
+                allPasses_[i].setGain(allPassGain);
             }
-            allPassGain_ = allPassGain;
 
             for (std::size_t i = 0; i < combs_.size(); ++i) {
                 const float delay = convertSr(combDelays[i]);
@@ -96,7 +104,7 @@ namespace ml::dsp::effects {
 
                 float allpassOutput = monoIn;
                 for (auto& ap : allPasses_) {
-                    allpassOutput = ap.process(allpassOutput, allPassGain_);
+                    allpassOutput = ap.process(allpassOutput);
                 }
 
                 std::array<float, kCombCount> x;
@@ -139,7 +147,6 @@ namespace ml::dsp::effects {
         static constexpr std::size_t kCombCount = 4;
 
         std::array<SchroederAllPass, 3> allPasses_;
-        float allPassGain_ = 0.7f;
 
         std::array<CombFilter, kCombCount> combs_;
 
