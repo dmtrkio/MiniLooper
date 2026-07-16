@@ -1,78 +1,10 @@
 #include "reverb.h"
 
-#include "dsp/delay_line.h"
 #include "dsp/dsp.h"
-#include "dsp/filter/one_pole_filter.h"
+#include "dsp/filter/reverb_design.h"
 #include "dsp/parameter/parameter_view.h"
 
 namespace ml::dsp::effects {
-    class SchroederAllPass : public FractionalDelayLine
-    {
-    public:
-        void setGain(float gain) noexcept
-        {
-            gain_ = gain;
-        }
-
-        [[nodiscard]] float process(float input) noexcept
-        {
-            const float delayed = read();
-            const float w = input - gain_ * delayed;
-            write(w);
-            const float output = w * gain_ + delayed;
-            return output;
-        }
-
-    private:
-        float gain_ = 0.7f;
-    };
-
-    class CombFilter : public FractionalDelayLine
-    {
-    public:
-        void setFeedback(float feedback) noexcept
-        {
-            feedback_ = feedback;
-        }
-
-        [[nodiscard]] float process(float input) noexcept
-        {
-
-            const float output = read();
-            write(input + output * feedback_);
-            return output;
-        }
-
-    private:
-        float feedback_ = 0;
-    };
-
-    class LowpassFeedbackCombFilter : public FractionalDelayLine
-    {
-    public:
-        void setFeedback(float feedback) noexcept
-        {
-            feedback_ = feedback;
-        }
-
-        void setDamp(float damp) noexcept
-        {
-            lowpassFilter_.setCoefficient(damp);
-        }
-
-        [[nodiscard]] float process(float input) noexcept
-        {
-
-            const float output = lowpassFilter_.process(read());
-            write(input + output * feedback_);
-            return output;
-        }
-
-    private:
-        float feedback_ = 0;
-        filter::OnePoleFilter lowpassFilter_;
-    };
-
     class SchroederReverb final : public EffectBase
     {
     public:
@@ -205,9 +137,9 @@ namespace ml::dsp::effects {
         static constexpr std::array<float, kCombCount> kCombDelays = { 1687.0f, 1601.0f, 2053.0f, 2251.0f };
         static constexpr std::array<float, kCombCount> kCombFeedback = {0.773f, 0.802f, 0.753f, 0.733f };
 
-        std::array<SchroederAllPass, kAllPassCount> allPasses_;
+        std::array<filter::SchroederAllPass, kAllPassCount> allPasses_;
 
-        std::array<LowpassFeedbackCombFilter, kCombCount> combs_;
+        std::array<filter::LowpassFeedbackCombFilter, kCombCount> combs_;
 
         parameter::FloatParameterView mixParam_;
         FloatSmoother mix_;
