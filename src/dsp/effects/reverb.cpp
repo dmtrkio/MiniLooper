@@ -5,6 +5,11 @@
 #include "dsp/parameter/parameter_view.h"
 
 namespace ml::dsp::effects {
+    static float convertSampleRate(float sourceDelay, float sourceSampleRate, float targetSampleRate)
+    {
+        return sourceDelay * (targetSampleRate / sourceSampleRate);
+    }
+
     class SchroederReverb final : public EffectBase
     {
     public:
@@ -37,7 +42,7 @@ namespace ml::dsp::effects {
             mix_.setSmoothingFrames(smoothFrames);
 
             const auto convertSr = [sampleRate](float x) {
-                return x * (sampleRate / 25000.0f);
+                return convertSampleRate(x, 25000.0f, sampleRate);
             };
 
             for (std::size_t i = 0; i < allPasses_.size(); ++i) {
