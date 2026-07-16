@@ -62,7 +62,7 @@ namespace ml::dsp::effects {
             float* right = data[1];
 
             for (unsigned int n = 0; n < nFrames; ++n) {
-                const float monoIn = (left[n] + right[n]) * 0.5f;
+                const float monoIn = (left[n] + right[n]) * 0.18f;
 
                 float allpassOutput = monoIn;
                 for (auto& ap : allPasses_) {
@@ -85,8 +85,8 @@ namespace ml::dsp::effects {
 
                 const float dryL = left[n];
                 const float dryR = right[n];
-                const float wetL = outA + dryL * 0.25f;
-                const float wetR = outC + dryR * 0.25f;
+                const float wetL = outA;
+                const float wetR = outC;
 
                 const float mix = mix_();
                 left[n] = std::lerp(dryL, wetL, mix);
@@ -108,9 +108,10 @@ namespace ml::dsp::effects {
         static float allpass(FractionalDelayLine& delayLine, const float input, const float gain) noexcept
         {
             const float delayed = delayLine.read();
-            const float w = input + gain * delayed;
+            const float w = input - gain * delayed;
             delayLine.write(w);
-            return delayed - gain * w;
+            const float output = w * gain + delayed;
+            return output;
         }
 
         static constexpr std::size_t kAllPassCount = 3;
