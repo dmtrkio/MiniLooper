@@ -51,11 +51,13 @@ namespace ml::dsp::effects {
         {
             std::vector<ParamTree> params = {
                 ParamTree{Param::makeFloat("Mix", 0.5f, dsp::Range{0.0f, 1.0f})},
+                ParamTree{Param::makeFloat("Decay", 0.5f, dsp::Range{0.0f, 1.0f})},
             };
 
             attachParameters(params);
 
             mixParam_.referTo(params[0].asParameterUnsafe());
+            decayParam_.referTo(params[1].asParameterUnsafe());
         }
 
     protected:
@@ -64,42 +66,42 @@ namespace ml::dsp::effects {
             static constexpr float kSmoothingMs = 1.0f;
             const auto smoothFrames = kSmoothingMs * sampleRate * 0.001f;
 
+            decay_.init(decayParam_.get());
+            decay_.setSmoothingFrames(smoothFrames);
+
             mix_.init(dsp::dBtoLinear(mixParam_.get()));
             mix_.setSmoothingFrames(smoothFrames);
-
-            constexpr std::array<float, kAllPassCount> allPassDelays = { 347.0f, 113.0f, 37.0f };
-            constexpr float allPassGain = 0.7f;
-
-            constexpr std::array<float, kCombCount> combDelays = { 1687.0f, 1601.0f, 2053.0f, 2251.0f };
-            constexpr std::array<float, kCombCount> combFeedback = {0.773f, 0.802f, 0.753f, 0.733f };
 
             const auto convertSr = [sampleRate](float x) {
                 return x * (sampleRate / 25000.0f);
             };
 
             for (std::size_t i = 0; i < allPasses_.size(); ++i) {
-                const float delay = convertSr(allPassDelays[i]);
+                const float delay = convertSr(kAllPassDelays[i]);
                 allPasses_[i].prepare(delay);
                 allPasses_[i].setDelay(delay);
-                allPasses_[i].setGain(allPassGain);
+                allPasses_[i].setGain(kAllPassGain);
             }
 
             for (std::size_t i = 0; i < combs_.size(); ++i) {
-                const float delay = convertSr(combDelays[i]);
+                const float delay = convertSr(kCombDelays[i]);
                 combs_[i].prepare(delay);
                 combs_[i].setDelay(delay);
-                combs_[i].setFeedback(combFeedback[i]);
+                combs_[i].setFeedback(kCombFeedback[i]);
             }
         }
 
         void processInner(float *const *data, unsigned int nFrames) noexcept override
         {
+            decay_.setTarget(decayParam_.get());
             mix_.setTarget(mixParam_.get());
 
             float* left = data[0];
             float* right = data[1];
 
             for (unsigned int n = 0; n < nFrames; ++n) {
+                setDecay(decay_());
+
                 const float monoIn = (left[n] + right[n]) * 0.18f;
 
                 float allpassOutput = monoIn;
@@ -143,12 +145,29 @@ namespace ml::dsp::effects {
         }
 
     private:
+        void setDecay(float decay) noexcept
+        {
+            const float decayScaler = std::lerp(0.4f, 1.0f, decay);
+            for (std::size_t i = 0; i < combs_.size(); ++i) {
+                combs_[i].setFeedback(decayScaler * kCombFeedback[i]);
+            }
+        }
+
         static constexpr std::size_t kAllPassCount = 3;
         static constexpr std::size_t kCombCount = 4;
 
-        std::array<SchroederAllPass, 3> allPasses_;
+        static constexpr std::array<float, kAllPassCount> kAllPassDelays = { 347.0f, 113.0f, 37.0f };
+        static constexpr float kAllPassGain = 0.7f;
+
+        static constexpr std::array<float, kCombCount> kCombDelays = { 1687.0f, 1601.0f, 2053.0f, 2251.0f };
+        static constexpr std::array<float, kCombCount> kCombFeedback = {0.773f, 0.802f, 0.753f, 0.733f };
+
+        std::array<SchroederAllPass, kAllPassCount> allPasses_;
 
         std::array<CombFilter, kCombCount> combs_;
+
+        parameter::FloatParameterView decayParam_;
+        FloatSmoother decay_;
 
         parameter::FloatParameterView mixParam_;
         FloatSmoother mix_;
