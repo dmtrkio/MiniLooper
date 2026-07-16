@@ -5,6 +5,36 @@
 #include "dsp/parameter/parameter_view.h"
 
 namespace ml::dsp::effects {
+    class SchroederAllPass : public FractionalDelayLine
+    {
+    public:
+        [[nodiscard]] float process(float input, float gain = 0.7f) noexcept
+        {
+            const float delayed = read();
+            const float w = input - gain * delayed;
+            write(w);
+            const float output = w * gain + delayed;
+            return output;
+        }
+    };
+
+    class CombFilter : public FractionalDelayLine
+    {
+    public:
+        void setFeedback(float feedback) noexcept
+        {
+            feedback_ = feedback;
+        }
+
+        [[nodiscard]] float process(float input) noexcept
+        {
+            return processWithFeedback(input, feedback_);
+        }
+
+    private:
+        float feedback_ = 0;
+    };
+
     class SchroederReverb final : public EffectBase
     {
     public:
@@ -50,7 +80,7 @@ namespace ml::dsp::effects {
                 const float delay = convertSr(combDelays[i]);
                 combs_[i].prepare(delay);
                 combs_[i].setDelay(delay);
-                combFeedback_[i] = combFeedback[i];
+                combs_[i].setFeedback(combFeedback[i]);
             }
         }
 
@@ -66,12 +96,12 @@ namespace ml::dsp::effects {
 
                 float allpassOutput = monoIn;
                 for (auto& ap : allPasses_) {
-                    allpassOutput = allpass(ap, allpassOutput, allPassGain_);
+                    allpassOutput = ap.process(allpassOutput, allPassGain_);
                 }
 
                 std::array<float, kCombCount> x;
                 for (std::size_t i = 0; i < combs_.size(); ++i) {
-                    x[i] = combs_[i].processWithFeedback(allpassOutput, combFeedback_[i]);
+                    x[i] = combs_[i].process(allpassOutput);
                 }
 
                 const float s1 = x[0] + x[2];
@@ -105,23 +135,13 @@ namespace ml::dsp::effects {
         }
 
     private:
-        static float allpass(FractionalDelayLine& delayLine, const float input, const float gain) noexcept
-        {
-            const float delayed = delayLine.read();
-            const float w = input - gain * delayed;
-            delayLine.write(w);
-            const float output = w * gain + delayed;
-            return output;
-        }
-
         static constexpr std::size_t kAllPassCount = 3;
         static constexpr std::size_t kCombCount = 4;
 
-        std::array<FractionalDelayLine, 3> allPasses_;
+        std::array<SchroederAllPass, 3> allPasses_;
         float allPassGain_ = 0.7f;
 
-        std::array<FractionalDelayLine, kCombCount> combs_;
-        std::array<float, kCombCount> combFeedback_{};
+        std::array<CombFilter, kCombCount> combs_;
 
         parameter::FloatParameterView mixParam_;
         FloatSmoother mix_;
