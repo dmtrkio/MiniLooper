@@ -65,14 +65,6 @@ namespace ml::dsp {
             return output; 
         }
 
-        // Comb filter: delay with feedback
-        float processWithFeedback(const float input, const float feedback) noexcept
-        {
-            const float output = read();
-            write(input + output * feedback);
-            return output;
-        }
-
         void clear()
         {
             std::ranges::fill(buffer_, 0.0f);

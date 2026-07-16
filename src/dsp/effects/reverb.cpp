@@ -2,6 +2,7 @@
 
 #include "dsp/delay_line.h"
 #include "dsp/dsp.h"
+#include "dsp/filter/one_pole_filter.h"
 #include "dsp/parameter/parameter_view.h"
 
 namespace ml::dsp::effects {
@@ -36,11 +37,40 @@ namespace ml::dsp::effects {
 
         [[nodiscard]] float process(float input) noexcept
         {
-            return processWithFeedback(input, feedback_);
+
+            const float output = read();
+            write(input + output * feedback_);
+            return output;
         }
 
     private:
         float feedback_ = 0;
+    };
+
+    class LowpassFeedbackCombFilter : public FractionalDelayLine
+    {
+    public:
+        void setFeedback(float feedback) noexcept
+        {
+            feedback_ = feedback;
+        }
+
+        void setDamp(float damp) noexcept
+        {
+            lowpassFilter_.setCoefficient(damp);
+        }
+
+        [[nodiscard]] float process(float input) noexcept
+        {
+
+            const float output = lowpassFilter_.process(read());
+            write(input + output * feedback_);
+            return output;
+        }
+
+    private:
+        float feedback_ = 0;
+        filter::OnePoleFilter lowpassFilter_;
     };
 
     class SchroederReverb final : public EffectBase
@@ -52,12 +82,14 @@ namespace ml::dsp::effects {
             std::vector<ParamTree> params = {
                 ParamTree{Param::makeFloat("Mix", 0.5f, dsp::Range{0.0f, 1.0f})},
                 ParamTree{Param::makeFloat("Decay", 0.5f, dsp::Range{0.0f, 1.0f})},
+                ParamTree{Param::makeFloat("Damp", 0.5f, dsp::Range{0.0f, 1.0f})},
             };
 
             attachParameters(params);
 
             mixParam_.referTo(params[0].asParameterUnsafe());
             decayParam_.referTo(params[1].asParameterUnsafe());
+            dampParam_.referTo(params[2].asParameterUnsafe());
         }
 
     protected:
@@ -88,19 +120,22 @@ namespace ml::dsp::effects {
                 combs_[i].prepare(delay);
                 combs_[i].setDelay(delay);
                 combs_[i].setFeedback(kCombFeedback[i]);
+                combs_[i].setDamp(dampParam_.get());
             }
         }
 
         void processInner(float *const *data, unsigned int nFrames) noexcept override
         {
-            decay_.setTarget(decayParam_.get());
             mix_.setTarget(mixParam_.get());
+            decay_.setTarget(decayParam_.get());
+            damp_.setTarget(dampParam_.get());
 
             float* left = data[0];
             float* right = data[1];
 
             for (unsigned int n = 0; n < nFrames; ++n) {
                 setDecay(decay_());
+                setDamp(damp_());
 
                 const float monoIn = (left[n] + right[n]) * 0.18f;
 
@@ -153,6 +188,14 @@ namespace ml::dsp::effects {
             }
         }
 
+        void setDamp(float damp) noexcept
+        {
+            const float dampMapped = std::lerp(0.05f, 0.85f, damp);
+            for (auto& comb : combs_) {
+                comb.setDamp(dampMapped);
+            }
+        }
+
         static constexpr std::size_t kAllPassCount = 3;
         static constexpr std::size_t kCombCount = 4;
 
@@ -164,13 +207,16 @@ namespace ml::dsp::effects {
 
         std::array<SchroederAllPass, kAllPassCount> allPasses_;
 
-        std::array<CombFilter, kCombCount> combs_;
+        std::array<LowpassFeedbackCombFilter, kCombCount> combs_;
+
+        parameter::FloatParameterView mixParam_;
+        FloatSmoother mix_;
 
         parameter::FloatParameterView decayParam_;
         FloatSmoother decay_;
 
-        parameter::FloatParameterView mixParam_;
-        FloatSmoother mix_;
+        parameter::FloatParameterView dampParam_;
+        FloatSmoother damp_;
     };
 
     Reverb::Reverb() : EffectBase("Reverb")
