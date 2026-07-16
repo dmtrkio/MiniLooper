@@ -12,6 +12,7 @@
 #include "dsp/effects/guitar_amp.h"
 #include "dsp/effects/chorus.h"
 #include "dsp/effects/equalizer.h"
+#include "dsp/effects/auto_wah.h"
 
 namespace ml::looper {
     class SourceChannel
@@ -52,6 +53,7 @@ namespace ml::looper {
 
         dsp::effects::EffectChain<
             dsp::effects::PitchShifter,
+            dsp::effects::AutoWah,
             dsp::effects::GuitarAmp,
             dsp::effects::Chorus,
             dsp::effects::Equalizer

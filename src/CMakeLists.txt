@@ -14,6 +14,7 @@ add_library(${PROJECT_NAME}_core OBJECT
     dsp/effects/chorus.cpp
     dsp/effects/guitar_amp.cpp
     dsp/effects/pitch_shifter.cpp
+    dsp/effects/auto_wah.cpp
     dsp/effects/reverb.cpp
     dsp/parameter/audio_parameter.cpp
     dsp/parameter/parameter_tree.cpp

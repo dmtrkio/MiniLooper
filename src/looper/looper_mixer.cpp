@@ -11,6 +11,7 @@
 #include "dsp/effects/chorus.h"
 #include "dsp/effects/equalizer.h"
 #include "dsp/effects/reverb.h"
+#include "dsp/effects/auto_wah.h"
 #include "dsp/parameter/parameter_view.h"
 
 #include "audio/audio_engine.h"
@@ -24,6 +25,7 @@ namespace ml::looper {
 
         dsp::effects::EffectChain<
             dsp::effects::PitchShifter,
+            dsp::effects::AutoWah,
             dsp::effects::GuitarAmp,
             dsp::effects::Chorus,
             dsp::effects::Equalizer

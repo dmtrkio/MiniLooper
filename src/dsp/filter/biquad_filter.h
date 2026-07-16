@@ -27,12 +27,12 @@ namespace ml::dsp::filter {
     };
 
     template <typename T, typename V>
-    T compute(const V sample, BiquadState<T> &state, const BiquadCoefficients<T> &coefficients)
+    V compute(const V sample, BiquadState<T> &state, const BiquadCoefficients<T> &coefficients)
     {
         static_assert(std::is_convertible_v<V, T> && std::is_convertible_v<T, V>, "T and V must be convertible to each other");
         auto &[x1, x2, y1, y2] = state;
         const auto x0 = static_cast<T>(sample);
-        return coefficients.process(x0, x1, x2, y1, y2);
+        return static_cast<V>(coefficients.process(x0, x1, x2, y1, y2));
     }
 
     template <typename T>
