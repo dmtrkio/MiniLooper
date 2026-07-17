@@ -87,7 +87,7 @@ namespace ml::ui {
                 ImGui::Begin(inputsLabel.c_str(), &inputSelectorWindowOpened_[i].value);
 
                 const auto inputPicker = [&](const dsp::parameter::ParameterTree& inputParam, int sourceIndex) {
-                    auto sourceParam = inputParam["Source"].asParameterUnsafe();
+                    auto& sourceParam = inputParam["Source"].asParameterUnsafe();
                     const auto paramRange = sourceParam.getRange<int>().value();
                     const auto minPort = paramRange.min;
                     const auto maxPort = std::min(nInputs - 1, paramRange.max);
