@@ -61,7 +61,12 @@ namespace ml::dsp::effects {
             const float minF = kMinFrequency;
             const float maxF = kMaxFrequency;
 
-            const float trigger = std::max(left[i], right[i]);
+            const float trigger = [&]() {
+                const float l = std::fabs(left[i]);
+                const float r = std::fabs(right[i]);
+                return std::max(l, r);
+            }();
+
             const float env = filterEnvelope_.process(trigger * sensitivity);
             const float frequency = minF + env * (maxF - minF);
             const float nf = filter::normalizeFrequency(sampleRate_, frequency);
