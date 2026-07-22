@@ -31,6 +31,22 @@ namespace ml::ui {
 
         ImGui::SameLine();
 
+        if (looper_->getLooperState().isTransportRunning) {
+            if (ImGui::Button("Pause")) {
+                looper_->pauseTransport();
+            }
+        } else {
+            if (ImGui::Button("Play")) {
+                looper_->playTransport();
+            }
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Stop")) {
+            looper_->stopTransport();
+        }
+
         if (ImGui::Button("Save to disk")) {
             if (const auto r = sessionManager_->saveCurrentSession(*looper_); !r) {
                 showErrorPopup(r.error());

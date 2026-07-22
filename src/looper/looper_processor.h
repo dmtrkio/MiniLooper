@@ -80,17 +80,24 @@ namespace ml::looper {
         [[nodiscard]] FrameInt getCurrentNumFrames(int trackIndex) const noexcept;
         [[nodiscard]] bool isEmpty(int trackIndex) const noexcept;
         [[nodiscard]] std::optional<FrameInt> getBeatLength() const noexcept;
+        [[nodiscard]] bool isTransportRunning() const noexcept;
 
         void setClickGain(float gain) noexcept;
         void setClickEnabled(bool enabled) noexcept;
 
+        void pauseTransport() noexcept;
+        void playTransport() noexcept;
+        void stopTransport() noexcept;
+
         void startRecording(int trackIndex, bool synced = true) noexcept;
         void stopRecording(int trackIndex, bool synced = true) noexcept;
-        void clear(int trackIndex) noexcept;
         void pause(int trackIndex, bool synced = true) noexcept;
         void resume(int trackIndex, bool synced = true) noexcept;
+        void clear(int trackIndex) noexcept;
         void clearAll() noexcept;
+
         [[nodiscard]] FrameInt copyLoop(int trackIndex, float *const *data, FrameInt capacity) const noexcept;
+
         void extractThumbnail(int trackIndex, ThumbnailSnapshot& out) const noexcept;
 
     private:
@@ -114,6 +121,7 @@ namespace ml::looper {
             void setTempoWithQuarterNote(FrameInt quarterNoteLength) noexcept;
             void reset(FrameInt maxFrameCount, float sr) noexcept;
 
+            bool isRunning{false};
             float sampleRate;
             FrameInt maxFrames{};
             FrameInt currentFrame{};

@@ -30,6 +30,9 @@ namespace ml::looper {
             FrameInt *framesWritten;
         };
 
+        [[nodiscard]] static LooperCommand pauseTransport() noexcept;
+        [[nodiscard]] static LooperCommand playTransport() noexcept;
+        [[nodiscard]] static LooperCommand stopTransport() noexcept;
         [[nodiscard]] static LooperCommand startRecording(int trackIndex, bool synced = true) noexcept;
         [[nodiscard]] static LooperCommand stopRecording(int trackIndex, bool synced = true) noexcept;
         [[nodiscard]] static LooperCommand clear(int trackIndex) noexcept;
@@ -49,6 +52,21 @@ namespace ml::looper {
         struct Dummy
         {
             void apply(LooperProcessor&) const {}
+        };
+
+        struct PauseTransport
+        {
+            void apply(LooperProcessor& looper) const;
+        };
+
+        struct PlayTransport
+        {
+            void apply(LooperProcessor& looper) const;
+        };
+
+        struct StopTransport
+        {
+            void apply(LooperProcessor& looper) const;
         };
 
         struct StartRecording
@@ -107,6 +125,9 @@ namespace ml::looper {
 
         using Variant = std::variant<
             Dummy,
+            PauseTransport,
+            PlayTransport,
+            StopTransport,
             StartRecording,
             StopRecording,
             Clear,

@@ -146,6 +146,7 @@ namespace ml::looper {
                 level = looperProcessor.getMixer().getLevel(i);
             }
 
+            snapshot.isTransportRunning = looperProcessor.isTransportRunning();
             snapshot.maxLoopLength = looperProcessor.getMaxFramesInLoop();
             snapshot.beatLength = looperProcessor.getBeatLength();
             snapshot.level = levelMeter_.getLevel();
@@ -241,6 +242,24 @@ namespace ml::looper {
     void Looper::loadSession(LooperSession&& session)
     {
         cb_->sessionToLoad = std::move(session);
+    }
+
+    void Looper::pauseTransport() noexcept
+    {
+        auto &looperMailbox = getCommandMailbox();
+        looperMailbox.tryPush(looper::LooperCommand::pauseTransport());
+    }
+
+    void Looper::playTransport() noexcept
+    {
+        auto &looperMailbox = getCommandMailbox();
+        looperMailbox.tryPush(looper::LooperCommand::playTransport());
+    }
+
+    void Looper::stopTransport() noexcept
+    {
+        auto &looperMailbox = getCommandMailbox();
+        looperMailbox.tryPush(looper::LooperCommand::stopTransport());
     }
 
     bool Looper::toggleRecording(int trackIndex, bool synced) const

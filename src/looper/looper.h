@@ -27,6 +27,7 @@ namespace ml::looper {
 
     struct LooperStateSnapshot
     {
+        bool isTransportRunning{};
         std::array<TrackStateSnapshot, kLooperTrackCount> tracks;
         FrameInt maxLoopLength{};
         std::optional<FrameInt> beatLength{};
@@ -74,6 +75,9 @@ namespace ml::looper {
 
         void loadSession(LooperSession&& session);
 
+        void pauseTransport() noexcept;
+        void playTransport() noexcept;
+        void stopTransport() noexcept;
         bool toggleRecording(int trackIndex, bool synced = true) const;
         bool togglePlay(int trackIndex, bool synced = true) const;
         void startRecording(int trackIndex, bool synced = true) const;

@@ -2,6 +2,21 @@
 #include "looper_processor.h"
 
 namespace ml::looper {
+    LooperCommand LooperCommand::pauseTransport() noexcept
+    {
+        return LooperCommand{ PauseTransport{} };
+    }
+
+    LooperCommand LooperCommand::playTransport() noexcept
+    {
+        return LooperCommand{ PlayTransport{} };
+    }
+
+    LooperCommand LooperCommand::stopTransport() noexcept
+    {
+        return LooperCommand{ StopTransport{} };
+    }
+
     LooperCommand LooperCommand::startRecording(int trackIndex, bool synced) noexcept
     {
         return LooperCommand{ StartRecording{ trackIndex, synced } };
@@ -67,6 +82,21 @@ namespace ml::looper {
         if (completionFlag_) {
             completionFlag_->complete.store(true);
         }
+    }
+
+    void LooperCommand::PauseTransport::apply(LooperProcessor& looper) const
+    {
+        looper.pauseTransport();
+    }
+
+    void LooperCommand::PlayTransport::apply(LooperProcessor& looper) const
+    {
+        looper.playTransport();
+    }
+
+    void LooperCommand::StopTransport::apply(LooperProcessor& looper) const
+    {
+        looper.stopTransport();
     }
 
     void LooperCommand::StartRecording::apply(LooperProcessor& looper) const

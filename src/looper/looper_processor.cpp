@@ -43,12 +43,18 @@ namespace ml::looper {
     {
         assert(nFrames <= maxFrames_);
         if (!data) return;
-
+        
         for (int trackIndex = 0; trackIndex < getNumLooperTracks(); ++trackIndex) {
             auto &track = tracks_[trackIndex];
             auto [mixerL, mixerR] = mixer_.getChannelBuffers(trackIndex);
-            float* out[2]{mixerL, mixerR};
-            track.process(data, out, nFrames);
+
+            if (transport_.isRunning) {
+                float* out[2]{mixerL, mixerR};
+                track.process(data, out, nFrames);
+            } else {
+                std::fill_n(mixerL, nFrames, 0.0f);
+                std::fill_n(mixerR, nFrames, 0.0f);
+            }
         }
 
         mixer_.process(data, nFrames);
@@ -130,6 +136,11 @@ namespace ml::looper {
         else return std::nullopt;
     }
 
+    bool LooperProcessor::isTransportRunning() const noexcept
+    {
+        return transport_.isRunning;
+    }
+
     void LooperProcessor::setClickGain(float gain) noexcept
     {
         clickGain_ = gain;
@@ -140,11 +151,37 @@ namespace ml::looper {
         clickEnabled_ = enabled;
     }
 
+    void LooperProcessor::pauseTransport() noexcept
+    {
+        if (!transport_.isRunning) return;
+        transport_.isRunning = false;
+        // for now, if track was being recorded while pause was toggled, we just discard the recording completely
+        for (auto& track : tracks_) {
+            if (track.state == State::Recording) {
+                track.clear();
+            }
+        }
+    }
+
+    void LooperProcessor::playTransport() noexcept
+    {
+        if (!std::ranges::all_of(tracks_, [](const auto& track) { return track.state == State::Cleared; })) {
+            transport_.isRunning = true;
+        }
+    }
+
+    void LooperProcessor::stopTransport() noexcept
+    {
+        pauseTransport();
+        transport_.currentFrame = 0;
+    }
+
     void LooperProcessor::startRecording(int trackIndex, bool synced) noexcept
     {
         if (!isTrackIndexValid(trackIndex)) return;
         if (isAnyTrackCurrentlyRecording()) return;
         tracks_[trackIndex].startRecording(synced);
+        transport_.isRunning = true;
     }
 
     void LooperProcessor::stopRecording(int trackIndex, bool synced) noexcept
@@ -166,12 +203,16 @@ namespace ml::looper {
     {
         if (!isTrackIndexValid(trackIndex)) return;
         tracks_[trackIndex].pause(synced);
+        if (std::ranges::all_of(tracks_, [](const auto& track) { return track.state == State::Paused; })) {
+            transport_.isRunning = false;
+        }
     }
 
     void LooperProcessor::resume(int trackIndex, bool synced) noexcept
     {
         if (!isTrackIndexValid(trackIndex)) return;
         tracks_[trackIndex].resume(synced);
+        transport_.isRunning = true;
     }
 
     void LooperProcessor::clearAll() noexcept
@@ -219,6 +260,8 @@ namespace ml::looper {
 
     bool LooperProcessor::Transport::tick() noexcept
     {
+        if (!isRunning) return false;
+
         const bool beat = [&]() {
             if (!isTempoSet()) return false;
             return (currentFrame % unitLength) == 0;
@@ -248,6 +291,7 @@ namespace ml::looper {
 
     void LooperProcessor::Transport::reset(FrameInt maxFrameCount, float sr) noexcept
     {
+        isRunning = false;
         sampleRate = sr;
         maxFrames = maxFrameCount;
         currentFrame = 0;
