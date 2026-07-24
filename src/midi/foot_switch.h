@@ -59,26 +59,25 @@ namespace ml::midi {
     private:
         bool isPressed(const midi::MidiMessage& msg)
         {
-            if (const auto control = msg.control(); control.has_value()) {
-                if (*control != cc_) return false;
-                const auto controlValue = *msg.value();
-                const bool pressed = (controlValue >= 64);
+            if (!msg.isCC()) return false;
+            if (msg.control() != cc_) return false;
 
-                if (pressed) {
-                    if (!lastPressed_) {
-                        holdTimer_.setOneShot(true);
-                        holdTimer_.setTimeoutSecs(sampleRate_, kHoldTimeSecs);
-                        holdTimer_.start();
-                    }
-                } else {
-                    holdTimer_.stop();
+            const auto controlValue = msg.value();
+            const bool pressed = (controlValue >= 64);
+
+            if (pressed) {
+                if (!lastPressed_) {
+                    holdTimer_.setOneShot(true);
+                    holdTimer_.setTimeoutSecs(sampleRate_, kHoldTimeSecs);
+                    holdTimer_.start();
                 }
-
-                const bool fired = pressed && !lastPressed_;
-                lastPressed_ = pressed;
-                return fired;
+            } else {
+                holdTimer_.stop();
             }
-            return false;
+
+            const bool fired = pressed && !lastPressed_;
+            lastPressed_ = pressed;
+            return fired;
         }
 
         static constexpr float kTimeoutSecs = 0.25f;

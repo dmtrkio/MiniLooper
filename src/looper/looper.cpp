@@ -121,6 +121,23 @@ namespace ml::looper {
         void drainMidiQueue()
         {
             midiQueue.consumeAll([&](const midi::MidiMessage& msg) {
+                if (msg.isNoteOn()) {
+                    int channel = -1;
+                    switch (msg.note()) {
+                        case 60: channel = 0; break;
+                        case 62: channel = 1; break;
+                        case 64: channel = 2; break;
+                        case 65: channel = 3; break;
+                        default: return;
+                    }
+
+                    if (looperProcessor.getState(channel) != looper::State::Recording) {
+                        looperProcessor.startRecording(channel, false);
+                    } else {
+                        looperProcessor.stopRecording(channel, false);
+                    }
+                }
+
                 footSwitch.update(msg);
             });
         }

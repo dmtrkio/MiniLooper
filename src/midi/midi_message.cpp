@@ -1,12 +1,12 @@
 #include "midi_message.h"
 
 namespace ml::midi {
-    MidiMessage::MidiMessage(const PmMessage msg) : raw_(msg)
+    MidiMessage::MidiMessage(const RawMidiMessage msg) : raw_(msg)
     {
         parse();
     }
 
-    PmMessage MidiMessage::raw() const { return raw_; }
+    MidiMessage::RawMidiMessage MidiMessage::raw() const { return raw_; }
 
     std::uint8_t MidiMessage::status() const { return status_; }
     std::uint8_t MidiMessage::channel() const { return channel_; }
@@ -37,48 +37,48 @@ namespace ml::midi {
     bool MidiMessage::isProgram() const { return type_ == Type::ProgramChange; }
     bool MidiMessage::isPitchBend() const { return type_ == Type::PitchBend; }
 
-    std::optional<std::uint8_t> MidiMessage::note() const
+    std::uint8_t MidiMessage::note() const
     {
         if (type_ == Type::NoteOn || type_ == Type::NoteOff || type_ == Type::PolyAftertouch)
             return data1_;
-        return std::nullopt;
+        return {};
     }
 
-    [[nodiscard]] std::optional<std::uint8_t> MidiMessage::velocity() const
+    std::uint8_t MidiMessage::velocity() const
     {
         if (type_ == Type::NoteOn || type_ == Type::NoteOff)
             return data2_;
-        return std::nullopt;
+        return {};
     }
 
-    [[nodiscard]] std::optional<std::uint8_t> MidiMessage::control() const
+    std::uint8_t MidiMessage::control() const
     {
         if (type_ == Type::ControlChange)
             return data1_;
-        return std::nullopt;
+        return {};
     }
 
-    std::optional<std::uint8_t> MidiMessage::value() const
+    std::uint8_t MidiMessage::value() const
     {
         if (type_ == Type::ControlChange || type_ == Type::ChannelAftertouch)
             return data2_;
-        return std::nullopt;
+        return {};
     }
 
-    std::optional<std::uint8_t> MidiMessage::program() const
+    std::uint8_t MidiMessage::program() const
     {
         if (type_ == Type::ProgramChange)
             return data1_;
-        return std::nullopt;
+        return {};
     }
 
-    std::optional<std::int16_t> MidiMessage::pitchBend() const
+    std::int16_t MidiMessage::pitchBend() const
     {
         if (type_ == Type::PitchBend) {
             const int value14 = (data2_ << 7) | data1_;
             return static_cast<std::int16_t>(value14 - 8192);
         }
-        return std::nullopt;
+        return {};
     }
 
     void MidiMessage::parse()
