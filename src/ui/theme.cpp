@@ -131,104 +131,86 @@ namespace ml::ui {
         ImGuiStyle& style = ImGui::GetStyle();
         ImVec4* c = style.Colors;
 
-        // Core palette
-        const ImVec4 NeonCyan  = hexToImVec4(0x00F0FF); // headers, checkmarks, nav
-        const ImVec4 NeonPink  = hexToImVec4(0xFF2070); // buttons, primary actions
-        const ImVec4 NeonLime  = hexToImVec4(0xB3FF00); // sliders, plots, accents
-        const ImVec4 DarkBase  = hexToImVec4(0x0C0C18); // window background
-        const ImVec4 DarkFrame = hexToImVec4(0x161630); // frames / panels
-        const ImVec4 DarkHead  = hexToImVec4(0x1E1E48); // header backgrounds
-        const ImVec4 DarkHov   = hexToImVec4(0x282860); // hovered backgrounds
-        const ImVec4 DarkAct   = hexToImVec4(0x323280); // active backgrounds
+        const ImVec4 TokyoCyan  = hexToImVec4(0x7DCFFF);
+        const ImVec4 TokyoPurp  = hexToImVec4(0xBB9AF7);
+        const ImVec4 TokyoGreen = hexToImVec4(0x9ECE6A);
+        const ImVec4 DarkBase   = hexToImVec4(0x1A1B26);
+        const ImVec4 DarkFrame  = hexToImVec4(0x24283B);
+        const ImVec4 DarkHead   = hexToImVec4(0x1F2335);
+        const ImVec4 DarkHov    = hexToImVec4(0x292E42);
+        const ImVec4 DarkAct    = hexToImVec4(0x3B4261);
 
-        // --- Text ---
-        c[ImGuiCol_Text]                  = hexToImVec4(0xE2E2E2);
-        c[ImGuiCol_TextDisabled]          = hexToImVec4(0x606090);
-        c[ImGuiCol_TextSelectedBg]        = hexToImVec4(0x00F0FF, 0.25f);
+        c[ImGuiCol_Text]                  = hexToImVec4(0xC0CAF5);
+        c[ImGuiCol_TextDisabled]          = hexToImVec4(0x565F89);
+        c[ImGuiCol_TextSelectedBg]        = hexToImVec4(0x7AA2F7, 0.25f);
 
-        // --- Backgrounds ---
         c[ImGuiCol_WindowBg]              = DarkBase;
-        c[ImGuiCol_ChildBg]               = hexToImVec4(0x0F0F1E);
-        c[ImGuiCol_PopupBg]               = hexToImVec4(0x121228);
-        c[ImGuiCol_MenuBarBg]             = hexToImVec4(0x141438);
+        c[ImGuiCol_ChildBg]               = hexToImVec4(0x16161E);
+        c[ImGuiCol_PopupBg]               = hexToImVec4(0x1F2335);
+        c[ImGuiCol_MenuBarBg]             = hexToImVec4(0x16161E);
 
-        // --- Borders ---
-        c[ImGuiCol_Border]                = hexToImVec4(0x00F0FF, 0.25f);
-        c[ImGuiCol_BorderShadow]          = hexToImVec4(0x00F0FF, 0.05f);
+        c[ImGuiCol_Border]                = hexToImVec4(0x7AA2F7, 0.25f);
+        c[ImGuiCol_BorderShadow]          = hexToImVec4(0x7AA2F7, 0.05f);
 
-        // --- Frames ---
         c[ImGuiCol_FrameBg]               = DarkFrame;
-        c[ImGuiCol_FrameBgHovered]        = hexToImVec4(0x202050);
-        c[ImGuiCol_FrameBgActive]         = hexToImVec4(0x2A2A70);
+        c[ImGuiCol_FrameBgHovered]        = hexToImVec4(0x292E42);
+        c[ImGuiCol_FrameBgActive]         = hexToImVec4(0x3B4261);
 
-        // --- Titles ---
-        c[ImGuiCol_TitleBg]               = hexToImVec4(0x121230);
-        c[ImGuiCol_TitleBgActive]         = hexToImVec4(0x1A1A50);
-        c[ImGuiCol_TitleBgCollapsed]      = hexToImVec4(0x0E0E28);
+        c[ImGuiCol_TitleBg]               = hexToImVec4(0x16161E);
+        c[ImGuiCol_TitleBgActive]         = hexToImVec4(0x1F2335);
+        c[ImGuiCol_TitleBgCollapsed]      = hexToImVec4(0x13131A);
 
-        // --- Buttons (Hot Pink) ---
-        c[ImGuiCol_Button]                = NeonPink;
-        c[ImGuiCol_ButtonHovered]         = hexToImVec4(0xFF4088);
-        c[ImGuiCol_ButtonActive]          = hexToImVec4(0xFF60A0);
+        c[ImGuiCol_Button]                = hexToImVec4(0x2F3549);
+        c[ImGuiCol_ButtonHovered]         = hexToImVec4(0x3B4261);
+        c[ImGuiCol_ButtonActive]          = hexToImVec4(0x565F89);
 
-        // --- Headers (Dark blue-purple; neon accents on active) ---
         c[ImGuiCol_Header]                = DarkHead;
         c[ImGuiCol_HeaderHovered]         = DarkHov;
         c[ImGuiCol_HeaderActive]          = DarkAct;
 
-        // --- Scrollbar ---
-        c[ImGuiCol_ScrollbarBg]           = hexToImVec4(0x0A0A1A);
-        c[ImGuiCol_ScrollbarGrab]         = hexToImVec4(0x2A2A60);
-        c[ImGuiCol_ScrollbarGrabHovered]  = hexToImVec4(0x3A3A90);
-        c[ImGuiCol_ScrollbarGrabActive]   = NeonCyan;
+        c[ImGuiCol_ScrollbarBg]           = hexToImVec4(0x13131A);
+        c[ImGuiCol_ScrollbarGrab]         = hexToImVec4(0x3B4261);
+        c[ImGuiCol_ScrollbarGrabHovered]  = hexToImVec4(0x565F89);
+        c[ImGuiCol_ScrollbarGrabActive]   = TokyoCyan;
 
-        // --- Checkmarks & Sliders (Cyan + Lime) ---
-        c[ImGuiCol_CheckMark]             = NeonCyan;
-        c[ImGuiCol_SliderGrab]            = NeonLime;
-        c[ImGuiCol_SliderGrabActive]      = hexToImVec4(0xCCFF44);
+        c[ImGuiCol_CheckMark]             = TokyoCyan;
+        c[ImGuiCol_SliderGrab]            = hexToImVec4(0x7AA2F7);
+        c[ImGuiCol_SliderGrabActive]      = hexToImVec4(0x8DB0F9);
 
-        // --- Separators ---
-        c[ImGuiCol_Separator]             = hexToImVec4(0x2A2A60);
-        c[ImGuiCol_SeparatorHovered]      = hexToImVec4(0x3A3A90);
-        c[ImGuiCol_SeparatorActive]       = NeonCyan;
+        c[ImGuiCol_Separator]             = hexToImVec4(0x3B4261);
+        c[ImGuiCol_SeparatorHovered]      = hexToImVec4(0x565F89);
+        c[ImGuiCol_SeparatorActive]       = TokyoCyan;
 
-        // --- Resize Grip ---
-        c[ImGuiCol_ResizeGrip]            = hexToImVec4(0x2A2A60);
-        c[ImGuiCol_ResizeGripHovered]     = NeonLime;
-        c[ImGuiCol_ResizeGripActive]      = NeonCyan;
+        c[ImGuiCol_ResizeGrip]            = hexToImVec4(0x3B4261);
+        c[ImGuiCol_ResizeGripHovered]     = TokyoGreen;
+        c[ImGuiCol_ResizeGripActive]      = TokyoCyan;
 
-        // --- Tabs (darker cyan active so white text stays readable) ---
-        c[ImGuiCol_Tab]                   = hexToImVec4(0x1A1A40);
-        c[ImGuiCol_TabHovered]            = hexToImVec4(0x2A2A70);
-        c[ImGuiCol_TabActive]             = hexToImVec4(0x00AABB);
-        c[ImGuiCol_TabUnfocused]          = hexToImVec4(0x151535);
-        c[ImGuiCol_TabUnfocusedActive]    = hexToImVec4(0x008899);
+        c[ImGuiCol_Tab]                   = hexToImVec4(0x16161E);
+        c[ImGuiCol_TabHovered]            = hexToImVec4(0x1F2335);
+        c[ImGuiCol_TabActive]             = hexToImVec4(0x24283B);
+        c[ImGuiCol_TabUnfocused]          = hexToImVec4(0x13131A);
+        c[ImGuiCol_TabUnfocusedActive]    = hexToImVec4(0x1F2335);
 
-        // --- Docking ---
-        c[ImGuiCol_DockingPreview]        = hexToImVec4(0x00F0FF, 0.25f);
-        c[ImGuiCol_DockingEmptyBg]        = hexToImVec4(0x080818);
+        c[ImGuiCol_DockingPreview]        = hexToImVec4(0x7DCFFF, 0.25f);
+        c[ImGuiCol_DockingEmptyBg]        = hexToImVec4(0x13131A);
 
-        // --- Plots ---
-        c[ImGuiCol_PlotLines]             = NeonCyan;
-        c[ImGuiCol_PlotLinesHovered]      = NeonLime;
-        c[ImGuiCol_PlotHistogram]         = NeonPink;
-        c[ImGuiCol_PlotHistogramHovered]  = hexToImVec4(0xFF60A0);
+        c[ImGuiCol_PlotLines]             = TokyoCyan;
+        c[ImGuiCol_PlotLinesHovered]      = TokyoGreen;
+        c[ImGuiCol_PlotHistogram]         = TokyoPurp;
+        c[ImGuiCol_PlotHistogramHovered]  = hexToImVec4(0xC7A9F9);
 
-        // --- Tables ---
-        c[ImGuiCol_TableHeaderBg]         = hexToImVec4(0x181840);
-        c[ImGuiCol_TableBorderStrong]     = hexToImVec4(0x2A2A70);
-        c[ImGuiCol_TableBorderLight]      = hexToImVec4(0x202050);
+        c[ImGuiCol_TableHeaderBg]         = hexToImVec4(0x1F2335);
+        c[ImGuiCol_TableBorderStrong]     = hexToImVec4(0x3B4261);
+        c[ImGuiCol_TableBorderLight]      = hexToImVec4(0x292E42);
         c[ImGuiCol_TableRowBg]            = hexToImVec4(0x000000, 0.00f);
-        c[ImGuiCol_TableRowBgAlt]         = hexToImVec4(0x00F0FF, 0.04f);
+        c[ImGuiCol_TableRowBgAlt]         = hexToImVec4(0x7DCFFF, 0.04f);
 
-        // --- Drag & Drop / Navigation ---
-        c[ImGuiCol_DragDropTarget]        = NeonLime;
-        c[ImGuiCol_NavHighlight]          = NeonCyan;
-        c[ImGuiCol_NavWindowingHighlight] = NeonCyan;
+        c[ImGuiCol_DragDropTarget]        = TokyoGreen;
+        c[ImGuiCol_NavHighlight]          = TokyoCyan;
+        c[ImGuiCol_NavWindowingHighlight] = TokyoCyan;
         c[ImGuiCol_NavWindowingDimBg]     = hexToImVec4(0x000000, 0.60f);
         c[ImGuiCol_ModalWindowDimBg]      = hexToImVec4(0x000000, 0.70f);
 
-        // --- Layout & Rounding (slight tech edge) ---
         style.WindowRounding     = 2.0f;
         style.ChildRounding      = 2.0f;
         style.FrameRounding      = 3.0f;

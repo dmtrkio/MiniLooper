@@ -6,8 +6,8 @@
 namespace ml::ui {
     enum class ImGuiTheme
     {
-        HighContrast,   // Stark black & white. Maximum readability.
-        Neon,           // Cyberpunk palette on deep blue-black.
+        HighContrast,   // Black & white.
+        Neon,           // Roughly tokyonight inspired.
         WarmNeutral,    // Easy-on-the-eyes sepia/terracotta light theme.
         Count
     };
