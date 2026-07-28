@@ -4,6 +4,20 @@ A barebones audio looper.
 
 <img width="2559" height="1198" alt="MiniLooper" src="https://github.com/user-attachments/assets/edde783b-0070-4d44-876c-a8295cff46f5" />
 
+## Features
+
+- 4-track looper with Gain/Pan mixing
+- Load/Save for looper sessions
+- Control via keyboard shortcuts (shown in Control Help window)
+- Control via MIDI bindings (hardcoded for now, I plan to make it customizable in future)
+- 6 DSP effects for all tracks and input sources
+  - 6-band Equalizer
+  - Simple guitar amp emulator
+  - Stereo chorus
+  - Pitch shifter
+  - Stereo reverb based on Schroeder reverberator
+  - Autowah-like dynamic filter
+
 ## Dependencies
 
 | Library | Repository |
