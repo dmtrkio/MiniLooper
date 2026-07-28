@@ -2,6 +2,8 @@
 
 A barebones audio looper.
 
+<img width="2559" height="1198" alt="MiniLooper" src="https://github.com/user-attachments/assets/edde783b-0070-4d44-876c-a8295cff46f5" />
+
 ## Dependencies
 
 | Library | Repository |
