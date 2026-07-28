@@ -42,7 +42,7 @@ MiniLooper is a hobby project and not a professional-grade audio tool. While I'v
 ### MIDI mapping
 Currently, MIDI mapping is hardcoded in the following way:
 - White notes C4-F4 (MIDI notes 60, 62, 64, 65) toggle recording/overdubbing for looper tracks 1-4
-- Midi CC 64, which is typically sustain pedal on most midi keyboard controllers can be used as an simulated footswitch, like a hardware looper pedal:
+- Midi CC 64, which is typically sustain pedal on most midi keyboard controllers can be used as a simulated footswitch, like a hardware looper pedal:
   - Single press toggles recording/overdubbing of selected track
   - Double press clears selected track
   - Hold clears all tracks
