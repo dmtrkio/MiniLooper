@@ -6,6 +6,18 @@ if (NOT SDL3_FOUND)
         GIT_TAG release-3.4.2
         EXCLUDE_FROM_ALL
     )
-    set(SDL_TEST_LIBRARY OFF CACHE BOOL "" FORCE)
+
+    set(SDL_TEST_LIBRARY OFF CACHE BOOL "Disable SDL3 tests" FORCE)
+    set(SDL_AUDIO OFF CACHE BOOL "Disable SDL3 audio" FORCE)
+    set(SDL_HAPTIC OFF CACHE BOOL "Disable SDL3 haptic" FORCE)
+    set(SDL_POWER OFF CACHE BOOL "Disable SDL3 power" FORCE)
+    set(SDL_SENSOR OFF CACHE BOOL "Disable SDL3 sensor" FORCE)
+    set(SDL_CAMERA OFF CACHE BOOL "Disable SDL3 camera" FORCE)
+    set(SDL_GPU OFF CACHE BOOL "Disable SDL3 GPU subsystem" FORCE)
+    set(SDL_TRAY OFF CACHE BOOL "Disable SDL3 tray" FORCE)
+    set(SDL_NOTIFICATION OFF CACHE BOOL "Disable SDL3 notification" FORCE)
+    set(SDL_PROCESS OFF CACHE BOOL "Disable SDL3 process" FORCE)
+    set(SDL_STORAGE OFF CACHE BOOL "Disable SDL3 storage" FORCE)
+
     FetchContent_MakeAvailable(SDL3)
 endif()

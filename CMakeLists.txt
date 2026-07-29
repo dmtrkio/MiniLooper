@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+option(MINILOOPER_BUILD_TESTS "Build unit tests" OFF)
+
 add_subdirectory(cmake)
 add_subdirectory(thirdparty)
 add_subdirectory(src)
@@ -25,6 +27,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_NAME}_core)
 
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
 
-include(CTest)
-enable_testing()
-add_subdirectory(tests)
+if (MINILOOPER_BUILD_TESTS)
+    include(CTest)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
