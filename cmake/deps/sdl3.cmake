@@ -7,8 +7,8 @@ if (MINILOOPER_USE_SHARED_SDL3)
         message(FATAL_ERROR 
             "SDL3 shared library not found!\n"
             "Install it with:\n"
-            "  Fedora/RHEL: sudo dnf install SDL3-devel\n"
             "  Ubuntu/Debian: sudo apt install libsdl3-dev\n"
+            "  Fedora: sudo dnf install SDL3-devel\n"
             "  Arch: sudo pacman -S sdl3\n"
             "Or set MINILOOPER_USE_SHARED_SDL3=OFF to build statically"
         )
