@@ -85,6 +85,11 @@ namespace ml::looper {
             track.start = offset;
             track.length = length;
             track.state = State::Playback;
+
+            track.currentBucket = 0;
+            do {
+                track.updateThumbnail();
+            } while (track.currentBucket != 0);
         }
 
         transport_.setTempoWithQuarterNote(session.framesInBeat);
@@ -314,6 +319,7 @@ namespace ml::looper {
         hasPendingTransition = false;
 
         fadeLength = static_cast<FrameInt>(kFadeLengthMs * sampleRate / 1000.0f);
+        currentBucket = 0;
     }
 
     void LooperProcessor::Track::process(const float *const *in, float *const *out, const FrameInt nFrames) noexcept
