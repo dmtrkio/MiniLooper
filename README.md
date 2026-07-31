@@ -66,7 +66,23 @@ You can switch between 3 built-in themes (High Contrast, Neon and Warm) by click
 | dr_wav | [GitHub](https://github.com/mackron/dr_libs) (vendored) |
 | Catch2 | [GitHub](https://github.com/catchorg/Catch2) (testing) |
 
-All dependencies are fetched automatically via CMake `FetchContent` (except dr_wav, which is vendored).
+### Linux
+Default and recommended option is to use system's shared SDL3 and PortAudio, installed by your package manager:
+```bash
+#Ubuntu/Debian
+sudo apt install portaudio19-dev libsdl3-dev
+#Fedora
+sudo dnf install portaudio-devel SDL3-devel
+#Arch
+sudo pacman -S portaudio sdl3
+```
+
+If you want to statically link those, use CMake options `-DMINILOOPER_USE_SHARED_PORTAUDIO=0` and `-DMINILOOPER_USE_SHARED_SDL3=0` to download them with `FetchContent` and link statically (this requires you to download have all the dependencies for PortAudio and SDL3, mostly platform APIs).
+
+All other dependencies are fetched automatically via CMake `FetchContent` (except dr_wav, which is vendored) and linked statically.
+
+### Windows
+All of the dependencies are fetched automatically via CMake `FetchContent` (except dr_wav, which is vendored) and linked statically.
 
 ## Prerequisites
 
