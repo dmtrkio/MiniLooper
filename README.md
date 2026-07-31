@@ -77,7 +77,7 @@ sudo dnf install portaudio-devel SDL3-devel
 sudo pacman -S portaudio sdl3
 ```
 
-If you want to statically link those, use CMake options `-DMINILOOPER_USE_SHARED_PORTAUDIO=0` and `-DMINILOOPER_USE_SHARED_SDL3=0` to download them with `FetchContent` and link statically (this requires you to download have all the dependencies for PortAudio and SDL3, mostly platform APIs).
+If you want to statically link those, use CMake options `-DMINILOOPER_USE_SHARED_PORTAUDIO=0` and `-DMINILOOPER_USE_SHARED_SDL3=0` to download them with `FetchContent` and link statically (this requires you to have all the dependencies for building PortAudio and SDL3).
 
 All other dependencies are fetched automatically via CMake `FetchContent` (except dr_wav, which is vendored) and linked statically.
 
