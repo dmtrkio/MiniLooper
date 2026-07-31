@@ -14,7 +14,7 @@ target_link_libraries(dependencies INTERFACE
     readerwriterqueue
     portaudio
     portmidi_with_porttime
-    SDL3::SDL3-static
+    ${SDL3_TARGET}
     nlohmann_json::nlohmann_json
     imgui_lib
 )

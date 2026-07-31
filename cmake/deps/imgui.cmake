@@ -20,4 +20,4 @@ target_include_directories(imgui_lib PUBLIC
     $<BUILD_INTERFACE:${imgui_SOURCE_DIR}/backends>
 )
 
-target_link_libraries(imgui_lib PUBLIC SDL3::SDL3-static)
+target_link_libraries(imgui_lib PUBLIC ${SDL3_TARGET})

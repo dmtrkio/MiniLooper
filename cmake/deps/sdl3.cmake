@@ -1,5 +1,7 @@
 find_package(SDL3 QUIET)
 if (NOT SDL3_FOUND)
+    message(STATUS "SDL3 not found on system, fetching and building statically")
+
     FetchContent_Declare(
         SDL3
         GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
@@ -20,4 +22,13 @@ if (NOT SDL3_FOUND)
     set(SDL_STORAGE OFF CACHE BOOL "Disable SDL3 storage" FORCE)
 
     FetchContent_MakeAvailable(SDL3)
+    set(SDL3_TARGET SDL3::SDL3-static)
+else()
+    message(STATUS "Preinstalled SDL3 found (shared)")
+
+    if(TARGET SDL3::SDL3-static)
+        set(SDL3_TARGET SDL3::SDL3-static)
+    else()
+        set(SDL3_TARGET SDL3::SDL3)
+    endif()
 endif()
