@@ -50,6 +50,17 @@ namespace ml {
         }
 
         std::cout << "Audio engine started\n";
+
+        constexpr float saveIntervalMs = 300.0f;
+        saveTimer_.setOneShot(false);
+        saveTimer_.setTimeout(saveIntervalMs * 0.001f);
+        saveTimer_.setOnTimeout([&] {
+            if (const auto r = saveJsonSettings(); !r) {
+                std::cerr << r.error() << std::endl;
+                ui::PopupManager::getInstance().errorPopup(r.error());
+            }
+        });
+        saveTimer_.start();
     }
 
     MainApplication::~MainApplication()
@@ -58,7 +69,15 @@ namespace ml {
             std::cout << "Audio engine stopped successfully.\n";
         }
 
-        saveJsonSettings();
+        if (const auto r = sessionManager_.saveCurrentSession(looper_); !r) {
+            std::cerr << r.error() << std::endl;
+        }
+
+        if (const auto r = saveJsonSettings(); !r) {
+            std::cerr << r.error() << std::endl;
+        } else {
+            std::cout << "Settings saved to " << filepaths::settingsPath() << std::endl;
+        }
     }
 
     void MainApplication::onFrame()
@@ -66,6 +85,7 @@ namespace ml {
         looper_.updateSnapshot();
         processInput();
         ui_.runFrame();
+        saveTimer_.tick(ImGui::GetIO().DeltaTime);
     }
 
     void MainApplication::loadJsonSettings()
@@ -104,17 +124,13 @@ namespace ml {
         }
     }
 
-    void MainApplication::saveJsonSettings() const
+    std::expected<void, std::string> MainApplication::saveJsonSettings() const
     {
         json j;
         j["audio"] = audioEngine_->getSettingsAsJson();
 
         if (midiEngine_) {
             j["midi"] = midiEngine_->getSettingsAsJson();
-        }
-
-        if (const auto r = sessionManager_.saveCurrentSession(looper_); !r) {
-            std::cerr << r.error() << std::endl;
         }
 
         j["sessionsPath"] = sessionManager_.getSessionsPath();
@@ -124,10 +140,10 @@ namespace ml {
         j["ui"] = ui_.serializeToJson();
 
         if (const auto r = saveJsonToFile(filepaths::settingsPath().string(), j); !r) {
-            std::cerr << r.error() << std::endl;
-        } else {
-            std::cout << "Settings saved to " << filepaths::settingsPath() << std::endl;
+            return std::unexpected(r.error());
         }
+
+        return {};
     }
 
     void MainApplication::processInput()

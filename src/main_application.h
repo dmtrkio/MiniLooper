@@ -1,5 +1,6 @@
 #pragma once
 
+#include <expected>
 #include <memory>
 
 #include "audio/audio_engine.h"
@@ -7,6 +8,7 @@
 #include "looper/looper.h"
 #include "midi/midi.h"
 #include "ui/main_ui.h"
+#include "timer.h"
 
 namespace ml {
     class MainApplication
@@ -25,7 +27,7 @@ namespace ml {
 
     private:
         void loadJsonSettings();
-        void saveJsonSettings() const;
+        [[nodiscard]] std::expected<void, std::string> saveJsonSettings() const;
         void processInput();
 
         std::unique_ptr<audio::AudioEngine> audioEngine_;
@@ -34,5 +36,6 @@ namespace ml {
         std::unique_ptr<midi::MidiEngine> midiEngine_;
 
         ui::MainUi ui_;
+        timer::Timer saveTimer_;
     };
 }
