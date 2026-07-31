@@ -6,7 +6,7 @@ namespace ml::dsp::effects {
         std::vector<ParamTree> params = {
             ParamTree{"HighPass", {
                 Param::makeFloat("Frequency", kDefaultFrequencies[0], kBandRanges[0]),
-                Param::makeFloat("Q", static_cast<float>(Filter::FilterDefaults::kDefaultQ), {0.5f, 8.0f}),
+                Param::makeFloat("Q", static_cast<float>(Filter::Defaults::kDefaultQ), {0.5f, 8.0f}),
             }},
 
             ParamTree{"LowShelf", {
@@ -31,7 +31,7 @@ namespace ml::dsp::effects {
 
             ParamTree{"LowPass", {
                 Param::makeFloat("Frequency", kDefaultFrequencies[5], kBandRanges[5]),
-                Param::makeFloat("Q", static_cast<float>(Filter::FilterDefaults::kDefaultQ), {0.5f, 8.0f}),
+                Param::makeFloat("Q", static_cast<float>(Filter::Defaults::kDefaultQ), {0.5f, 8.0f}),
             }}
         };
 
@@ -67,12 +67,12 @@ namespace ml::dsp::effects {
             if (type == filter::FilterType::LowPass || type == filter::FilterType::HighPass) {
                 bands_[i].setParameters(
                     type, sampleRate_, freqHz,
-                    bandViews_[i].q.get(), Filter::FilterDefaults::kDefaultBw, Filter::FilterDefaults::kDefaultSlope, Filter::FilterDefaults::kDefaultGain
+                    bandViews_[i].q.get(), Filter::Defaults::kDefaultBw, Filter::Defaults::kDefaultSlope, Filter::Defaults::kDefaultGain
                 );
             } else {
                 bands_[i].setParameters(
                     type, sampleRate_, freqHz,
-                    Filter::FilterDefaults::kDefaultQ, Filter::FilterDefaults::kDefaultBw, Filter::FilterDefaults::kDefaultSlope, dBtoLinear(bandViews_[i].gainDb.get())
+                    Filter::Defaults::kDefaultQ, Filter::Defaults::kDefaultBw, Filter::Defaults::kDefaultSlope, dBtoLinear(bandViews_[i].gainDb.get())
                 );
             }
         }

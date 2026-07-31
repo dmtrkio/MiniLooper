@@ -52,17 +52,17 @@ namespace ml::dsp::filter {
 
         using DataType = T;
         using Coefficients = BiquadCoefficients<T>;
-        using FilterDefaults = FilterDefaults<T>;
+        using Defaults = FilterDefaults<T>;
         static constexpr auto kChannelCount = N;
 
         void setParameters(const FilterType filterType, T sampleRate, T frequencyHz, std::optional<T> q = std::nullopt, std::optional<T> bw = std::nullopt, std::optional<T> slope = std::nullopt, std::optional<T> gain = std::nullopt) noexcept
         {
             type_ = filterType;
             f_ = normalizeFrequency(sampleRate, frequencyHz);
-            q_ = q.value_or(FilterDefaults::kDefaultQ);
-            bw_ = bw.value_or(FilterDefaults::kDefaultBw);
-            slope_ = slope.value_or(FilterDefaults::kDefaultSlope);
-            gain_ = gain.value_or(FilterDefaults::kDefaultGain);
+            q_ = q.value_or(Defaults::kDefaultQ);
+            bw_ = bw.value_or(Defaults::kDefaultBw);
+            slope_ = slope.value_or(Defaults::kDefaultSlope);
+            gain_ = gain.value_or(Defaults::kDefaultGain);
             update();
         }
 
@@ -127,11 +127,11 @@ namespace ml::dsp::filter {
 
     private:
         FilterType type_{};
-        T f_{FilterDefaults::kDefaultFrequency};
-        T q_{FilterDefaults::kDefaultQ};
-        T bw_{FilterDefaults::kDefaultBw};
-        T slope_{FilterDefaults::kDefaultSlope};
-        T gain_{FilterDefaults::kDefaultGain};
+        T f_{Defaults::kDefaultFrequency};
+        T q_{Defaults::kDefaultQ};
+        T bw_{Defaults::kDefaultBw};
+        T slope_{Defaults::kDefaultSlope};
+        T gain_{Defaults::kDefaultGain};
 
         Coefficients coefficients_;
         std::array<BiquadState<DataType>, kChannelCount> state_{};
