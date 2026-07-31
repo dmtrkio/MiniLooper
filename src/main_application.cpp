@@ -51,7 +51,7 @@ namespace ml {
 
         std::cout << "Audio engine started\n";
 
-        constexpr float saveIntervalMs = 300.0f;
+        constexpr float saveIntervalMs = 1000.0f;
         saveTimer_.setOneShot(false);
         saveTimer_.setTimeout(saveIntervalMs * 0.001f);
         saveTimer_.setOnTimeout([&] {
