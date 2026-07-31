@@ -1,3 +1,5 @@
+include(${CMAKE_CURRENT_SOURCE_DIR}/options.cmake)
+
 add_subdirectory(deps)
 
 configure_file(

@@ -7,8 +7,6 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-option(MINILOOPER_BUILD_TESTS "Build unit tests" OFF)
-
 add_subdirectory(cmake)
 add_subdirectory(thirdparty)
 add_subdirectory(src)

@@ -1,6 +1,22 @@
-find_package(SDL3 QUIET)
-if (NOT SDL3_FOUND)
-    message(STATUS "SDL3 not found on system, fetching and building statically")
+if (MINILOOPER_USE_SHARED_SDL3)
+    message(STATUS "Looking for SDL3 shared library...")
+
+    find_package(SDL3 QUIET)
+
+    if (NOT SDL3_FOUND)
+        message(FATAL_ERROR 
+            "SDL3 shared library not found!\n"
+            "Install it with:\n"
+            "  Fedora/RHEL: sudo dnf install SDL3-devel\n"
+            "  Ubuntu/Debian: sudo apt install libsdl3-dev\n"
+            "  Arch: sudo pacman -S sdl3\n"
+            "Or set MINILOOPER_USE_SHARED_SDL3=OFF to build statically"
+        )
+    endif()
+
+    set(SDL3_TARGET SDL3::SDL3)
+else()
+    message(STATUS "Fetching SDL3 and building statically")
 
     FetchContent_Declare(
         SDL3
@@ -23,12 +39,4 @@ if (NOT SDL3_FOUND)
 
     FetchContent_MakeAvailable(SDL3)
     set(SDL3_TARGET SDL3::SDL3-static)
-else()
-    message(STATUS "Preinstalled SDL3 found (shared)")
-
-    if(TARGET SDL3::SDL3-static)
-        set(SDL3_TARGET SDL3::SDL3-static)
-    else()
-        set(SDL3_TARGET SDL3::SDL3)
-    endif()
 endif()
