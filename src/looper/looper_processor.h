@@ -17,7 +17,7 @@ namespace ml::looper {
     using FrameInt = std::int32_t;
 
     inline constexpr int kLooperTrackCount = 4;
-    inline constexpr float kMaxLoopSecs = 40.0f;
+    inline constexpr float kMaxLoopSecs = 90.0f;
 
     struct LooperSession
     {
